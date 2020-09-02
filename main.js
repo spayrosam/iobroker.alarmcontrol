@@ -358,13 +358,13 @@ var Alarmwaschangedfromlevel = {
         [pllang]: "trzy",
         [zhcnlang]: "三"
     };
-class myborkeralarm extends utils.Adapter {
+class AlarmControl extends utils.Adapter {
         //**********************************************************************************************************************************************************
         //******************************************************************Register event**************************************************************************
         //**********************************************************************************************************************************************************
         constructor(options) {
                 super({...options,
-                    name: "myborkeralarm",
+                    name: "AlarmControl",
                 });
                 this.on("ready", this.onReady.bind(this));
                 this.on("objectChange", this.onObjectChange.bind(this));
@@ -377,7 +377,7 @@ class myborkeralarm extends utils.Adapter {
             //**********************************************************************************************************************************************************
         async onReady() {
                 const Adapter = this;
-                Adapter.log.debug('Starting myborkeralarm');
+                Adapter.log.debug('Starting AlarmControl');
                 await Adapter.setStateAsync('info.connection', true, true);
                 Adapter.createChannelAsync('Settings', 'Settings');
                 await Adapter.setObjectNotExistsAsync('Settings', {
@@ -3442,8 +3442,8 @@ if (module.parent) {
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
      */
-    module.exports = (options) => new myborkeralarm(options);
+    module.exports = (options) => new AlarmControl(options);
 } else {
     // otherwise start the instance directly
-    new myborkeralarm();
+    new AlarmControl();
 }
