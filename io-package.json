@@ -1,0 +1,127 @@
+{
+    "common": {
+        "name": "AlarmControl",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial Commit",
+                "de": "Erstveröffentlichung"
+            }
+        },
+        "title": "AlarmControl",
+        "titleLang": {
+            "en": "AlarmControl",
+            "de": "AlarmControl"
+        },
+        "desc": {
+            "en": "AlarmControl",
+            "de": "Adapter für AlarmControl"
+        },
+        "authors": [
+            "spayrosam <spayrosam@gmail.com>"
+        ],
+        "keywords": [
+            "ioBroker",
+            "tasmota",
+            "offline",
+            "Smart Home",
+            "home automation"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "AlarmControl.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/spayrosam/ioBroker.AlarmControl/master/admin/AlarmControl.png",
+        "readme": "https://github.com/spayrosam/ioBroker.AlarmControl/blob/master/README.md",
+        "loglevel": "info",
+        "messagebox": true,
+        "subscribe": "messagebox",
+        "restartAdapters": [
+            "AlarmControl"
+        ],
+        "mode": "daemon",
+        "type": "general",
+        "compact": true,
+        "materialize": true,
+        "materializeTab": false,
+        "supportCustoms": false,
+        "dependencies": [{
+            "js-controller": ">=1.4.2"
+        }],
+        "installedFrom": "https://github.com/spayrosam/ioBroker.AlarmControl"
+    },
+    "native": {
+	    "SpeakObject": "",
+	    "TelegramObject": "",
+        "DeviceIDName": "",
+        "DeviceType": "",
+        "OnState": "",
+        "OnObject": "",
+        "OnObjectString": "",
+        "OffState": "",
+        "OffObject": "",
+        "OffObjectString": "",
+		"trigerswitch": "",
+        "ReedObject": "",
+		"ReedObjectString": "",
+		"EntranceState": "",
+		"ReedTimeValue": "",
+		"ReedCountdownValue": "",
+        "MotionObject": "",
+        "MotionObjectString": "",
+        "IlluminationObject": "",
+        "IlluminationValue": "",
+        "MotionTimeValue": "",
+        "MotionIlluminationActiv": "",
+		"OtherObject": "",
+        "OtherObjectValue": "",
+		"OtherTimeValue": "",
+		"OtherCountdownValue": "",
+		"TimerObject": "",
+		"TimerTimeValue": "",
+		"TimerCountdownValue": "",
+        "Schedule_Enabled": "",
+        "Schedule_Start": "",
+        "Schedule_End": "",
+        "Schedule_Monday": "",
+        "Schedule_Tuesday": "",
+        "Schedule_Wednesday": "",
+        "Schedule_Thursday": "",
+        "Schedule_Friday": "",
+        "Schedule_Saturday": "",
+        "Schedule_Sunday": "",
+        "Speach": "",
+		"Echos": "",
+        "SpeachString": "",
+        "AlarmNumber": "",
+        "activate": "",
+		"IDName": "",
+		"PresenceObject": "",
+		"PresenceTime": "",
+		"PresenceStamp": "",
+		"AbsentSince": "",
+		"PresenceState": "",
+		"SendAlarmChanges": "",
+		"AlarmVoice": "",
+		"AlarmCountdownValue": "",
+		"Welcomephrase": "",
+		"WarningphraseEntrance": "",
+		"WarningphraseMotion": "",
+		"VoiceResetLevel": "",
+		"VoiceChangeLevel": ""
+    },
+    "objects": [],
+    "instanceObjects": [{
+        "_id": "Change",
+        "type": "state",
+        "common": {
+            "name": "Change",
+            "type": "array",
+            "role": "state",
+            "write": false,
+            "def": ""
+        },
+        "native": {}
+    }]
+}
