@@ -1,0 +1,2280 @@
+<html>
+
+<head>
+    <!-- Load ioBroker scripts and styles-->
+    <link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
+    <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
+    <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="../../js/translate.js"></script>
+    <!-- iobroker/node_modules/iobroker.admin/www/js/ -->
+    <script type="text/javascript" src="../../lib/js/materialize.js"></script>
+    <!-- iobroker/node_modules/iobroker.admin/www/lib/js/ -->
+    <script type="text/javascript" src="../../js/adapter-settings.js"></script>
+    <!-- iobroker/node_modules/iobroker.admin/www/js/ -->
+    <!-------------------------------------------------------------------------------------------->
+    <script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../lib/css/fancytree/ui.fancytree.min.css" />
+    <script type="text/javascript" src="../../lib/js/jquery.fancytree-all.min.js"></script>
+    <script type="text/javascript" src="../../lib/js/selectID.js"></script>
+    <!---------------selectID.js (node_modules/iobroker.admin/www/lib/js/)------------------------->
+    <!-- Load our own files -->
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script type="text/javascript" src="words.js"></script>
+    <script type="text/javascript">
+        // This will be called by the admin adapter when the settings page loads
+        let SwitchDevices;
+        let MotionDevices;
+        let ReedDevices;
+        var FamilyIndex = '1';
+        var selectId;
+
+        function load(settings, onChange) {
+            if (!settings) return;
+            $('.value').each(function() {
+                var $key = $(this);
+                var id = $key.attr('id');
+                if ($key.attr('type') === 'checkbox') {
+                    $key.prop('checked', settings[id]).on('change', () => onChange());
+                } else {
+                    $key.val(settings[id]).on('change', () => onChange()).on('keyup', () => onChange());
+                }
+            });
+            HideReed();
+            HideSwitch();
+            HideTemperature();
+            HideOther();
+            HideTimer();
+            var collap = document.getElementsByClassName("collapsible");
+            var iColla;
+            for (iColla = 0; iColla < collap.length; iColla++) {
+                collap[iColla].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var collapContent = this.nextElementSibling;
+                    if (collapContent.style.maxHeight) {
+                        collapContent.style.maxHeight = null;
+                    } else {
+                        collapContent.style.maxHeight = collapContent.scrollHeight + "px";
+                    }
+                });
+            }
+            //*******************************************************Get / Update Echos*****************************************************************************/
+            sendTo(null, 'GetEchos', {}, response => {
+                for (let ArrayEcho in response.Echosarray) {
+                    optText = response.Echosarray[ArrayEcho].EchoName;
+                    optValue = response.Echosarray[ArrayEcho].EchoName;
+                    optValue.trim();
+                    //Create Option and pre-select
+                    var newOption = new Option(optText, optValue, true, false);
+                    // Append
+                    $('#Echos').append(newOption).trigger('change');
+                }
+                //Update Select
+                UpdateSelect();
+            });
+            //*******************************************************Get / Update Family*****************************************************************************/
+            sendTo(null, 'getFamily', {}, response => {
+                //$("#Family > tr").remove();
+                $("#Family").html("");
+                for (let ArrayFam in response.Familyarray) {
+                    ShowFamily(response.Familyarray[ArrayFam]);
+                    console.log(response);
+                }
+            });
+            //*******************************************************Get / Update Device*****************************************************************************/
+            sendTo(null, 'getdevice', {}, response => {
+                //$("#SwitchDevices > tr").remove();
+                //$("#MotionDevices > tr").remove();
+                $("#SwitchDevices").html("");
+                $("#MotionDevices").html("");
+                $("#ReedDevices").html("");
+                $("#OtherDevices").html("");
+                $("#TimerDevices").html("");
+                for (let ArrayDev in response.devicearray) {
+                    //alert(response.devicearray[ArrayDev].DeviceIDName);
+                    ShowDevices(response.devicearray[ArrayDev]);
+                    console.log(response);
+                }
+            });
+            //*******************************************************Add Family Member****************************************************************************/
+            $('#AddFamily').click(function() {
+                var x = document.getElementById("Family").rows.length;
+                var GetFamilyIndex = x + 1 - 1;
+                var FamilyIndex = GetFamilyIndex.toString();
+                // alert(FamilyIndex);
+                chboxFamily = ''; //checked';
+                let text = '<tr> ';
+                text += '<td><label><input type="checkbox" id="Family-' + FamilyIndex + '"  ' + chboxFamily + ' disabled/><span></span></label></td>';
+                text += '<td><input type="text" id="FamilyName' + FamilyIndex + '" " class="value" onchange="EventChBoxFamily(' + FamilyIndex + ')"/></td> ';
+                text += '<td> <a class="BTNFamily-' + FamilyIndex + ' values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></td>';
+                text += '<td><input type="text" id="FamilyPresenceObject' + FamilyIndex + '" " class="value" onchange="EventChBoxFamily(' + FamilyIndex + ')"/></td> ';
+                text += '<td><input type="text" id="FamilyPresenceTime' + FamilyIndex + '" " class="value" onchange="EventChBoxFamily(' + FamilyIndex + ')"/></td> ';
+                text += '<td> <a class="deleteFamily-' + FamilyIndex + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a>';
+                text += '</td></tr>';
+                $('#Family').append(text);
+                //===========================================Edit===================================================
+                $('.BTNFamily-' + FamilyIndex).on('click', function() {
+                    initSelectId(function(sid) {
+                        sid.selectId('show', $('#FamilyPresenceObject' + FamilyIndex).val(), function(newId) {
+                            //alert(newId);
+                            if (newId != $('#FamilyPresenceObject' + FamilyIndex).val()) {
+                                $('#FamilyPresenceObject' + FamilyIndex).val(newId);
+                                onChange();
+                            }
+                        });
+                    });
+                });
+                //===========================================DELETE===================================================
+                $('.deleteFamily-' + FamilyIndex).on('click', function() {
+                    alert($('#FamilyName' + FamilyIndex).val() + ' will be removed from your local database!');
+                    sendTo(null, 'deleteFamily', {
+                        FamilyIDName: $('#FamilyName' + FamilyIndex).val()
+                    }, response => {
+                        console.log(response);
+                    });
+                    $(this).parents('tr').remove();
+                });
+                //===========================================Add Object===================================================
+                $('#Family-' + FamilyIndex).click(function() {
+                    if ($(this).is(':checked')) {
+                        sendTo(null, 'addFamily', {
+                            IDName: $('#FamilyName' + FamilyIndex).val(),
+                            PresenceObject: $('#FamilyPresenceObject' + FamilyIndex).val(),
+                            PresenceTime: $('#FamilyPresenceTime' + FamilyIndex).val(),
+                            Active: true
+                        }, response => {
+                            sendTo(null, 'getFamily', {}, response => {
+                                //$("#Family > tr").remove();
+                                $("#Family").html("");
+                                for (let ArrayFam in response.Familyarray) {
+                                    ShowFamily(response.Familyarray[ArrayFam]);
+                                    console.log(response);
+                                }
+                            });
+                            onChange(true);
+                        });
+                        //socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + $('#FamilyName' + FamilyIndex).val() + `.activate`, true);
+                    } else {
+                        socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + $('#FamilyName' + FamilyIndex).val() + `.Active`, false);
+                    }
+                });
+            });
+            //*******************************************************Select****************************************************************************/
+            $('#BTNSpeak').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#SpeakObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#SpeakObject').val()) {
+                            $('#SpeakObject').val(newId);
+                            onChange();
+                            sendTo(null, 'addSpeak', {
+                                SpeakObject: newId
+                            }, response => {
+                                console.log(response);
+                            });
+                        }
+                    });
+                });
+            });
+            $('#BTNTelegram').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#TelegramObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#TelegramObject').val()) {
+                            $('#TelegramObject').val(newId);
+                            onChange();
+                            sendTo(null, 'addTelegram', {
+                                TelegramObject: newId
+                            }, response => {
+                                console.log(response);
+                            });
+                        }
+                    });
+                });
+            });
+            $('#BTNOnObject').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#OnObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#OnObject').val()) {
+                            $('#OnObject').val(newId);
+                            onChange();
+                        }
+                    });
+                });
+            });
+            $('#BTNOffObject').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#OffObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#OffObject').val()) {
+                            $('#OffObject').val(newId);
+                            onChange();
+                        }
+                    });
+                });
+            });
+            $('#BTNMotionObject').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#MotionObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#MotionObject').val()) {
+                            $('#MotionObject').val(newId);
+                            onChange();
+                        }
+                    });
+                });
+            });
+            $('#BTNLuxObject').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#IlluminationObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#IlluminationObject').val()) {
+                            $('#IlluminationObject').val(newId);
+                            onChange();
+                        }
+                    });
+                });
+            });
+            $('#BTNReedObject').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#ReedObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#ReedObject').val()) {
+                            $('#ReedObject').val(newId);
+                            onChange();
+                        }
+                    });
+                });
+            });
+            $('#BTNTemperatureObject').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#TemperatureObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#TemperatureObject').val()) {
+                            $('#TemperatureObject').val(newId);
+                            onChange();
+                        }
+                    });
+                });
+            });
+            $('#BTNOtherObject').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#OtherObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#OtherObject').val()) {
+                            $('#OtherObject').val(newId);
+                            onChange();
+                        }
+                    });
+                });
+            });
+            //*******************************************************Add Device*****************************************************************************/
+            $('#addDevicestable').click(function() {
+                let chbox = "";
+                if ($('#activate').is(":checked")) {
+                    chbox = 'checked';
+                }
+                let chboxSpeach = "";
+                if ($('#Speach').is(":checked")) {
+                    chboxSpeach = 'checked';
+                }
+                let SetNamedevice = $('#DeviceIDName').val();
+                let SetTypedevice = $('#DeviceType').val();
+                //alert($('#DeviceType').val());
+                //===========================================SEND TO MAIN===================================================
+                let chboxActivateWrite = false;
+                if ($('#activate').is(":checked")) {
+                    chboxActivateWrite = true;
+                }
+                let chboxSpeachWrite = false;
+                if ($('#Speach').is(":checked")) {
+                    chboxSpeachWrite = true;
+                }
+                let chboxScheduleWrite = false;
+                if ($('#Schedule_Enabled').is(":checked")) {
+                    chboxScheduleWrite = true;
+                }
+                let chboxScheduleMondayWrite = false;
+                if ($('#Schedule_Monday').is(":checked")) {
+                    chboxScheduleMondayWrite = true;
+                }
+                let chboxScheduleTuesdayWrite = false;
+                if ($('#Schedule_Tuesday').is(":checked")) {
+                    chboxScheduleTuesdayWrite = true;
+                }
+                let chboxScheduleWednesdayWrite = false;
+                if ($('#Schedule_Wednesday').is(":checked")) {
+                    chboxScheduleWednesdayWrite = true;
+                }
+                let chboxScheduleThursdayWrite = false;
+                if ($('#Schedule_Thursday').is(":checked")) {
+                    chboxScheduleThursdayWrite = true;
+                }
+                let chboxScheduleFridayWrite = false;
+                if ($('#Schedule_Friday').is(":checked")) {
+                    chboxScheduleFridayWrite = true;
+                }
+                let chboxScheduleSaturdayWrite = false;
+                if ($('#Schedule_Saturday').is(":checked")) {
+                    chboxScheduleSaturdayWrite = true;
+                }
+                let chboxScheduleSundayWrite = false;
+                if ($('#Schedule_Sunday').is(":checked")) {
+                    chboxScheduleSundayWrite = true;
+                }
+                switch ($('#DeviceType').val()) {
+                    case "Switch":
+                        sendTo(null, 'adddevice', {
+                            DeviceIDName: $('#DeviceIDName').val(),
+                            DeviceType: $('#DeviceType').val(),
+                            OnState: true,
+                            OnObject: $('#OnObject').val(),
+                            OnObjectString: $('#OnObjectString').val(),
+                            OffState: false,
+                            OffObject: $('#OffObject').val(),
+                            OffObjectString: $('#OffObjectString').val(),
+                            Schedule_Enabled: chboxScheduleWrite,
+                            Schedule_Monday: chboxScheduleMondayWrite,
+                            Schedule_Tuesday: chboxScheduleTuesdayWrite,
+                            Schedule_Wednesday: chboxScheduleWednesdayWrite,
+                            Schedule_Thursday: chboxScheduleThursdayWrite,
+                            Schedule_Friday: chboxScheduleFridayWrite,
+                            Schedule_Saturday: chboxScheduleSaturdayWrite,
+                            Schedule_Sunday: chboxScheduleSundayWrite,
+                            Schedule_Start: $('#Schedule_Start').val(),
+                            Schedule_End: $('#Schedule_End').val(),
+                            Speach: chboxSpeachWrite,
+                            Echos: $('#Echos').val(),
+                            SpeachString: $('#SpeachString').val(),
+                            AlarmNumber: $('#AlarmNumber').val(),
+                            trigerswitch: $('#trigerswitch').val(),
+                            activate: chboxActivateWrite
+                        }, response => {
+                            sendTo(null, 'getdevice', {}, response => {
+                                $("#SwitchDevices").html("");
+                                $("#MotionDevices").html("");
+                                $("#ReedDevices").html("");
+                                $("#OtherDevices").html("");
+                                $("#TimerDevices").html("");
+                                for (let ArrayDev in response.devicearray) {
+                                    ShowDevices(response.devicearray[ArrayDev]);
+                                    console.log(response);
+                                }
+                                onChange(true);
+                            });
+                            $('#DeviceIDName').val('');
+                            $('#DeviceType').val('Switch').trigger('change');
+                            $('#OnObject').val('');
+                            $('#OnObjectString').val('');
+                            $('#OffObject').val('');
+                            $('#OffObjectString').val('');
+                            $('#Schedule_Start').val('00:00');
+                            $('#Schedule_End').val('23:59');
+                            $('#Schedule_Enabled').prop('checked', false);
+                            $('#Schedule_Monday').prop('checked', false);
+                            $('#Schedule_Tuesday').prop('checked', false);
+                            $('#Schedule_Wednesday').prop('checked', false);
+                            $('#Schedule_Thursday').prop('checked', false);
+                            $('#Schedule_Friday').prop('checked', false);
+                            $('#Schedule_Saturday').prop('checked', false);
+                            $('#Schedule_Sunday').prop('checked', false);
+                            $('#Speach').prop('checked', false);
+                            $('#Echos').val('').trigger('change');
+                            $('#SpeachString').val('');
+                            $('#AlarmNumber').val('0').trigger('change');
+                            $('#trigerswitch').val('').trigger('change');
+                            $('#activate').prop('checked', false);
+                        });
+                        break;
+                    case "Reed":
+                        sendTo(null, 'adddevice', {
+                            DeviceIDName: $('#DeviceIDName').val(),
+                            DeviceType: $('#DeviceType').val(),
+                            ReedObject: $('#ReedObject').val(),
+                            ReedObjectString: $('#ReedObjectString').val(),
+                            EntranceState: false,
+                            ReedTimeValue: $('#ReedTimeValue').val(),
+                            ReedCountdownValue: $('#ReedCountdownValue').val(),
+                            Schedule_Enabled: chboxScheduleWrite,
+                            Schedule_Monday: chboxScheduleMondayWrite,
+                            Schedule_Tuesday: chboxScheduleTuesdayWrite,
+                            Schedule_Wednesday: chboxScheduleWednesdayWrite,
+                            Schedule_Thursday: chboxScheduleThursdayWrite,
+                            Schedule_Friday: chboxScheduleFridayWrite,
+                            Schedule_Saturday: chboxScheduleSaturdayWrite,
+                            Schedule_Sunday: chboxScheduleSundayWrite,
+                            Schedule_Start: $('#Schedule_Start').val(),
+                            Schedule_End: $('#Schedule_End').val(),
+                            Speach: chboxSpeachWrite,
+                            Echos: $('#Echos').val(),
+                            SpeachString: $('#SpeachString').val(),
+                            AlarmNumber: $('#AlarmNumber').val(),
+                            trigerswitch: $('#trigerswitch').val(),
+                            activate: chboxActivateWrite
+                        }, response => {
+                            sendTo(null, 'getdevice', {}, response => {
+                                $("#SwitchDevices").html("");
+                                $("#MotionDevices").html("");
+                                $("#ReedDevices").html("");
+                                $("#OtherDevices").html("");
+                                $("#TimerDevices").html("");
+                                for (let ArrayDev in response.devicearray) {
+                                    ShowDevices(response.devicearray[ArrayDev]);
+                                    console.log(response);
+                                }
+                                onChange(true);
+                            });
+                            $('#DeviceIDName').val('');
+                            $('#DeviceType').val('Switch').trigger('change');
+                            $('#ReedObject').val('');
+                            $('#ReedObjectString').val('');
+                            $('#ReedTimeValue').val('00:00:00');
+                            $('#ReedCountdownValue').val('00:00:00');
+                            $('#Schedule_Start').val('00:00');
+                            $('#Schedule_End').val('23:59');
+                            $('#Schedule_Enabled').prop('checked', false);
+                            $('#Schedule_Monday').prop('checked', false);
+                            $('#Schedule_Tuesday').prop('checked', false);
+                            $('#Schedule_Wednesday').prop('checked', false);
+                            $('#Schedule_Thursday').prop('checked', false);
+                            $('#Schedule_Friday').prop('checked', false);
+                            $('#Schedule_Saturday').prop('checked', false);
+                            $('#Schedule_Sunday').prop('checked', false);
+                            $('#Speach').prop('checked', false);
+                            $('#Echos').val('').trigger('change');
+                            $('#SpeachString').val('');
+                            $('#AlarmNumber').val('0').trigger('change');
+                            $('#trigerswitch').val('').trigger('change');
+                            $('#activate').prop('checked', false);
+                        });
+                        break;
+                    case "Motion":
+                        sendTo(null, 'adddevice', {
+                            DeviceIDName: $('#DeviceIDName').val(),
+                            DeviceType: $('#DeviceType').val(),
+                            MotionObject: $('#MotionObject').val(),
+                            MotionObjectString: $('#MotionObjectString').val(),
+                            MotionIlluminationActiv: false,
+                            IlluminationObject: $('#IlluminationObject').val(),
+                            IlluminationValue: $('#IlluminationValue').val(),
+                            MotionTimeValue: $('#MotionTimeValue').val(),
+                            Schedule_Enabled: chboxScheduleWrite,
+                            Schedule_Monday: chboxScheduleMondayWrite,
+                            Schedule_Tuesday: chboxScheduleTuesdayWrite,
+                            Schedule_Wednesday: chboxScheduleWednesdayWrite,
+                            Schedule_Thursday: chboxScheduleThursdayWrite,
+                            Schedule_Friday: chboxScheduleFridayWrite,
+                            Schedule_Saturday: chboxScheduleSaturdayWrite,
+                            Schedule_Sunday: chboxScheduleSundayWrite,
+                            Schedule_Start: $('#Schedule_Start').val(),
+                            Schedule_End: $('#Schedule_End').val(),
+                            Speach: chboxSpeachWrite,
+                            Echos: $('#Echos').val(),
+                            SpeachString: $('#SpeachString').val(),
+                            AlarmNumber: $('#AlarmNumber').val(),
+                            activate: chboxActivateWrite
+                        }, response => {
+                            sendTo(null, 'getdevice', {}, response => {
+                                $("#SwitchDevices").html("");
+                                $("#MotionDevices").html("");
+                                $("#ReedDevices").html("");
+                                $("#OtherDevices").html("");
+                                $("#TimerDevices").html("");
+                                for (let ArrayDev in response.devicearray) {
+                                    ShowDevices(response.devicearray[ArrayDev]);
+                                    console.log(response);
+                                }
+                                onChange(true);
+                            });
+                            $('#DeviceIDName').val('');
+                            $('#DeviceType').val('Switch').trigger('change');
+                            $('#MotionObject').val('');
+                            $('#MotionObjectString').val('');
+                            $('#IlluminationObject').val('');
+                            $('#IlluminationValue').val('');
+                            $('#MotionTimeValue').val('');
+                            $('#Schedule_Start').val('00:00');
+                            $('#Schedule_End').val('23:59');
+                            $('#Schedule_Enabled').prop('checked', false);
+                            $('#Schedule_Monday').prop('checked', false);
+                            $('#Schedule_Tuesday').prop('checked', false);
+                            $('#Schedule_Wednesday').prop('checked', false);
+                            $('#Schedule_Thursday').prop('checked', false);
+                            $('#Schedule_Friday').prop('checked', false);
+                            $('#Schedule_Saturday').prop('checked', false);
+                            $('#Schedule_Sunday').prop('checked', false);
+                            $('#Speach').prop('checked', false);
+                            $('#Echos').val('').trigger('change');
+                            $('#SpeachString').val('').trigger('change');
+                            $('#AlarmNumber').val('0').trigger('change');
+                            $('#activate').prop('checked', false);
+                        });
+                        break;
+                    case "Other":
+                        sendTo(null, 'adddevice', {
+                            DeviceIDName: $('#DeviceIDName').val(),
+                            DeviceType: $('#DeviceType').val(),
+                            OtherObject: $('#OtherObject').val(),
+                            OtherObjectValue: $('#OtherObjectValue').val(),
+                            OtherTimeValue: $('#OtherTimeValue').val(),
+                            OtherCountdownValue: $('#OtherCountdownValue').val(),
+                            Schedule_Enabled: chboxScheduleWrite,
+                            Schedule_Monday: chboxScheduleMondayWrite,
+                            Schedule_Tuesday: chboxScheduleTuesdayWrite,
+                            Schedule_Wednesday: chboxScheduleWednesdayWrite,
+                            Schedule_Thursday: chboxScheduleThursdayWrite,
+                            Schedule_Friday: chboxScheduleFridayWrite,
+                            Schedule_Saturday: chboxScheduleSaturdayWrite,
+                            Schedule_Sunday: chboxScheduleSundayWrite,
+                            Schedule_Start: $('#Schedule_Start').val(),
+                            Schedule_End: $('#Schedule_End').val(),
+                            Speach: chboxSpeachWrite,
+                            Echos: $('#Echos').val(),
+                            SpeachString: $('#SpeachString').val(),
+                            AlarmNumber: $('#AlarmNumber').val(),
+                            trigerswitch: $('#trigerswitch').val(),
+                            activate: chboxActivateWrite
+                        }, response => {
+                            sendTo(null, 'getdevice', {}, response => {
+                                $("#SwitchDevices").html("");
+                                $("#MotionDevices").html("");
+                                $("#ReedDevices").html("");
+                                $("#OtherDevices").html("");
+                                $("#TimerDevices").html("");
+                                for (let ArrayDev in response.devicearray) {
+                                    ShowDevices(response.devicearray[ArrayDev]);
+                                    console.log(response);
+                                }
+                                onChange(true);
+                            });
+                            $('#DeviceIDName').val('');
+                            $('#DeviceType').val('Switch').trigger('change');
+                            $('#OtherObject').val('');
+                            $('#OtherObjectValue').val('');
+                            $('#OtherTimeValue').val('00:00:00');
+                            $('#OtherCountdownValue').val('00:00:00');
+                            $('#Schedule_Start').val('00:00');
+                            $('#Schedule_End').val('23:59');
+                            $('#Schedule_Enabled').prop('checked', false);
+                            $('#Schedule_Monday').prop('checked', false);
+                            $('#Schedule_Tuesday').prop('checked', false);
+                            $('#Schedule_Wednesday').prop('checked', false);
+                            $('#Schedule_Thursday').prop('checked', false);
+                            $('#Schedule_Friday').prop('checked', false);
+                            $('#Schedule_Saturday').prop('checked', false);
+                            $('#Schedule_Sunday').prop('checked', false);
+                            $('#Speach').prop('checked', false);
+                            $('#Echos').val('').trigger('change');
+                            $('#SpeachString').val('');
+                            $('#AlarmNumber').val('0').trigger('change');
+                            $('#trigerswitch').val('').trigger('change');
+                            $('#activate').prop('checked', false);
+                        });
+                        break;
+                    case "Timer":
+                        sendTo(null, 'adddevice', {
+                            DeviceIDName: $('#DeviceIDName').val(),
+                            DeviceType: $('#DeviceType').val(),
+                            TimerObject: $('#TimerObject').val(),
+                            TimerTimeValue: $('#TimerTimeValue').val(),
+                            TimerCountdownValue: $('#TimerCountdownValue').val(),
+                            Schedule_Enabled: chboxScheduleWrite,
+                            Schedule_Monday: chboxScheduleMondayWrite,
+                            Schedule_Tuesday: chboxScheduleTuesdayWrite,
+                            Schedule_Wednesday: chboxScheduleWednesdayWrite,
+                            Schedule_Thursday: chboxScheduleThursdayWrite,
+                            Schedule_Friday: chboxScheduleFridayWrite,
+                            Schedule_Saturday: chboxScheduleSaturdayWrite,
+                            Schedule_Sunday: chboxScheduleSundayWrite,
+                            Schedule_Start: $('#Schedule_Start').val(),
+                            Schedule_End: $('#Schedule_End').val(),
+                            Speach: chboxSpeachWrite,
+                            Echos: $('#Echos').val(),
+                            SpeachString: $('#SpeachString').val(),
+                            AlarmNumber: $('#AlarmNumber').val(),
+                            trigerswitch: $('#trigerswitch').val(),
+                            activate: chboxActivateWrite
+                        }, response => {
+                            sendTo(null, 'getdevice', {}, response => {
+                                $("#SwitchDevices").html("");
+                                $("#MotionDevices").html("");
+                                $("#ReedDevices").html("");
+                                $("#OtherDevices").html("");
+                                $("#TimerDevices").html("");
+                                for (let ArrayDev in response.devicearray) {
+                                    ShowDevices(response.devicearray[ArrayDev]);
+                                    console.log(response);
+                                }
+                                onChange(true);
+                            });
+                            $('#DeviceIDName').val('');
+                            $('#DeviceType').val('Switch').trigger('change');
+                            $('#TimerObject').val('00:00:00');
+                            $('#TimerTimeValue').val('00:00:00');
+                            $('#TimerCountdownValue').val('00:00:00');
+                            $('#Schedule_Start').val('00:00');
+                            $('#Schedule_End').val('23:59');
+                            $('#Schedule_Enabled').prop('checked', false);
+                            $('#Schedule_Monday').prop('checked', false);
+                            $('#Schedule_Tuesday').prop('checked', false);
+                            $('#Schedule_Wednesday').prop('checked', false);
+                            $('#Schedule_Thursday').prop('checked', false);
+                            $('#Schedule_Friday').prop('checked', false);
+                            $('#Schedule_Saturday').prop('checked', false);
+                            $('#Schedule_Sunday').prop('checked', false);
+                            $('#Speach').prop('checked', false);
+                            $('#Echos').val('').trigger('change');
+                            $('#SpeachString').val('');
+                            $('#AlarmNumber').val('0').trigger('change');
+                            $('#trigerswitch').val('').trigger('change');
+                            $('#activate').prop('checked', false);
+                        });
+                        break;
+                }
+				HideMotion();
+				HideReed();
+				HideTemperature();
+				HideOther();
+				HideTimer();
+				ShowSwitch();
+				UpdateSelect();
+            });
+            //*******************************************************Show / Hide Control*****************************************************************************/
+            $('#DeviceType').change(function() {
+                var id = $(this).val();
+                var GetSelect = $(this).find('option:selected').val();
+                //var CtrlIdget = '';
+                //alert(id + ', ' + GetSelect);
+                switch (GetSelect) {
+                    case "Motion":
+                        HideSwitch();
+                        HideReed();
+                        HideTemperature();
+                        HideOther();
+                        HideTimer();
+                        ShowMotion();
+                        break;
+                    case "Reed":
+                        HideSwitch();
+                        HideMotion();
+                        HideTemperature();
+                        HideOther();
+                        HideTimer();
+                        ShowReed();
+                        break;
+                    case "Temperature":
+                        HideSwitch();
+                        HideMotion();
+                        HideReed();
+                        HideOther();
+                        HideTimer();
+                        ShowTemperature();
+                        break;
+                    case "Switch":
+                        HideMotion();
+                        HideReed();
+                        HideTemperature();
+                        HideOther();
+                        HideTimer();
+                        ShowSwitch();
+                        break;
+                    case "Other":
+                        HideMotion();
+                        HideReed();
+                        HideTemperature();
+                        HideSwitch();
+                        HideTimer();
+                        ShowOther();
+                        break;
+                    case "Timer":
+                        HideMotion();
+                        HideReed();
+                        HideTemperature();
+                        HideSwitch();
+                        HideOther();
+                        ShowTimer();
+                        break;
+                }
+            });
+            onChange(false);
+            // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
+            if (M) M.updateTextFields();
+        }
+
+        function UpdateSelect() {
+		 setTimeout(function() {
+		        M.FormSelect.init($('#Echos'));
+                M.FormSelect.init($('#trigerswitch'));
+                M.FormSelect.init($('#AlarmNumber'));
+                M.FormSelect.init($('#DeviceType'));
+			    M.updateTextFields();
+				}, 500);
+        }
+        //*******************************************************Show / Hide Control Function*****************************************************************************/
+        function ShowSwitch() {
+            ShowCtrl("OnObject");
+            ShowCtrl("BTNOnObject");
+            ShowCtrl("OnObjectLbl");
+            ShowCtrl("OnObjectString");
+            ShowCtrl("OnObjectStringLbl");
+            ShowCtrl("OffObject");
+            ShowCtrl("BTNOffObject");
+            ShowCtrl("OffObjectLbl");
+            ShowCtrl("OffObjectString");
+            ShowCtrl("OffObjectStringLbl");
+            $("#trigerswitch").prop("disabled", false);
+            M.FormSelect.init($('#trigerswitch'));
+			$("#AndOr").prop("disabled", false);
+			M.FormSelect.init($('#AndOr'));
+        }
+
+        function HideSwitch() {
+            HideCtrl("OnObject");
+            HideCtrl("BTNOnObject");
+            HideCtrl("OnObjectLbl");
+            HideCtrl("OnObjectString");
+            HideCtrl("OnObjectStringLbl");
+            HideCtrl("OffObject");
+            HideCtrl("BTNOffObject");
+            HideCtrl("OffObjectLbl");
+            HideCtrl("OffObjectLbl");
+            HideCtrl("OffObjectString");
+            HideCtrl("OffObjectStringLbl");
+            $("#trigerswitch").prop("disabled", true);
+            M.FormSelect.init($('#trigerswitch'));
+			$("#AndOr").prop("disabled", true);
+			 M.FormSelect.init($('#AndOr'));
+        }
+
+        function ShowMotion() {
+            ShowCtrl("MotionObject");
+            ShowCtrl("BTNMotionObject");
+            ShowCtrl("MotionObjectLbl");
+            ShowCtrl("MotionObjectString");
+            ShowCtrl("MotionObjectStringLbl");
+            ShowCtrl("IlluminationObject");
+            ShowCtrl("BTNLuxObject");
+            ShowCtrl("IlluminationObjectLbl");
+            ShowCtrl("IlluminationValue");
+            ShowCtrl("IlluminationValueLbl");
+            ShowCtrl("MotionTimeValue");
+            ShowCtrl("MotionTimeValueLbl");
+        }
+
+        function HideMotion() {
+            HideCtrl("MotionObject");
+            HideCtrl("BTNMotionObject");
+            HideCtrl("MotionObjectLbl");
+            HideCtrl("MotionObjectString");
+            HideCtrl("MotionObjectStringLbl");
+            HideCtrl("IlluminationObject");
+            HideCtrl("BTNLuxObject");
+            HideCtrl("IlluminationObjectLbl");
+            HideCtrl("IlluminationValue");
+            HideCtrl("IlluminationValueLbl");
+            HideCtrl("MotionTimeValue");
+            HideCtrl("MotionTimeValueLbl");
+        }
+
+        function ShowReed() {
+            ShowCtrl("ReedObject");
+            ShowCtrl("BTNReedObject");
+            ShowCtrl("ReedObjectLbl");
+            ShowCtrl("ReedObjectString");
+            ShowCtrl("ReedObjectStringLbl");
+            ShowCtrl("ReedTimeValue");
+            ShowCtrl("ReedTimeValueLbl");
+            ShowCtrl("ReedCountdownValue");
+            ShowCtrl("ReedCountdownValueLbl");
+        }
+
+        function HideReed() {
+            HideCtrl("ReedObject");
+            HideCtrl("BTNReedObject");
+            HideCtrl("ReedObjectLbl");
+            HideCtrl("ReedObjectString");
+            HideCtrl("ReedObjectStringLbl");
+            HideCtrl("ReedTimeValue");
+            HideCtrl("ReedTimeValueLbl");
+            HideCtrl("ReedCountdownValue");
+            HideCtrl("ReedCountdownValueLbl");
+        }
+
+        function ShowTemperature() {
+            ShowCtrl("TemperatureObject");
+            ShowCtrl("BTNTemperatureObject");
+            ShowCtrl("TemperatureObjectLbl");
+            ShowCtrl("TemperatureObjectValue");
+            ShowCtrl("TemperatureObjectValueLbl");
+            ShowCtrl("TemperatureTimeValue");
+            ShowCtrl("TemperatureTimeValueLbl");
+        }
+
+        function HideTemperature() {
+            HideCtrl("TemperatureObject");
+            HideCtrl("BTNTemperatureObject");
+            HideCtrl("TemperatureObjectLbl");
+            HideCtrl("TemperatureObjectValue");
+            HideCtrl("TemperatureObjectValueLbl");
+            HideCtrl("TemperatureTimeValue");
+            HideCtrl("TemperatureTimeValueLbl");
+        }
+
+        function ShowOther() {
+            ShowCtrl("OtherObject");
+            ShowCtrl("BTNOtherObject");
+            ShowCtrl("OtherObjectLbl");
+            ShowCtrl("OtherObjectValue");
+            ShowCtrl("OtherObjectValueLbl");
+            ShowCtrl("OtherTimeValue");
+            ShowCtrl("OtherTimeValueLbl");
+            ShowCtrl("OtherCountdownValue");
+            ShowCtrl("OtherCountdownValueLbl");
+        }
+
+        function HideOther() {
+            HideCtrl("OtherObject");
+            HideCtrl("BTNOtherObject");
+            HideCtrl("OtherObjectLbl");
+            HideCtrl("OtherObjectValue");
+            HideCtrl("OtherObjectValueLbl");
+            HideCtrl("OtherTimeValue");
+            HideCtrl("OtherTimeValueLbl");
+            HideCtrl("OtherCountdownValue");
+            HideCtrl("OtherCountdownValueLbl");
+        }
+
+        function ShowTimer() {
+            ShowCtrl("TimerObject");
+            ShowCtrl("TimerObjectLbl");
+            ShowCtrl("TimerTimeValue");
+            ShowCtrl("TimerTimeValueLbl");
+            ShowCtrl("TimerCountdownValue");
+            ShowCtrl("TimerCountdownValueLbl");
+        }
+
+        function HideTimer() {
+            HideCtrl("TimerObject");
+            HideCtrl("TimerObjectLbl");
+            HideCtrl("TimerTimeValue");
+            HideCtrl("TimerTimeValueLbl");
+            HideCtrl("TimerCountdownValue");
+            HideCtrl("TimerCountdownValueLbl");
+        }
+        //*******************************************************Show / Hide Control Function*****************************************************************************/
+        function ShowCtrl(CtrlId) {
+            var CtrlElement = document.getElementById(CtrlId);
+            CtrlElement.style.display = "";
+        }
+
+        function HideCtrl(CtrlId) {
+            var CtrlElement = document.getElementById(CtrlId);
+            CtrlElement.style.display = "none";
+        }
+        //*******************************************************Voice and Telegram****************************************************************/
+        function EventChBoxVoice() {
+            if ($('#AlarmVoice').is(':checked')) {
+                socket.emit('setState', `${adapter}.${instance}.` + "Settings" + `.AlarmVoice`, true);
+            } else {
+                socket.emit('setState', `${adapter}.${instance}.` + "Settings" + `.AlarmVoice`, false);
+            }
+        }
+
+        function EventChBoxTelegram() {
+            if ($('#SendAlarmChanges').is(':checked')) {
+                socket.emit('setState', `${adapter}.${instance}.` + "Settings" + `.SendAlarmChanges`, true);
+            } else {
+                socket.emit('setState', `${adapter}.${instance}.` + "Settings" + `.SendAlarmChanges`, false);
+            }
+        }
+        //*******************************************************Show / Hide CHBox Family*****************************************************************************/
+        function EventChBoxFamily(iFIndex) {
+            var Vari1 = $('#FamilyName' + iFIndex).val();
+            var Vari2 = $('#FamilyPresenceObject' + iFIndex).val();
+            var Vari3 = $('#FamilyPresenceTime' + iFIndex).val()
+            if ((Vari1 === "") || (Vari2 === "") || (Vari3 === "")) {
+                document.getElementById('Family-' + iFIndex).setAttribute('disabled', 'disabled');
+                //alert("Disable");
+            } else {
+                document.getElementById('Family-' + iFIndex).removeAttribute('disabled');
+                //alert("Enable");
+            }
+        }
+        //*******************************************************Show Family Member****************************************************************************/
+        function ShowFamily(ArrayFamily) {
+            var x = document.getElementById("Family").rows.length;
+            var GetFamilyIndex = x + 1 - 1;
+            var FamilyIndex = GetFamilyIndex.toString();
+            chboxFamily = ''; //checked';
+            if (ArrayFamily.Active) {
+                chboxFamily = 'checked';
+            }
+            let text = '<tr> ';
+            text += '<td><label><input type="checkbox" id="Family-' + FamilyIndex + '"  ' + chboxFamily + ' disabled/><span></span></label></td>';
+            text += '<td>' + ArrayFamily.IDName + '</td> ';
+            text += '<td></td> ';
+            text += '<td>' + ArrayFamily.PresenceObject + '</td> ';
+            text += '<td>' + ArrayFamily.PresenceTime + '</td> ';
+            text += '<td> <a class="deleteFamily-' + FamilyIndex + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a>';
+            text += '</td></tr>';
+            $('#Family').append(text);
+            //===========================================DELETE===================================================
+            $('.deleteFamily-' + FamilyIndex).on('click', function() {
+                alert(ArrayFamily.IDName + ' will be removed from your local database!');
+                sendTo(null, 'deleteFamily', {
+                    FamilyIDName: ArrayFamily.IDName
+                }, response => {
+                    console.log(response);
+                });
+                $(this).parents('tr').remove();
+            });
+            //===========================================Add Object===================================================
+            $('#Family-' + FamilyIndex).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + ArrayFamily.IDName + `.activate`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + ArrayFamily.IDName + `.Active`, false);
+                }
+            });
+        }
+        //*******************************************************Show Devices************************************************************************************/
+        function ShowDevices(DeviceGetArray) {
+            let chbox = "";
+            if (DeviceGetArray.activate) {
+                chbox = 'checked';
+            }
+            let chboxSpeach = "";
+            if (DeviceGetArray.Speach) {
+                chboxSpeach = 'checked';
+            }
+            let chboxOnState = "";
+            if (DeviceGetArray.OnState) {
+                chboxOnState = 'checked';
+            }
+            let chboxOffState = "";
+            if (DeviceGetArray.OffState) {
+                chboxOffState = 'checked';
+            }
+            let chboxIlluminationState = "";
+            if (DeviceGetArray.MotionIlluminationActiv) {
+                chboxIlluminationState = 'checked';
+            }
+            let chboxEntranceState = "";
+            if (DeviceGetArray.EntranceState) {
+                chboxEntranceState = 'checked';
+            }
+            let SetNamedevice = DeviceGetArray.DeviceIDName;
+            var IDEditDelete = SetNamedevice.replace(/[ ]+/g, "_");
+            let SetTypedevice = DeviceGetArray.DeviceType;
+            switch (DeviceGetArray.DeviceType) {
+                //*******************************************************SWITCH************************************************************************************/
+                case "Switch":
+                    let TagSwitch = '<tr> ';
+                    TagSwitch += '<td><label><input type="checkbox" id="SwitchCheckBActive-' + IDEditDelete + '"  ' + chbox + '/><span></span></label></td>';
+                    TagSwitch += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
+                    TagSwitch += '<td>' + DeviceGetArray.DeviceIDName + '</td> ';
+                    TagSwitch += '<td><label><input type="checkbox" id="SwitchCheckBOn-' + IDEditDelete + '" ' + chboxOnState + '/><span></span></label></td>';
+                    TagSwitch += '<td>' + DeviceGetArray.OnObject + '</td> ';
+                    TagSwitch += '<td>' + DeviceGetArray.OnObjectString + '</td> ';
+                    TagSwitch += '<td><label><input type="checkbox" id="SwitchCheckBOff-' + IDEditDelete + '" ' + chboxOffState + '/><span></span></label></td>';
+                    TagSwitch += '<td>' + DeviceGetArray.OffObject + '</td> ';
+                    TagSwitch += '<td>' + DeviceGetArray.OffObjectString + '</td> ';
+                    TagSwitch += '<td>' + DeviceGetArray.trigerswitch + '</td>';
+                    let Collectdays = '';
+                    if (DeviceGetArray.Schedule_Enabled) {
+                        Collectdays += DeviceGetArray.Schedule_Start + '-';
+                        Collectdays += DeviceGetArray.Schedule_End + ' ';
+                        if (DeviceGetArray.Schedule_Monday) {
+                            Collectdays += 'Mo '
+                        }
+                        if (DeviceGetArray.Schedule_Tuesday) {
+                            Collectdays += 'Tu '
+                        }
+                        if (DeviceGetArray.Schedule_Wednesday) {
+                            Collectdays += 'We '
+                        }
+                        if (DeviceGetArray.Schedule_Thursday) {
+                            Collectdays += 'Th '
+                        }
+                        if (DeviceGetArray.Schedule_Friday) {
+                            Collectdays += 'Fr '
+                        }
+                        if (DeviceGetArray.Schedule_Saturday) {
+                            Collectdays += 'Sa '
+                        }
+                        if (DeviceGetArray.Schedule_Sunday) {
+                            Collectdays += 'Su '
+                        }
+                        TagSwitch += '<td>' + Collectdays + '</td> ';
+                    } else {
+                        TagSwitch += '<td>' + Collectdays + '</td> ';
+                    }
+                    TagSwitch += '<td><label><input type="checkbox" id="SwitchCheckBSpeach-' + IDEditDelete + '" ' + chboxSpeach + '/><span></span></label></td>';
+                    TagSwitch += '<td>' + DeviceGetArray.SpeachString + '</td>';
+                    TagSwitch += '<td><a class="EditSwitch-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit" class="translate">edit</i></a>';
+                    TagSwitch += '<a class="deleteSwitch-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a></td>';
+                    TagSwitch += '</tr>';
+                    $('#SwitchDevices').append(TagSwitch);
+                    break;
+                    //*******************************************************Reed************************************************************************************/
+                case "Reed":
+                    let TagReed = '<tr> ';
+                    TagReed += '<td><label><input type="checkbox" id="ReedCheckBActive-' + IDEditDelete + '"  ' + chbox + '/><span></span></label></td>';
+                    TagReed += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
+                    TagReed += '<td>' + DeviceGetArray.DeviceIDName + '</td> ';
+                    TagReed += '<td>' + DeviceGetArray.ReedObject + '</td> ';
+                    TagReed += '<td>' + DeviceGetArray.ReedObjectString + '</td> ';
+                    TagReed += '<td><label><input type="checkbox" id="ReedCheckBEntrance-' + IDEditDelete + '" ' + chboxEntranceState + '/><span></span></label></td>';
+                    TagReed += '<td>' + DeviceGetArray.ReedTimeValue + '</td>';
+                    TagReed += '<td>' + DeviceGetArray.ReedCountdownValue + '</td>';
+                    let CollectdaysReed = '';
+                    if (DeviceGetArray.Schedule_Enabled) {
+                        CollectdaysReed += DeviceGetArray.Schedule_Start + '-';
+                        CollectdaysReed += DeviceGetArray.Schedule_End + ' ';
+                        if (DeviceGetArray.Schedule_Monday) {
+                            CollectdaysReed += 'Mo '
+                        }
+                        if (DeviceGetArray.Schedule_Tuesday) {
+                            CollectdaysReed += 'Tu '
+                        }
+                        if (DeviceGetArray.Schedule_Wednesday) {
+                            CollectdaysReed += 'We '
+                        }
+                        if (DeviceGetArray.Schedule_Thursday) {
+                            CollectdaysReed += 'Th '
+                        }
+                        if (DeviceGetArray.Schedule_Friday) {
+                            CollectdaysReed += 'Fr '
+                        }
+                        if (DeviceGetArray.Schedule_Saturday) {
+                            CollectdaysReed += 'Sa '
+                        }
+                        if (DeviceGetArray.Schedule_Sunday) {
+                            CollectdaysReed += 'Su '
+                        }
+                        TagReed += '<td>' + CollectdaysReed + '</td> ';
+                    } else {
+                        TagReed += '<td>' + CollectdaysReed + '</td> ';
+                    }
+                    TagReed += '<td><label><input type="checkbox" id="ReedCheckBSpeach-' + IDEditDelete + '" ' + chboxSpeach + '/><span></span></label></td>';
+                    TagReed += '<td>' + DeviceGetArray.SpeachString + '</td>';
+                    TagReed += '<td><a class="EditReed-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit" class="translate">edit</i></a>';
+                    TagReed += '<a class="deleteReed-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a></td>';
+                    TagReed += '</tr>';
+                    $('#ReedDevices').append(TagReed);
+                    optText = DeviceGetArray.DeviceIDName;
+                    optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                    optValue.trim();
+                    if ($('#trigerswitch').find("option[value='" + optValue + "']").length) {
+                        $('#trigerswitch').val(optValue).trigger('change');
+                    } else {
+                        //Create Option and pre-select
+                        var newOption = new Option(optText, optValue, true, false);
+                        // Append
+                        $('#trigerswitch').append(newOption).trigger('change');
+                        //Update Select
+                        let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                        instance.destroy();
+                        instances = M.FormSelect.init($('#trigerswitch'));
+                    }
+                    break;
+                    //*******************************************************MOTIONS************************************************************************************/
+                case "Motion":
+                    let TagMotion = '<tr> ';
+                    TagMotion += '<td><label><input type="checkbox" id="MotionCheckBActive-' + IDEditDelete + '" ' + chbox + '/><span></span></label></td>';
+                    TagMotion += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
+                    TagMotion += '<td>' + DeviceGetArray.DeviceIDName + '</td> ';
+                    TagMotion += '<td>' + DeviceGetArray.MotionObject + '</td> ';
+                    TagMotion += '<td>' + DeviceGetArray.MotionObjectString + '</td> ';
+                    TagMotion += '<td><label><input type="checkbox" id="MotionCheckBIllumination-' + IDEditDelete + '" ' + chboxIlluminationState + '/><span></span></label></td>';
+                    TagMotion += '<td>' + DeviceGetArray.IlluminationObject + '</td> ';
+                    TagMotion += '<td>' + DeviceGetArray.IlluminationValue + '</td> ';
+                    TagMotion += '<td>' + DeviceGetArray.MotionTimeValue + '</td> ';
+                    let CollectdaysMotion = '';
+                    if (DeviceGetArray.Schedule_Enabled) {
+                        CollectdaysMotion += DeviceGetArray.Schedule_Start + '-';
+                        CollectdaysMotion += DeviceGetArray.Schedule_End + ' ';
+                        if (DeviceGetArray.Schedule_Monday) {
+                            CollectdaysMotion += 'Mo '
+                        }
+                        if (DeviceGetArray.Schedule_Tuesday) {
+                            CollectdaysMotion += 'Tu '
+                        }
+                        if (DeviceGetArray.Schedule_Wednesday) {
+                            CollectdaysMotion += 'We '
+                        }
+                        if (DeviceGetArray.Schedule_Thursday) {
+                            CollectdaysMotion += 'Th '
+                        }
+                        if (DeviceGetArray.Schedule_Friday) {
+                            CollectdaysMotion += 'Fr '
+                        }
+                        if (DeviceGetArray.Schedule_Saturday) {
+                            CollectdaysMotion += 'Sa '
+                        }
+                        if (DeviceGetArray.Schedule_Sunday) {
+                            CollectdaysMotion += 'Su '
+                        }
+                        TagMotion += '<td>' + CollectdaysMotion + '</td> ';
+                    } else {
+                        TagMotion += '<td>' + CollectdaysMotion + '</td> ';
+                    }
+                    TagMotion += '<td><label><input type="checkbox" id="MotionCheckBSpeach-' + IDEditDelete + '" ' + chboxSpeach + '/><span></span></label></td>';
+                    TagMotion += '<td>' + DeviceGetArray.SpeachString + '</td>';
+                    TagMotion += '<td><a class="EditMotion-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit" class="translate">edit</i></a>';
+                    TagMotion += '<a class="deleteMotion-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a></td>';
+                    TagMotion += '</tr>';
+                    $('#MotionDevices').append(TagMotion);
+                    optText = DeviceGetArray.DeviceIDName;
+                    optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                    optValue.trim();
+                    if ($('#trigerswitch').find("option[value='" + optValue + "']").length) {
+                        $('#trigerswitch').val(optValue).trigger('change');
+                    } else {
+                        //Create Option and pre-select
+                        var newOption = new Option(optText, optValue, true, false);
+                        // Append
+                        $('#trigerswitch').append(newOption).trigger('change');
+                        //Update Select
+                        let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                        instance.destroy();
+                        instances = M.FormSelect.init($('#trigerswitch'));
+                    }
+                    break;
+                    //*******************************************************Other************************************************************************************/
+                case "Other":
+                    let TagOther = '<tr> ';
+                    TagOther += '<td><label><input type="checkbox" id="OtherCheckBActive-' + IDEditDelete + '"  ' + chbox + '/><span></span></label></td>';
+                    TagOther += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
+                    TagOther += '<td>' + DeviceGetArray.DeviceIDName + '</td> ';
+                    TagOther += '<td>' + DeviceGetArray.OtherObject + '</td> ';
+                    TagOther += '<td>' + DeviceGetArray.OtherObjectValue + '</td> ';
+                    TagOther += '<td>' + DeviceGetArray.OtherTimeValue + '</td>';
+                    TagOther += '<td>' + DeviceGetArray.OtherCountdownValue + '</td>';
+                    let CollectdaysOther = '';
+                    if (DeviceGetArray.Schedule_Enabled) {
+                        CollectdaysOther += DeviceGetArray.Schedule_Start + '-';
+                        CollectdaysOther += DeviceGetArray.Schedule_End + ' ';
+                        if (DeviceGetArray.Schedule_Monday) {
+                            CollectdaysOther += 'Mo '
+                        }
+                        if (DeviceGetArray.Schedule_Tuesday) {
+                            CollectdaysOther += 'Tu '
+                        }
+                        if (DeviceGetArray.Schedule_Wednesday) {
+                            CollectdaysOther += 'We '
+                        }
+                        if (DeviceGetArray.Schedule_Thursday) {
+                            CollectdaysOther += 'Th '
+                        }
+                        if (DeviceGetArray.Schedule_Friday) {
+                            CollectdaysOther += 'Fr '
+                        }
+                        if (DeviceGetArray.Schedule_Saturday) {
+                            CollectdaysOther += 'Sa '
+                        }
+                        if (DeviceGetArray.Schedule_Sunday) {
+                            CollectdaysOther += 'Su '
+                        }
+                        TagOther += '<td>' + CollectdaysOther + '</td> ';
+                    } else {
+                        TagOther += '<td>' + CollectdaysOther + '</td> ';
+                    }
+                    TagOther += '<td><label><input type="checkbox" id="OtherCheckBSpeach-' + IDEditDelete + '" ' + chboxSpeach + '/><span></span></label></td>';
+                    TagOther += '<td>' + DeviceGetArray.SpeachString + '</td>';
+                    TagOther += '<td><a class="EditOther-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit" class="translate">edit</i></a>';
+                    TagOther += '<a class="deleteOther-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a></td>';
+                    TagOther += '</tr>';
+                    $('#OtherDevices').append(TagOther);
+                    optText = DeviceGetArray.DeviceIDName;
+                    optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                    optValue.trim();
+                    if ($('#trigerswitch').find("option[value='" + optValue + "']").length) {
+                        $('#trigerswitch').val(optValue).trigger('change');
+                    } else {
+                        //Create Option and pre-select
+                        var newOption = new Option(optText, optValue, true, false);
+                        // Append
+                        $('#trigerswitch').append(newOption).trigger('change');
+                        //Update Select
+                        let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                        instance.destroy();
+                        instances = M.FormSelect.init($('#trigerswitch'));
+                    }
+                    break;
+                    //*******************************************************Timer************************************************************************************/
+                case "Timer":
+                    let TagTimer = '<tr> ';
+                    TagTimer += '<td><label><input type="checkbox" id="TimerCheckBActive-' + IDEditDelete + '"  ' + chbox + '/><span></span></label></td>';
+                    TagTimer += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
+                    TagTimer += '<td>' + DeviceGetArray.DeviceIDName + '</td> ';
+                    TagTimer += '<td>' + DeviceGetArray.TimerObject + '</td> ';
+                    TagTimer += '<td>' + DeviceGetArray.TimerTimeValue + '</td> ';
+                    TagTimer += '<td>' + DeviceGetArray.TimerCountdownValue + '</td>';
+                    let CollectdaysTimer = '';
+                    if (DeviceGetArray.Schedule_Enabled) {
+                        CollectdaysTimer += DeviceGetArray.Schedule_Start + '-';
+                        CollectdaysTimer += DeviceGetArray.Schedule_End + ' ';
+                        if (DeviceGetArray.Schedule_Monday) {
+                            CollectdaysTimer += 'Mo '
+                        }
+                        if (DeviceGetArray.Schedule_Tuesday) {
+                            CollectdaysTimer += 'Tu '
+                        }
+                        if (DeviceGetArray.Schedule_Wednesday) {
+                            CollectdaysTimer += 'We '
+                        }
+                        if (DeviceGetArray.Schedule_Thursday) {
+                            CollectdaysTimer += 'Th '
+                        }
+                        if (DeviceGetArray.Schedule_Friday) {
+                            CollectdaysTimer += 'Fr '
+                        }
+                        if (DeviceGetArray.Schedule_Saturday) {
+                            CollectdaysTimer += 'Sa '
+                        }
+                        if (DeviceGetArray.Schedule_Sunday) {
+                            CollectdaysTimer += 'Su '
+                        }
+                        TagTimer += '<td>' + CollectdaysTimer + '</td> ';
+                    } else {
+                        TagTimer += '<td>' + CollectdaysTimer + '</td> ';
+                    }
+                    TagTimer += '<td><label><input type="checkbox" id="TimerCheckBSpeach-' + IDEditDelete + '" ' + chboxSpeach + '/><span></span></label></td>';
+                    TagTimer += '<td>' + DeviceGetArray.SpeachString + '</td>';
+                    TagTimer += '<td><a class="EditTimer-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit" class="translate">edit</i></a>';
+                    TagTimer += '<a class="deleteTimer-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a></td>';
+                    TagTimer += '</tr>';
+                    $('#TimerDevices').append(TagTimer);
+                    optText = DeviceGetArray.DeviceIDName;
+                    optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                    optValue.trim();
+                    if ($('#trigerswitch').find("option[value='" + optValue + "']").length) {
+                        $('#trigerswitch').val(optValue).trigger('change');
+                    } else {
+                        //Create Option and pre-select
+                        var newOption = new Option(optText, optValue, true, false);
+                        // Append
+                        $('#trigerswitch').append(newOption).trigger('change');
+                        //Update Select
+                        let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                        instance.destroy();
+                        instances = M.FormSelect.init($('#trigerswitch'));
+                    }
+                    break;
+            }
+            //===========================================DELETE Switch===================================================
+            $('.deleteSwitch-' + IDEditDelete).on('click', function() {
+                sendTo(null, 'deletedevice', {
+                    DeviceIDName: DeviceGetArray.DeviceIDName,
+                    DeviceType: DeviceGetArray.DeviceType
+                }, response => {
+                    console.log(response);
+                });
+                $(this).parents('tr').remove();
+            });
+            //===========================================Toggle Switch Activate==========================================
+            $('#SwitchCheckBActive-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, false);
+                }
+            });
+            //===========================================Toggle Switch On/Off=============================================
+            $('#SwitchCheckBOn-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OnState`, true);
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OffState`, false);
+                    $('#SwitchCheckBOff-' + IDEditDelete).prop('checked', false);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OnState`, false);
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OffState`, true);
+                    $('#SwitchCheckBOff-' + IDEditDelete).prop('checked', true);
+                }
+            });
+            $('#SwitchCheckBOff-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OffState`, true);
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OnState`, false);
+                    $('#SwitchCheckBOn-' + IDEditDelete).prop('checked', false);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OffState`, false);
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OnState`, true);
+                    $('#SwitchCheckBOn-' + IDEditDelete).prop('checked', true);
+                }
+            });
+            //===========================================Toggle Switch Speach=============================================
+            $('#SwitchCheckBSpeach-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, false);
+                }
+            });
+            //===========================================EDIT Switch===================================================
+            $('.EditSwitch-' + IDEditDelete).on('click', function() {
+                //DeviceIDName, DeviceType, OnState, OnObject, OnObjectString, OffState, OffObject, OffObjectString;
+                //Schedule_Enabled, Schedule_Start, Schedule_End, Schedule_Monday, Schedule_Tuesday, Schedule_Wednesday, Schedule_Thursday, Schedule_Friday, Schedule_Saturday, Schedule_Sunday;
+                //Speach, SpeachString, AlarmNumber, activate;
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceIDName`, (error, state) => {
+                    $('#DeviceIDName').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceType`, (error, state) => {
+                    $('#DeviceType').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OnObject`, (error, state) => {
+                    $('#OnObject').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OnObjectString`, (error, state) => {
+                    $('#OnObjectString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OffObject`, (error, state) => {
+                    $('#OffObject').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OffObjectString`, (error, state) => {
+                    $('#OffObjectString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Enabled`, (error, state) => {
+                    $('#Schedule_Enabled').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Start`, (error, state) => {
+                    $('#Schedule_Start').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_End`, (error, state) => {
+                    $('#Schedule_End').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Monday`, (error, state) => {
+                    $('#Schedule_Monday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Wednesday`, (error, state) => {
+                    $('#Schedule_Wednesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Thursday`, (error, state) => {
+                    $('#Schedule_Thursday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Friday`, (error, state) => {
+                    $('#Schedule_Friday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Saturday`, (error, state) => {
+                    $('#Schedule_Saturday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Sunday`, (error, state) => {
+                    $('#Schedule_Sunday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, (error, state) => {
+                    $('#Speach').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Echos`, (error, state) => {
+                    $('#Echos').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SpeachString`, (error, state) => {
+                    $('#SpeachString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.AlarmNumber`, (error, state) => {
+                    $('#AlarmNumber').val(state.val.trigger('change'));
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, (error, state) => {
+                    $('#activate').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.trigerswitch`, (error, state) => {
+                    $('#trigerswitch').val(state.val).trigger('change');
+                });
+                UpdateSelect();
+            });
+            //===========================================DELETE Reed===================================================
+            $('.deleteReed-' + IDEditDelete).on('click', function() {
+                sendTo(null, 'deletedevice', {
+                    DeviceIDName: DeviceGetArray.DeviceIDName,
+                    DeviceType: DeviceGetArray.DeviceType
+                }, response => {
+                    console.log(response);
+                });
+                $(this).parents('tr').remove();
+                optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                $("#trigerswitch option[value='" + optValue + "']").remove();
+                let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                instance.destroy();
+                instances = M.FormSelect.init($('#trigerswitch'));
+            });
+            //===========================================Toggle Reed===================================================
+            $('#ReedCheckBActive-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, false);
+                }
+            });
+            //===========================================Toggle Reed Entrance Activate==========================================
+            $('#ReedCheckBEntrance-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EntranceState`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EntranceState`, false);
+                }
+            });
+            //===========================================Toggle Reed Speach=============================================
+            $('#ReedCheckBSpeach-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, false);
+                }
+            });
+            //===========================================EDIT Reed===================================================
+            $('.EditReed-' + IDEditDelete).on('click', function() {
+                //DeviceIDName, DeviceType, OnState, OnObject, OnObjectString, OffState, OffObject, OffObjectString;
+                //MotionObject, MotionObjectString, IlluminationObject, IlluminationValue, MotionTimeValue, MotionIlluminationActiv;
+                //Schedule_Enabled, Schedule_Start, Schedule_End, Schedule_Monday, Schedule_Tuesday, Schedule_Wednesday, Schedule_Thursday, Schedule_Friday, Schedule_Saturday, Schedule_Sunday;
+                //Speach, SpeachString, AlarmNumber, activate;
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceIDName`, (error, state) => {
+                    $('#DeviceIDName').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceType`, (error, state) => {
+                    $('#DeviceType').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.ReedObject`, (error, state) => {
+                    $('#ReedObject').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.ReedObjectString`, (error, state) => {
+                    $('#ReedObjectString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.ReedTimeValue`, (error, state) => {
+                    $('#ReedTimeValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.ReedCountdownValue`, (error, state) => {
+                    $('#ReedCountdownValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Enabled`, (error, state) => {
+                    $('#Schedule_Enabled').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Start`, (error, state) => {
+                    $('#Schedule_Start').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_End`, (error, state) => {
+                    $('#Schedule_End').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Monday`, (error, state) => {
+                    $('#Schedule_Monday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Wednesday`, (error, state) => {
+                    $('#Schedule_Wednesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Thursday`, (error, state) => {
+                    $('#Schedule_Thursday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Friday`, (error, state) => {
+                    $('#Schedule_Friday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Saturday`, (error, state) => {
+                    $('#Schedule_Saturday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Sunday`, (error, state) => {
+                    $('#Schedule_Sunday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, (error, state) => {
+                    $('#Speach').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Echos`, (error, state) => {
+                    $('#Echos').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SpeachString`, (error, state) => {
+                    $('#SpeachString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.AlarmNumber`, (error, state) => {
+                    $('#AlarmNumber').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, (error, state) => {
+                    $('#activate').prop('checked', state.val);
+                });
+                UpdateSelect();
+            });
+            //===========================================DELETE Motion===================================================
+            $('.deleteMotion-' + IDEditDelete).on('click', function() {
+                sendTo(null, 'deletedevice', {
+                    DeviceIDName: DeviceGetArray.DeviceIDName,
+                    DeviceType: DeviceGetArray.DeviceType
+                }, response => {
+                    console.log(response);
+                });
+                $(this).parents('tr').remove();
+                optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                $("#trigerswitch option[value='" + optValue + "']").remove();
+                let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                instance.destroy();
+                instances = M.FormSelect.init($('#trigerswitch'));
+            });
+            //===========================================Toggle Motion===================================================
+            $('#MotionCheckBActive-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, false);
+                }
+            });
+            //===========================================Toggle Motion Illumination=============================================
+            $('#MotionCheckBIllumination-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.MotionIlluminationActiv`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.MotionIlluminationActiv`, false);
+                }
+            });
+            //===========================================Toggle Motion Speach=============================================
+            $('#MotionCheckBSpeach-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, false);
+                }
+            });
+            //===========================================EDIT Motion===================================================
+            $('.EditMotion-' + IDEditDelete).on('click', function() {
+                //DeviceIDName, DeviceType, OnState, OnObject, OnObjectString, OffState, OffObject, OffObjectString;
+                //MotionObject, MotionObjectString, IlluminationObject, IlluminationValue, MotionTimeValue, MotionIlluminationActiv;
+                //Schedule_Enabled, Schedule_Start, Schedule_End, Schedule_Monday, Schedule_Tuesday, Schedule_Wednesday, Schedule_Thursday, Schedule_Friday, Schedule_Saturday, Schedule_Sunday;
+                //Speach, SpeachString, AlarmNumber, activate;
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceIDName`, (error, state) => {
+                    $('#DeviceIDName').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceType`, (error, state) => {
+                    $('#DeviceType').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.MotionObject`, (error, state) => {
+                    $('#MotionObject').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.MotionObjectString`, (error, state) => {
+                    $('#MotionObjectString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.IlluminationObject`, (error, state) => {
+                    $('#IlluminationObject').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.IlluminationValue`, (error, state) => {
+                    $('#IlluminationValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.MotionTimeValue`, (error, state) => {
+                    $('#MotionTimeValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Enabled`, (error, state) => {
+                    $('#Schedule_Enabled').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Start`, (error, state) => {
+                    $('#Schedule_Start').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_End`, (error, state) => {
+                    $('#Schedule_End').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Monday`, (error, state) => {
+                    $('#Schedule_Monday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Wednesday`, (error, state) => {
+                    $('#Schedule_Wednesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Thursday`, (error, state) => {
+                    $('#Schedule_Thursday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Friday`, (error, state) => {
+                    $('#Schedule_Friday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Saturday`, (error, state) => {
+                    $('#Schedule_Saturday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Sunday`, (error, state) => {
+                    $('#Schedule_Sunday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, (error, state) => {
+                    $('#Speach').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Echos`, (error, state) => {
+                    $('#Echos').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SpeachString`, (error, state) => {
+                    $('#SpeachString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.AlarmNumber`, (error, state) => {
+                    $('#AlarmNumber').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, (error, state) => {
+                    $('#activate').prop('checked', state.val);
+                });
+                UpdateSelect();
+            });
+            //===========================================DELETE Other===================================================
+            $('.deleteOther-' + IDEditDelete).on('click', function() {
+                sendTo(null, 'deletedevice', {
+                    DeviceIDName: DeviceGetArray.DeviceIDName,
+                    DeviceType: DeviceGetArray.DeviceType
+                }, response => {
+                    console.log(response);
+                });
+                $(this).parents('tr').remove();
+                optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                $("#trigerswitch option[value='" + optValue + "']").remove();
+                let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                instance.destroy();
+                instances = M.FormSelect.init($('#trigerswitch'));
+            });
+            //===========================================Toggle Other===================================================
+            $('#OtherCheckBActive-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, false);
+                }
+            });
+            //===========================================Toggle Other Speach=============================================
+            $('#OtherCheckBSpeach-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, false);
+                }
+            });
+            //===========================================EDIT Other===================================================
+            $('.EditOther-' + IDEditDelete).on('click', function() {
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceIDName`, (error, state) => {
+                    $('#DeviceIDName').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceType`, (error, state) => {
+                    $('#DeviceType').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OtherObject`, (error, state) => {
+                    $('#OtherObject').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OtherObjectValue`, (error, state) => {
+                    $('#OtherObjectValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OtherTimeValue`, (error, state) => {
+                    $('#OtherTimeValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.OtherCountdownValue`, (error, state) => {
+                    $('#OtherCountdownValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Enabled`, (error, state) => {
+                    $('#Schedule_Enabled').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Start`, (error, state) => {
+                    $('#Schedule_Start').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_End`, (error, state) => {
+                    $('#Schedule_End').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Monday`, (error, state) => {
+                    $('#Schedule_Monday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Wednesday`, (error, state) => {
+                    $('#Schedule_Wednesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Thursday`, (error, state) => {
+                    $('#Schedule_Thursday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Friday`, (error, state) => {
+                    $('#Schedule_Friday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Saturday`, (error, state) => {
+                    $('#Schedule_Saturday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Sunday`, (error, state) => {
+                    $('#Schedule_Sunday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, (error, state) => {
+                    $('#Speach').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Echos`, (error, state) => {
+                    $('#Echos').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SpeachString`, (error, state) => {
+                    $('#SpeachString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.AlarmNumber`, (error, state) => {
+                    $('#AlarmNumber').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, (error, state) => {
+                    $('#activate').prop('checked', state.val);
+                });
+                UpdateSelect();
+            });
+            //===========================================DELETE Timer===================================================
+            $('.deleteTimer-' + IDEditDelete).on('click', function() {
+                sendTo(null, 'deletedevice', {
+                    DeviceIDName: DeviceGetArray.DeviceIDName,
+                    DeviceType: DeviceGetArray.DeviceType
+                }, response => {
+                    console.log(response);
+                });
+                $(this).parents('tr').remove();
+                optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                $("#trigerswitch option[value='" + optValue + "']").remove();
+                let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                instance.destroy();
+                instances = M.FormSelect.init($('#trigerswitch'));
+            });
+            //===========================================Toggle Timer===================================================
+            $('#TimerCheckBActive-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, false);
+                }
+            });
+            //===========================================Toggle Timer Speach=============================================
+            $('#TimerCheckBSpeach-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, false);
+                }
+            });
+            //===========================================EDIT Timer===================================================
+            $('.EditTimer-' + IDEditDelete).on('click', function() {
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceIDName`, (error, state) => {
+                    $('#DeviceIDName').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceType`, (error, state) => {
+                    $('#DeviceType').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.TimerObject`, (error, state) => {
+                    $('#TimerObject').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.TimerTimeValue`, (error, state) => {
+                    $('#TimerTimeValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.TimerCountdownValue`, (error, state) => {
+                    $('#TimerCountdownValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Enabled`, (error, state) => {
+                    $('#Schedule_Enabled').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Start`, (error, state) => {
+                    $('#Schedule_Start').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_End`, (error, state) => {
+                    $('#Schedule_End').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Monday`, (error, state) => {
+                    $('#Schedule_Monday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Wednesday`, (error, state) => {
+                    $('#Schedule_Wednesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Thursday`, (error, state) => {
+                    $('#Schedule_Thursday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Friday`, (error, state) => {
+                    $('#Schedule_Friday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Saturday`, (error, state) => {
+                    $('#Schedule_Saturday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Sunday`, (error, state) => {
+                    $('#Schedule_Sunday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, (error, state) => {
+                    $('#Speach').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Echos`, (error, state) => {
+                    $('#Echos').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SpeachString`, (error, state) => {
+                    $('#SpeachString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.AlarmNumber`, (error, state) => {
+                    $('#AlarmNumber').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, (error, state) => {
+                    $('#activate').prop('checked', state.val);
+                });
+                UpdateSelect();
+            });
+        }
+        // This will be called by the admin adapter when the user presses the save button
+        function save(callback) {
+            // Checkup
+            let chboxAlarmVoiceWrite = false;
+            if ($('#AlarmVoice').is(":checked")) {
+                chboxAlarmVoiceWrite = true;
+            }
+            let chboxSendAlarmChangesWrite = false;
+            if ($('#SendAlarmChanges').is(":checked")) {
+                chboxSendAlarmChangesWrite = true;
+            }
+            sendTo(null, 'SaveSettings', {
+                AlarmCountdownValue: $('#AlarmCountdownValue').val(),
+                Welcomephrase: $('#Welcomephrase').val(),
+                WarningphraseEntrance: $('#WarningphraseEntrance').val(),
+                WarningphraseMotion: $('#WarningphraseMotion').val(),
+                VoiceResetLevel: $('#VoiceResetLevel').val(),
+                VoiceChangeLevel: $('#VoiceChangeLevel').val(),
+                AlarmVoice: chboxAlarmVoiceWrite,
+                SendAlarmChanges: chboxSendAlarmChangesWrite
+            }, response => {
+                console.log(response);
+            });
+            var obj = {};
+            $('.value').each(function() {
+                let $this = $(this);
+                if ($this.attr('type') === 'checkbox') {
+                    obj[$this.attr('id')] = $this.prop('checked');
+                } else {
+                    obj[$this.attr('id')] = $this.val();
+                }
+            });
+            callback(obj);
+        }
+        //*******************************************************initSelectId*****************************************************************************/
+        function initSelectId(cb) {
+            if (selectId) return cb(selectId);
+            socket.emit('getObjects', function(err, res) {
+                if (!err && res) {
+                    selectId = $('#dialog-select-member').selectId('init', {
+                        noMultiselect: true,
+                        objects: res,
+                        imgPath: '../../lib/css/fancytree/',
+                        filter: {
+                            type: 'state'
+                        },
+                        name: 'vcard-select-state',
+                        texts: {
+                            select: _('Select'),
+                            cancel: _('Cancel'),
+                            all: _('All'),
+                            id: _('ID'),
+                            name: _('Name'),
+                            role: _('Role'),
+                            room: _('Room'),
+                            value: _('Value'),
+                            selectid: _('Select ID'),
+                            from: _('From'),
+                            lc: _('Last changed'),
+                            ts: _('Time stamp'),
+                            wait: _('Processing...'),
+                            ack: _('Acknowledged'),
+                            selectAll: _('Select all'),
+                            unselectAll: _('Deselect all'),
+                            invertSelection: _('Invert selection')
+                        },
+                        columns: ['image', 'name', 'role', 'room']
+                    });
+                    cb && cb(selectId);
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div class="m adapter-container">
+        <div>
+            <div class="row">
+                <div class="col s12"> <img src="AlarmControl.png" class="logo" /> </div>
+            </div>
+            <div class="row">
+                <!--Alarm section-->
+                <button class="collapsible translate">Notification settings</button>
+                <div class="collapContent">
+                    <div class="row">
+                        <div class="col s6"><input type="checkbox" class="value" id="SendAlarmChanges" onchange="EventChBoxTelegram()" /> <label id="SendAlarmChangesLbl" class="translate">Report alarm changes</label></div>
+                        <div class="col s6"><input type="checkbox" class="value" id="AlarmVoice" onchange="EventChBoxVoice()" /> <label id="AlarmVoiceLbl" class="translate">Voice notification</label></div>
+                    </div>
+                    <div class="row">
+                        <div class="col s6">
+                            <div id="elementLeft"><a id="BTNSpeak" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                            <div id="elementRight"><input type="text" id="SpeakObject" class="value" /></div>
+                            <div id="elementBottom"><label id="SpeakObjectLbl" class="translate">Spoken object</label></div>
+                        </div>
+                        <div class="col s6">
+                            <div id="elementLeft"><a id="BTNTelegram" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                            <div id="elementRight"><input type="text" id="TelegramObject" class="value" /></div>
+                            <div id="elementBottom"><label id="TelegramObjectLbl" class="translate">Telegram object</label></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col s6">
+                            <div id="elementRight"><input type="number" id="AlarmCountdownValue" class="value" placeholder="60" /></div>
+                            <div id="elementBottom"><label id="AlarmCountdownValueLbl" class="translate">Alarm activation time (no one present)</label></div>
+                        </div>
+                        <div class="col s6">
+                            <div id="elementRight"><input type="text" id="Welcomephrase" class="value" placeholder="Welcome Home" /></div>
+                            <div id="elementBottom"><label for="Welcomephrase" class="translate">Welcome phrase</label></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col s6">
+                            <div id="elementRight"><input type="text" id="WarningphraseEntrance" class="value" placeholder="Attention! entrance is open since" /></div>
+                            <div id="elementBottom"><label for="WarningphraseEntrance" class="translate">Warning phrase: If the set opening time is exceeded (Entrance).</label></div>
+                        </div>
+                        <div class="col s6">
+                            <div id="elementRight"><input type="text" id="WarningphraseMotion" class="value" placeholder="Attention! Movement was detected" /></div>
+                            <div id="elementBottom"><label for="WarningphraseMotion" class="translate">Warning phrase: when motion is detected</label></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col s6">
+                            <div id="elementRight"><input type="text" id="VoiceChangeLevel" class="value" placeholder="Alarm to level" /></div>
+                            <div id="elementBottom"><label for="VoiceChangeLevel" class="translate">Voice command to change the alarm level (without number)</label></div>
+                        </div>
+                        <div class="col s6">
+                            <div id="elementRight"><input type="text" id="VoiceResetLevel" class="value" placeholder="I'm here" /></div>
+                            <div id="elementBottom"><label for="VoiceResetLevel" class="translate">Voice command to turn off the alarm (Level 2)</label></div>
+                        </div>
+                    </div>
+                </div><br>
+                <hr><br>
+
+                <div class="col s12">
+                    <a class="waves-effect waves-Illumination btn" id="AddFamily"> <i class="material-icons left">add</i><span class="translate">Add Family member</span> </a>
+                </div><br><br><br>
+                <div>
+                    <div class="mytableoutter">
+                        <table id="mytable">
+                            <thead>
+                                <tr>
+                                    <th class="header translate" data-name="ActiveFamilyTable" data-type="checkbox">Active</th>
+                                    <th class="header translate" data-name="FamilymemberTable">Family member</th>
+                                    <th class="header translate" data-name="FamilyObjectEditTable"></th>
+                                    <th class="header translate" data-name="FamilyObjectTable">Presence Object</th>
+                                    <th class="header translate" data-name="FamilyAbsentTable">Time until absent</th>
+                                    <th class="header translate" data-buttons="FamilyDelete">Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody id="Family"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <br>
+                <hr><br>
+                <div class="col s1"> <select id="AlarmNumber" multiple>
+                            <option value="0">0</option>
+                            <option value="1" selected>1</option>
+	                        <option value="2">2</option>
+							<option value="3">3</option>
+							</select> </div>
+                <div class="col s3"> <select id="DeviceType">
+							<option value="Motion" selected class="translate">Motion sensor</option>
+							<option value="Reed" class="translate">Door and Window sensor</option>
+							<option value="Temperature" class="translate">Temperature sensor</option>
+							<option value="Other" class="translate">Other sensor</option>
+							<option value="Timer" class="translate">Timer</option>
+                            <option value="Switch" class="translate">Device</option>
+
+							</select> </div>
+                <div class="col s3"><input type="text" id="DeviceIDName" class="value" placeholder="Name your Device" />
+                    <div id="elementBottom"><label for="DeviceIDName" class="translate">Name</label></div>
+                </div>
+				<div class="col s2"> <select id="AndOr">
+							<option value="And" selected class="translate">And Mode</option>
+							<option value="Or" class="translate">Or Mode</option>
+							</select> </div>
+                <div class="col s3"> <select id="trigerswitch" multiple>
+							</select> </div>
+            </div>
+            <div class="row">
+                <!--Switch section-->
+                <div class="col s4">
+                    <div id="elementLeft"><a id="BTNOnObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                    <div id="elementRight"><input type="text" id="OnObject" class="value" placeholder="object ***on" /></div>
+                    <div id="elementBottom"><label id="OnObjectLbl" class="translate">On object</label></div>
+                </div>
+                <div class="col s2"><input type="text" id="OnObjectString" class="value" placeholder="true / 100" />
+                    <div id="elementBottom"><label id="OnObjectStringLbl" class="translate">On Value</label></div>
+                </div>
+                <div class="col s4">
+                    <div id="elementLeft"><a id="BTNOffObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit" >edit</i></a></div>
+                    <div id="elementRight"><input type="text" id="OffObject" class="value" placeholder="object ***off" /></div>
+                    <div id="elementBottom"><label id="OffObjectLbl" class="translate">Off object</label></div>
+                </div>
+                <div class="col s2"><input type="text" id="OffObjectString" class="value" placeholder="false / 0" />
+                    <div id="elementBottom"><label id="OffObjectStringLbl" class="translate">Off Value</label></div>
+                </div>
+                <!--Motion section-->
+                <div class="col s3">
+                    <div id="elementLeft"><a id="BTNMotionObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                    <div id="elementRight"><input type="text" id="MotionObject" class="value" placeholder="object ***Motion" /></div>
+                    <div id="elementBottom"><label id="MotionObjectLbl" class="translate">Motion object</label></div>
+                </div>
+                <div class="col s2"><input type="text" id="MotionObjectString" class="value" placeholder="true / 0" />
+                    <div id="elementBottom"><label id="MotionObjectStringLbl" class="translate">Motion value</label></div>
+                </div>
+                <div class="col s3">
+                    <!--the illumination of the environment is less/hight than ** LUX-->
+                    <div id="elementLeft"><a id="BTNLuxObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit" >edit</i></a></div>
+                    <div id="elementRight"><input type="text" id="IlluminationObject" class="value" placeholder="object ***Illumination" /></div>
+                    <div id="elementBottom"><label id="IlluminationObjectLbl" class="translate">Illumination object</label></div>
+                </div>
+                <div class="col s2"><input type="text" id="IlluminationValue" class="value" placeholder="=40 / >40 / <40" />
+                    <div id="elementBottom"><label id="IlluminationValueLbl" class="translate">Illumination value</label></div>
+                </div>
+                <div class="col s2"><input type="number" id="MotionTimeValue" class="value" placeholder="30" min="0" max="900" />
+                    <div id="elementBottom"><label id="MotionTimeValueLbl" class="translate">Seconds of the switch-on time</label></div>
+                </div>
+                <!--Reed section-->
+                <div class="col s6">
+                    <div id="elementLeft"><a id="BTNReedObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                    <div id="elementRight"><input type="text" id="ReedObject" class="value" placeholder="object ***Sensor" /></div>
+                    <div id="elementBottom"><label id="ReedObjectLbl" class="translate">Door and Window sensor object</label></div>
+                </div>
+                <div class="col s2"><input type="text" id="ReedObjectString" class="value" placeholder="true / 0" />
+                    <div id="elementBottom"><label id="ReedObjectStringLbl" class="translate">Sensor value</label></div>
+                </div>
+                <div class="col s2"><input type="time" id="ReedTimeValue" value="00:00:00" step="1"/>
+                    <div id="elementBottom"><label id="ReedTimeValueLbl" class="translate">Trigger time</label></div>
+                </div>
+                <div class="col s2"><input type="time" id="ReedCountdownValue" value="00:00:00" step="1"/>
+                    <div id="elementBottom"><label id="ReedCountdownValueLbl" class="translate">Countdown</label></div>
+                </div>
+                <!--Temperature section-->
+                <div class="col s8">
+                    <div id="elementLeft"><a id="BTNTemperatureObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                    <div id="elementRight"><input type="text" id="TemperatureObject" class="value" placeholder="object ***Temperature" /></div>
+                    <div id="elementBottom"><label id="TemperatureObjectLbl" class="translate">Temperature object</label></div>
+                </div>
+                <div class="col s2"><input type="number" id="TemperatureObjectValue" class="value" placeholder="18" />
+                    <div id="elementBottom"><label id="TemperatureObjectValueLbl" class="translate">Temperature value</label></div>
+                </div>
+                <div class="col s2"><input type="number" id="TemperatureTimeValue" class="value" placeholder="30" min="0" max="900" />
+                    <div id="elementBottom"><label id="TemperatureTimeValueLbl" class="translate">Trigger time</label></div>
+                </div>
+                <!--Other section-->
+                <div class="col s6">
+                    <div id="elementLeft"><a id="BTNOtherObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                    <div id="elementRight"><input type="text" id="OtherObject" class="value" placeholder="object ***Sensor" /></div>
+                    <div id="elementBottom"><label id="OtherObjectLbl" class="translate">Sensor object</label></div>
+                </div>
+                <div class="col s2"><input type="text" id="OtherObjectValue" class="value" placeholder="100/true" />
+                    <div id="elementBottom"><label id="OtherObjectValueLbl" class="translate">Sensor value</label></div>
+                </div>
+                <div class="col s2"><input type="time" id="OtherTimeValue" value="00:00:00" step="1"/>
+                    <div id="elementBottom"><label id="OtherTimeValueLbl" class="translate">Trigger time</label></div>
+                </div>
+                <div class="col s2"><input type="time" id="OtherCountdownValue" value="00:00:00" step="1"/>
+                    <div id="elementBottom"><label id="OtherCountdownValueLbl" class="translate">Countdown</label></div>
+                </div>
+                <!--Timer section-->
+                <div class="col s2"><input type="time" id="TimerObject" value="00:00:00" step="1"/>
+                    <div id="elementBottom"><label id="TimerObjectLbl" class="translate">Timer</label></div>
+                </div>
+                <div class="col s2"><input type="time" id="TimerTimeValue" value="00:00:00" step="1"/>
+                    <div id="elementBottom"><label id="TimerTimeValueLbl" class="translate">Trigger time</label></div>
+                </div>
+                <div class="col s2"><input type="time" id="TimerCountdownValue" value="00:00:00" step="1"/>
+                    <div id="elementBottom"><label id="TimerCountdownValueLbl" class="translate">Countdown</label></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s2"><input type="checkbox" id="Schedule_Enabled" class="value" /> <label for="Schedule_Enabled" class="translate">Activate schedule</label> </div>
+                <div class="col s2"><input type="time" id="Schedule_Start" value="00:00:00" step="60"/> <label for="Schedule_Start" class="translate">Start</label> </div>
+                <div class="col s2"><input type="time" id="Schedule_End" value="23:59:00" step="60"/> <label for="Schedule_End" class="translate">End</label> </div>
+                <div class="col s6"><input type="checkbox" id="Schedule_Monday" class="value" /> <label for="Schedule_Monday" class="translate">Monday</label><input type="checkbox" id="Schedule_Tuesday" class="value" /> <label for="Schedule_Tuesday" class="translate">Tuesday</label><input type="checkbox" id="Schedule_Wednesday" class="value" /> <label for="Schedule_Wednesday" class="translate">Wednesday</label><input type="checkbox" id="Schedule_Thursday" class="value" /> <label for="Schedule_Thursday" class="translate">Thursday</label><input type="checkbox" id="Schedule_Friday" class="value" /> <label for="Schedule_Friday" class="translate">Friday</label><input type="checkbox" id="Schedule_Saturday" class="value" /> <label for="Schedule_Saturday" class="translate">Saturday</label><input type="checkbox" id="Schedule_Sunday" class="value" /> <label for="Schedule_Sunday" class="translate">Sunday</label> </div>
+            </div>
+            <div class="row">
+                <div class="col s2"><input type="checkbox" class="value" id="Speach" /> <label id="SpeachLbl" class="translate">Speach</label> </div>
+                <div class="col s3"> <select id="Echos" multiple>
+							</select> </div>
+                <div class="col s7"><input type="text" id="SpeachString" class="value" placeholder="window was opened" />
+                    <div id="elementBottom"><label for="SpeachString" class="translate">Spoken sentence</label></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12"><input type="checkbox" class="value" id="activate" /> <label for="activate" class="translate">Activate Device</label> </div>
+                <br><br><br><br>
+                <div class="col s12">
+                    <a class="waves-effect waves-Illumination btn" id="addDevicestable"> <span class="translate" data-position="bottom" data-delay="50" data-lang="Add Device">Add Device</span> </a>
+                </div>
+            </div>
+            <hr>
+            <div>
+                <div class="col s12 translate" style="font-size: 1.5rem;">Motion sensors</div>
+                <div class="mytableoutterscroll wrapper">
+                    <table id="mytable">
+                        <thead>
+                            <tr>
+                                <th class="header translate" data-name="MotionActivTable" data-type="checkbox">Active</th>
+                                <th class="header translate" data-name="MotionAlarmTable">Alarm</th>
+                                <th class="header translate" data-name="MotionDeviceIDTable">Name</th>
+                                <th class="header translate" data-name="MotionObjectTable">Motion object</th>
+                                <th class="header translate" data-name="MotionStringTable">Value</th>
+                                <th class="header translate" data-name="MotionIlluminationActivTable" data-type="checkbox"></th>
+                                <th class="header translate" data-name="MotionIlluminationObjectTable">Illumination object</th>
+                                <th class="header translate" data-name="MotionIlluminationStringTable">Value</th>
+                                <th class="header translate" data-name="MotionIlluminationTimeTable">Time</th>
+                                <th class="header translate" data-name="MotionScheduleTable">Schedule</th>
+                                <th class="header translate" data-name="MotionSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header translate" data-name="MotionSpeachStringTable">Sentence</th>
+                                <th class="header translate" data-buttons="Motion edit delete">Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="MotionDevices"></tbody>
+                    </table>
+                </div> <br><br>
+                <hr>
+                <div class="col s12 translate" style="font-size: 1.5rem;">Door and Window sensors</div>
+                <div class="mytableoutterscroll wrapper">
+                    <table id="mytable">
+                        <thead>
+                            <tr>
+                                <th class="header translate" data-name="ReedActivTable" data-type="checkbox">Active</th>
+                                <th class="header translate" data-name="ReedAlarmTable">Alarm</th>
+                                <th class="header translate" data-name="ReedDeviceIDTable">Name</th>
+                                <th class="header translate" data-name="ReedObjectTable">Sensor object</th>
+                                <th class="header translate" data-name="ReedStringTable">Value</th>
+                                <th class="header translate" data-name="EntranceStateTable" data-type="checkbox">Entrance</th>
+                                <th class="header translate" data-name="ReedTimeTable">Time</th>
+                                <th class="header translate" data-name="ReedCountdownTable">Countdown</th>
+                                <th class="header translate" data-name="ReedScheduleTable">Schedule</th>
+                                <th class="header translate" data-name="ReedSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header translate" data-name="ReedSpeachStringTable">Sentence</th>
+                                <th class="header translate" data-buttons="Reed edit delete">Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ReedDevices"></tbody>
+                    </table>
+                </div> <br><br>
+                <hr>
+                <div class="col s12 translate" style="font-size: 1.5rem;">Temperature sensors</div>
+                <div class="mytableoutterscroll wrapper">
+                    <table id="mytable">
+                        <thead>
+                            <tr>
+                                <th class="header translate" data-name="TemperatureActivTable" data-type="checkbox">Active</th>
+                                <th class="header translate" data-name="TemperatureAlarmTable">Alarm</th>
+                                <th class="header translate" data-name="TemperatureDeviceIDTable">Name</th>
+                                <th class="header translate" data-name="TemperatureObjectTable">Temperature object</th>
+                                <th class="header translate" data-name="TemperatureValueTable">Value</th>
+                                <th class="header translate" data-name="TemperatureTimeTable">Time</th>
+                                <th class="header translate" data-name="TemperatureScheduleTable">Schedule</th>
+                                <th class="header translate" data-name="TemperatureSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header translate" data-name="TemperatureSpeachStringTable">Sentence</th>
+                                <th class="header translate" data-buttons="Temperature edit delete">Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="TemperatureDevices"></tbody>
+                    </table>
+                </div><br><br>
+                <hr>
+                <div class="col s12 translate" style="font-size: 1.5rem;">Other sensors</div>
+                <div class="mytableoutterscroll wrapper">
+                    <table id="mytable">
+                        <thead>
+                            <tr>
+                                <th class="header translate" data-name="OtherActivTable" data-type="checkbox">Active</th>
+                                <th class="header translate" data-name="OtherAlarmTable">Alarm</th>
+                                <th class="header translate" data-name="OtherDeviceIDTable">Name</th>
+                                <th class="header translate" data-name="OtherObjectTable">Sensor object</th>
+                                <th class="header translate" data-name="OtherValueTable">Value</th>
+                                <th class="header translate" data-name="OtherTimeTable">Time</th>
+                                <th class="header translate" data-name="OtherCountdownTable">Countdown</th>
+                                <th class="header translate" data-name="OtherScheduleTable">Schedule</th>
+                                <th class="header translate" data-name="OtherSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header translate" data-name="OtherSpeachStringTable">Sentence</th>
+                                <th class="header translate" data-buttons="Other edit delete">Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="OtherDevices"></tbody>
+                    </table>
+                </div><br><br>
+                <hr>
+                <div class="col s12 translate" style="font-size: 1.5rem;">Timer</div>
+                <div class="mytableoutterscroll wrapper">
+                    <table id="mytable">
+                        <thead>
+                            <tr>
+                                <th class="header translate" data-name="TimerActivTable" data-type="checkbox">Active</th>
+                                <th class="header translate" data-name="TimerAlarmTable">Alarm</th>
+                                <th class="header translate" data-name="TimerDeviceIDTable">Name</th>
+                                <th class="header translate" data-name="TimerObjectTable">Timer</th>
+                                <th class="header translate" data-name="TimerTimeTable">Time</th>
+                                <th class="header translate" data-name="TimerCountdownTable">Countdown</th>
+                                <th class="header translate" data-name="TimerScheduleTable">Schedule</th>
+                                <th class="header translate" data-name="TimerSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header translate" data-name="TimerSpeachStringTable">Sentence</th>
+                                <th class="header translate" data-buttons="Timer edit delete">Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="TimerDevices"></tbody>
+                    </table>
+                </div><br><br>
+                <hr>
+                <div class="col s12 translate" style="font-size: 1.5rem;">Devices</div>
+                <div class="mytableoutterscroll wrapper">
+                    <table id="mytable">
+                        <!-- id="SwitchDevices">-->
+                        <thead>
+                            <tr>
+                                <th style="width: 60px" class="header translate" data-name="SwitchActivTable" data-type="checkbox">Active</th>
+                                <th style="width: 70px" class="header translate" data-name="SwitchAlarmTable">Alarm</th>
+                                <th style="width: 120px" class="header translate" data-name="SwitchDeviceIDTable">Name</th>
+                                <th style="width: 60px" class="header translate" data-name="SwitchOnActiveTable" data-type="checkbox"></th>
+                                <th style="width: 110px" class="header translate" data-name="SwitchOnObjectTable">On object</th>
+                                <th style="width: 70px" class="header translate" data-name="SwitchOnStringTable">Value</th>
+                                <th style="width: 60px" class="header translate" data-name="SwitchOffActiveTable" data-type="checkbox"></th>
+                                <th style="width: 110px" class="header translate" data-name="SwitchOnffbjectTable">Off object</th>
+                                <th style="width: 70px" class="header translate" data-name="SwitchOffStringTable">Value</th>
+                                <th style="width: 110px" class="header translate" data-name="SwitchExecuteTable">Trigger</th>
+                                <th style="width: 110px" class="header translate" data-name="SwitchScheduleTable">Schedule</th>
+                                <th style="width: 70px" class="header translate" data-name="SwitchSpeachTable" data-type="checkbox">Speach</th>
+                                <th style="width: 110px" class="header translate" data-name="SwitchSpeachStringTable">Sentence</th>
+                                <th style="width: 70px" class="header translate" data-buttons="Switch edit delete">Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="SwitchDevices"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="m material-dialogs">
+            <div id="dialog-select-member" class="modal modal-fixed-footer">
+                <div class="modal-content">
+                    <div class="row">
+                        <div class="col s12 title"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col s12 dialog-content"> </div>
+                    </div>
+                </div>
+                <div class="modal-footer"> <a class="modal-action modal-close waves-effect waves-green btn btn-set"><i class="large material-icons left">check</i><span class="translate">Select</span></a> <a class="modal-action modal-close waves-effect waves-green btn btn-close"><i class="large material-icons left ">close</i><span class="translate">Cancel</span></a> </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

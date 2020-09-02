@@ -1,0 +1,81 @@
+body,html {padding:0;margin:3;height:auto;}
+
+
+.mytableoutter {
+	border: 2px solid #66C2E0;
+}
+.mytableoutterscroll {
+    overflow-x: scroll;
+	border: 2px solid #66C2E0;
+}
+
+#mytable {
+  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#mytable td, #mytable th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#mytable tr:nth-child(even){background-color: #f2f2f2;}
+
+#mytable tr:hover {background-color: #ddd;}
+
+#mytable th {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  text-align: left;
+  background-color: #4287f5;
+  color: white;
+}
+
+#elementLeft {
+    float: left;
+    margin-right: 0px;
+    width: 10%;
+}
+
+#elementRight {
+    float: left;
+    width: 90%;
+}
+
+#elementBottom {
+    float: left;
+    margin-right: 50%;
+}
+
+.collapsible {
+  background-color: #4287f5;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 20px;
+}
+
+.collapsible:after {
+  content: '\002B';
+  color: white;
+  font-weight: bold;
+  float: left;
+  margin-right: 10px;
+}
+
+.active:after {
+  content: "\2212";
+}
+
+.collapContent {
+  padding: 0 10px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  background-color: #f1f1f1;
+}
