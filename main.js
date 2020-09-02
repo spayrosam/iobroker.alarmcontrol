@@ -768,7 +768,7 @@ class AlarmControl extends utils.Adapter {
                 }
                 Adapter.GetMyEchos();
                 //**************************************Restart loop switch off***********************************************
-                if (CommandSPTG.AlarmObject.toString() == '3') {
+                if (CommandSPTG.AlarmObject && CommandSPTG.AlarmObject.toString() == '3') {
                     AlarmIsActivThree = true;
                     AlarmIsThree = true;
                     //**************************************Subscribe all switch***********************************************
