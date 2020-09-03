@@ -2,17 +2,17 @@
 "use strict";
 
 systemDictionary = {
-	"AlarmControl adapter settings": {
-		"en": "Adapter settings for AlarmControl",
-		"de": "Adaptereinstellungen für AlarmControl",
-		"ru": "Настройки адаптера для AlarmControl",
-		"pt": "Configurações do adaptador para AlarmControl",
-		"nl": "Adapterinstellingen voor AlarmControl",
-		"fr": "Paramètres d'adaptateur pour AlarmControl",
-		"it": "Impostazioni dell'adattatore per AlarmControl",
-		"es": "Ajustes del adaptador para AlarmControl",
-		"pl": "Ustawienia adaptera dla AlarmControl",
-		"zh-cn": "AlarmControl的适配器设置"
+	"alarmcontrol adapter settings": {
+		"en": "Adapter settings for alarmcontrol",
+		"de": "Adaptereinstellungen für alarmcontrol",
+		"ru": "Настройки адаптера для alarmcontrol",
+		"pt": "Configurações do adaptador para alarmcontrol",
+		"nl": "Adapterinstellingen voor alarmcontrol",
+		"fr": "Paramètres d'adaptateur pour alarmcontrol",
+		"it": "Impostazioni dell'adattatore per alarmcontrol",
+		"es": "Ajustes del adaptador para alarmcontrol",
+		"pl": "Ustawienia adaptera dla alarmcontrol",
+		"zh-cn": "alarmcontrol的适配器设置"
 	},
 	"Notification settings": {
     "en": "Notification settings",

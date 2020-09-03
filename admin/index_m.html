@@ -334,6 +334,7 @@
                 }
                 switch ($('#DeviceType').val()) {
                     case "Switch":
+
                         sendTo(null, 'adddevice', {
                             DeviceIDName: $('#DeviceIDName').val(),
                             DeviceType: $('#DeviceType').val(),
@@ -357,6 +358,7 @@
                             Echos: $('#Echos').val(),
                             SpeachString: $('#SpeachString').val(),
                             AlarmNumber: $('#AlarmNumber').val(),
+							SwitchMode: $('#AndOr').val(),
                             trigerswitch: $('#trigerswitch').val(),
                             activate: chboxActivateWrite
                         }, response => {
@@ -392,6 +394,7 @@
                             $('#Echos').val('').trigger('change');
                             $('#SpeachString').val('');
                             $('#AlarmNumber').val('0').trigger('change');
+							$('#AndOr').val('Or').trigger('change');
                             $('#trigerswitch').val('').trigger('change');
                             $('#activate').prop('checked', false);
                         });
@@ -989,7 +992,11 @@
                     TagSwitch += '<td><label><input type="checkbox" id="SwitchCheckBOff-' + IDEditDelete + '" ' + chboxOffState + '/><span></span></label></td>';
                     TagSwitch += '<td>' + DeviceGetArray.OffObject + '</td> ';
                     TagSwitch += '<td>' + DeviceGetArray.OffObjectString + '</td> ';
-                    TagSwitch += '<td>' + DeviceGetArray.trigerswitch + '</td>';
+					let TriggerSwitchMode = DeviceGetArray.trigerswitch;
+					if (DeviceGetArray.SwitchMode.toString() == "And"){
+						 TriggerSwitchMode = DeviceGetArray.trigerswitch.replace(/,/g, "+");
+						}
+                    TagSwitch += '<td>' + TriggerSwitchMode + '</td>';
                     let Collectdays = '';
                     if (DeviceGetArray.Schedule_Enabled) {
                         Collectdays += DeviceGetArray.Schedule_Start + '-';
@@ -1393,8 +1400,11 @@
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, (error, state) => {
                     $('#activate').prop('checked', state.val);
                 });
+				socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SwitchMode`, (error, state) => {
+					$('#AndOr').val(state.val).trigger('change');
+                });
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.trigerswitch`, (error, state) => {
-                    $('#trigerswitch').val(state.val).trigger('change');
+				   $('#trigerswitch').val(state.val).trigger('change');
                 });
                 UpdateSelect();
             });
@@ -1906,7 +1916,7 @@
     <div class="m adapter-container">
         <div>
             <div class="row">
-                <div class="col s12"> <img src="AlarmControl.png" class="logo" /> </div>
+                <div class="col s12"> <img src="alarmcontrol.png" class="logo" /> </div>
             </div>
             <div class="row">
                 <!--Alarm section-->
@@ -2002,8 +2012,8 @@
                     <div id="elementBottom"><label for="DeviceIDName" class="translate">Name</label></div>
                 </div>
 				<div class="col s2"> <select id="AndOr">
+				            <option value="Or" selected class="translate">Or Mode</option>
 							<option value="And" selected class="translate">And Mode</option>
-							<option value="Or" class="translate">Or Mode</option>
 							</select> </div>
                 <div class="col s3"> <select id="trigerswitch" multiple>
 							</select> </div>
