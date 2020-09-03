@@ -1,6 +1,6 @@
 {
     "common": {
-        "name": "AlarmControl",
+        "name": "alarmcontrol",
         "version": "0.0.1",
         "news": {
             "0.0.1": {
@@ -8,14 +8,14 @@
                 "de": "Erstveröffentlichung"
             }
         },
-        "title": "AlarmControl",
+        "title": "alarmcontrol",
         "titleLang": {
-            "en": "AlarmControl",
-            "de": "AlarmControl"
+            "en": "alarmcontrol",
+            "de": "alarmcontrol"
         },
         "desc": {
-            "en": "AlarmControl",
-            "de": "Adapter für AlarmControl"
+            "en": "alarmcontrol",
+            "de": "Adapter für alarmcontrol"
         },
         "authors": [
             "spayrosam <spayrosam@gmail.com>"
@@ -30,15 +30,15 @@
         "license": "MIT",
         "platform": "Javascript/Node.js",
         "main": "main.js",
-        "icon": "AlarmControl.png",
+        "icon": "alarmcontrol.png",
         "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/spayrosam/ioBroker.AlarmControl/master/admin/AlarmControl.png",
-        "readme": "https://github.com/spayrosam/ioBroker.AlarmControl/blob/master/README.md",
+        "extIcon": "https://raw.githubusercontent.com/spayrosam/ioBroker.alarmcontrol/master/admin/alarmcontrol.png",
+        "readme": "https://github.com/spayrosam/ioBroker.alarmcontrol/blob/master/README.md",
         "loglevel": "info",
         "messagebox": true,
         "subscribe": "messagebox",
         "restartAdapters": [
-            "AlarmControl"
+            "alarmcontrol"
         ],
         "mode": "daemon",
         "type": "general",
@@ -49,7 +49,7 @@
         "dependencies": [{
             "js-controller": ">=1.4.2"
         }],
-        "installedFrom": "https://github.com/spayrosam/ioBroker.AlarmControl"
+        "installedFrom": "https://github.com/spayrosam/ioBroker.alarmcontrol"
     },
     "native": {
 	    "SpeakObject": "",

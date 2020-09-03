@@ -1,20 +1,20 @@
 {
-  "name": "iobroker.AlarmControl",
+  "name": "iobroker.alarmcontrol",
   "version": "0.0.1",
   "description": "Alarm system with four levels. Create and control thousands of scenes. Integrate voice support to control the created alarm system.",
   "author": {
     "name": "spayrosam",
     "email": "spayrosam@gmail.com"
   },
-  "homepage": "https://github.com/spayrosam/ioBroker.AlarmControl",
+  "homepage": "https://github.com/spayrosam/ioBroker.alarmcontrol",
   "license": "MIT",
-   "icon": "AlarmControl.png",
+   "icon": "alarmcontrol.png",
     "enabled": true,
     "loglevel": "info",
     "messagebox": true,
     "subscribe": "messagebox",
     "restartAdapters": [
-      "AlarmControl"
+      "alarmcontrol"
     ],
 
   "keywords": [
@@ -25,7 +25,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/spayrosam/ioBroker.AlarmControl"
+    "url": "https://github.com/spayrosam/ioBroker.alarmcontrol"
   },
   "dependencies": {
     "@iobroker/adapter-core": "^2.4.0"
@@ -60,7 +60,7 @@
     "lint": "eslint"
   },
   "bugs": {
-    "url": "https://github.com/spayrosam/ioBroker.AlarmControl/issues"
+    "url": "https://github.com/spayrosam/ioBroker.alarmcontrol/issues"
   },
   "readmeFilename": "README.md"
 }

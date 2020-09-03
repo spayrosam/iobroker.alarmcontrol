@@ -358,13 +358,13 @@ var Alarmwaschangedfromlevel = {
         [pllang]: "trzy",
         [zhcnlang]: "三"
     };
-class AlarmControl extends utils.Adapter {
+class alarmcontrol extends utils.Adapter {
         //**********************************************************************************************************************************************************
         //******************************************************************Register event**************************************************************************
         //**********************************************************************************************************************************************************
         constructor(options) {
                 super({...options,
-                    name: "AlarmControl",
+                    name: "alarmcontrol",
                 });
                 this.on("ready", this.onReady.bind(this));
                 this.on("objectChange", this.onObjectChange.bind(this));
@@ -377,7 +377,7 @@ class AlarmControl extends utils.Adapter {
             //**********************************************************************************************************************************************************
         async onReady() {
                 const Adapter = this;
-                Adapter.log.debug('Starting AlarmControl');
+                Adapter.log.debug('Starting alarmcontrol');
                 await Adapter.setStateAsync('info.connection', true, true);
                 Adapter.createChannelAsync('Settings', 'Settings');
                 await Adapter.setObjectNotExistsAsync('Settings', {
@@ -2453,6 +2453,18 @@ class AlarmControl extends utils.Adapter {
                             native: {}
                         });
                         Adapter.setStateAsync(ToCreateChannel + '.OffObjectString', recivemsg.message.OffObjectString, true);
+						await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.SwitchMode', {
+                            type: "state",
+                            common: {
+                                name: 'SwitchMode',
+                                desc: 'SwitchMode',
+                                type: 'string',
+                                role: 'text',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.SwitchMode', recivemsg.message.SwitchMode, true);
                         await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.trigerswitch', {
                             type: "state",
                             common: {
@@ -3442,8 +3454,8 @@ if (module.parent) {
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
      */
-    module.exports = (options) => new AlarmControl(options);
+    module.exports = (options) => new alarmcontrol(options);
 } else {
     // otherwise start the instance directly
-    new AlarmControl();
+    new alarmcontrol();
 }
