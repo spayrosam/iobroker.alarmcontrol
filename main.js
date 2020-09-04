@@ -1513,7 +1513,7 @@ class alarmcontrol extends utils.Adapter {
                 //***********************************************************Reed***********************************************
                 for (let ArrayReed in strAdapterarray) {
                     //================Check Device List
-                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArrayReed].trigerswitch, "NO");//strAdapterarray[ArrayReed].SwitchMode);
+                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArrayReed].trigerswitch, "NO"); //strAdapterarray[ArrayReed].SwitchMode);
                     var iFA;
                     for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                         //if (strAdapterarray[ArrayReed].trigerswitch == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
@@ -1577,7 +1577,7 @@ class alarmcontrol extends utils.Adapter {
             const Adapter = this;
             for (let ArrayOther in strAdapterarray) {
                 //================Check Device List
-                var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArrayOther].trigerswitch, "NO");//strAdapterarray[ArrayOther].SwitchMode);
+                var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArrayOther].trigerswitch, "NO"); //strAdapterarray[ArrayOther].SwitchMode);
                 var iFA;
                 for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                     if (FindAllTriger[iFA].toString() == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
@@ -1781,7 +1781,7 @@ class alarmcontrol extends utils.Adapter {
                                     //**************************************Start loop switch off***********************************************
                                     if (Adapterarray[0][ArrayDev].DeviceType == "Switch") {
                                         //================Check Device List
-                                        var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayDev].trigerswitch, "NO");//Adapterarray[0][ArrayDev].SwitchMode);
+                                        var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayDev].trigerswitch, "NO"); //Adapterarray[0][ArrayDev].SwitchMode);
                                         var iFA;
                                         for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                                             if (FindAllTriger[iFA].toString() == TimeTimerIndex.toString()) {
@@ -2218,14 +2218,14 @@ class alarmcontrol extends utils.Adapter {
                         if (Adapterarray[0][ArrayDev].DeviceType == "Motion") {
                             if (id == Adapterarray[0][ArrayDev].MotionObject) {
                                 if (state.val.toString() == Adapterarray[0][ArrayDev].MotionObjectString) {
-									if (CommandSPTG.AlarmObject.toString() == "3"){
-										if (CommandSPTG.SendAlarmChanges) {
+                                    if (CommandSPTG.AlarmObject.toString() == "3") {
+                                        if (CommandSPTG.SendAlarmChanges) {
                                             Adapter.setForeignStateAsync(CommandSPTG.TelegramObject, "⛔ " + Adapterarray[0][ArrayDev].DeviceIDName + "! " + CommandSPTG.WarningphraseMotion.toString() + " ⛔");
-										}
+                                        }
                                         if (CommandSPTG.AlarmVoice) {
                                             Adapter.setForeignStateAsync(CommandSPTG.SpeakObject, Adapterarray[0][ArrayDev].DeviceIDName + "! " + CommandSPTG.WarningphraseMotion.toString());
                                         }
-									}
+                                    }
                                     var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
                                     if (GetAlarm) {
                                         //================Check State
@@ -2349,7 +2349,7 @@ class alarmcontrol extends utils.Adapter {
                                             //***********************************************************Other False***********************************************
                                             for (let ArrayOther in Adapterarray[0]) {
                                                 //================Check Device List
-                                                var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayOther].trigerswitch, "NO");//Adapterarray[0][ArrayOther].SwitchMode);
+                                                var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayOther].trigerswitch, "NO"); //Adapterarray[0][ArrayOther].SwitchMode);
                                                 var iFA;
                                                 for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                                                     if (FindAllTriger[iFA].toString() == Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName) {
