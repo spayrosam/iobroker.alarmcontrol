@@ -2218,6 +2218,14 @@ class alarmcontrol extends utils.Adapter {
                         if (Adapterarray[0][ArrayDev].DeviceType == "Motion") {
                             if (id == Adapterarray[0][ArrayDev].MotionObject) {
                                 if (state.val.toString() == Adapterarray[0][ArrayDev].MotionObjectString) {
+									if (CommandSPTG.AlarmObject.toString() == "3"){
+										if (CommandSPTG.SendAlarmChanges) {
+                                            Adapter.setForeignStateAsync(CommandSPTG.TelegramObject, "⛔ " + Adapterarray[0][ArrayDev].DeviceIDName + "! " + CommandSPTG.WarningphraseMotion.toString() + " ⛔");
+										}
+                                        if (CommandSPTG.AlarmVoice) {
+                                            Adapter.setForeignStateAsync(CommandSPTG.SpeakObject, Adapterarray[0][ArrayDev].DeviceIDName + "! " + CommandSPTG.WarningphraseMotion.toString());
+                                        }
+									}
                                     var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
                                     if (GetAlarm) {
                                         //================Check State
