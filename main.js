@@ -377,7 +377,7 @@ class alarmcontrol extends utils.Adapter {
             //**********************************************************************************************************************************************************
         async onReady() {
                 const Adapter = this;
-                Adapter.log.debug('Starting alarmcontrol');
+                Adapter.log.info('Starting alarmcontrol');
                 await Adapter.setStateAsync('info.connection', true, true);
                 Adapter.createChannelAsync('Settings', 'Settings');
                 await Adapter.setObjectNotExistsAsync('Settings', {
@@ -556,6 +556,7 @@ class alarmcontrol extends utils.Adapter {
                                 let OffObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObject');
                                 let OffObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObjectString');
                                 let trigerswitch = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.trigerswitch');
+                                let SwitchMode = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SwitchMode');
                                 devicearray[MyChannelname] = {
                                     DeviceIDName: DeviceIDName.val,
                                     DeviceType: DeviceType.val,
@@ -579,6 +580,7 @@ class alarmcontrol extends utils.Adapter {
                                     Echos: Echos.val,
                                     SpeachString: SpeachString.val,
                                     AlarmNumber: AlarmNumber.val,
+                                    SwitchMode: SwitchMode.val,
                                     trigerswitch: trigerswitch.val,
                                     activate: activate.val
                                 };
@@ -1125,7 +1127,7 @@ class alarmcontrol extends utils.Adapter {
         inTime(istartTime, iendTime, strDayArray) {
             var now = new Date();
             var timeHour = now.getHours();
-            var timeMinutes = now.getMinutes()
+            var timeMinutes = now.getMinutes();
             if (strDayArray[now.getDay()] == 1) {
                 var StrTime = istartTime.split(':');
                 var start = (Number(StrTime[0]) * 60) + Number(StrTime[1]);
@@ -1137,7 +1139,7 @@ class alarmcontrol extends utils.Adapter {
                     end += (24 * 60);
                 }
                 var time = (timeHour * 60) + timeMinutes;
-                this.log.info("compare now is " + timeHour + ":" + timeMinutes + "(" + time + ") Start is " + istartTime + " (" + start + ") End is " + iendTime + " (" + end + ")");
+                //this.log.info("compare now is " + timeHour + ":" + timeMinutes + "(" + time + ") Start is " + istartTime + " (" + start + ") End is " + iendTime + " (" + end + ")");
                 return time >= start && time < end;
             } else {
                 return false;
@@ -1260,17 +1262,102 @@ class alarmcontrol extends utils.Adapter {
             number = number.substring(0, 2);
             return number;
         }
-        checkTrigger(strParent) {
-                var strParent = "" + strParent;
-                var fullArray = [];
-                if (strParent !== undefined) {
-                    if (strParent.indexOf(',') == -1) {
-                        fullArray.push(strParent);
-                    } else {
-                        fullArray = strParent.split(',');
+        checkTrigger(strParent, strSwitchMode) {
+            const Adapter = this;
+            var strParent = "" + strParent;
+            var fullArray = [];
+            if (strParent !== undefined) {
+                if (strParent.indexOf(',') == -1) {
+                    fullArray.push(strParent);
+                } else {
+                    fullArray = strParent.split(',');
+                }
+            }
+            if (strSwitchMode && (strSwitchMode.toString() == "And")) {
+                var RetAndMode = Adapter.ChackAndTriger(fullArray);
+                if (RetAndMode) {
+                    return fullArray;
+                } else {
+                    for (iFa = 0; iFa < fullArray.length; iFa++) {
+                        fullArray[iFa] = "0";
+                    }
+                    return fullArray;
+                }
+            } else {
+                return fullArray;
+            }
+        }
+        async ChackAndTriger(fullArray) {
+                const Adapter = this;
+                var TestDevArray = [];
+                var TestAllEventObject = true;
+                var GetChangeObjectJson = await Adapter.getStateAsync('Change');
+                if (GetChangeObjectJson !== undefined) {
+                    TestDevArray.push(JSON.parse(GetChangeObjectJson.val));
+                    var iFa;
+                    for (let RArrD in TestDevArray[0]) {
+                        //**************************************Start loop***********************************************
+                        if (TestDevArray[0][RArrD].DeviceType !== "Switch") {
+                            for (iFa = 0; iFa < fullArray.length; iFa++) {
+                                //=================Compare Found and Array (TriggerSwitch)
+                                if (fullArray[iFa].toString() == TestDevArray[0][RArrD].DeviceType + "-" + TestDevArray[0][RArrD].DeviceIDName) {
+                                    var TestEventObjectString;
+                                    var TestEventObject = '';
+                                    var TestGetEventObject = '';
+                                    if (TestDevArray[0][RArrD].DeviceType == "Motion") {
+                                        TestEventObject = TestDevArray[0][RArrD].MotionObject;
+                                        TestEventObjectString = TestDevArray[0][RArrD].MotionObjectString;
+                                    } else if (TestDevArray[0][RArrD].DeviceType == "Reed") {
+                                        TestEventObject = TestDevArray[0][RArrD].ReedObject;
+                                        TestEventObjectString = TestDevArray[0][RArrD].ReedObjectString;
+                                    } else if (TestDevArray[0][RArrD].DeviceType == "Other") {
+                                        TestEventObject = TestDevArray[0][RArrD].OtherObject;
+                                        TestEventObjectString = TestDevArray[0][RArrD].OtherObjectValue;
+                                    } else if (TestDevArray[0][RArrD].DeviceType == "Timer") {
+                                        TestEventObject = TestDevArray[0][RArrD].TimerObject;
+                                        TestEventObjectString = TestDevArray[0][RArrD].TimerTimeValue;
+                                    } else if (TestDevArray[0][RArrD].DeviceType == "Temperature") {}
+                                    if (TestDevArray[0][RArrD].DeviceType !== "Timer") {
+                                        var ObTestGetEventObject = await Adapter.getForeignStateAsync(TestEventObject)
+                                        if (ObTestGetEventObject) {
+                                            TestGetEventObject = ObTestGetEventObject.val;
+                                        }
+                                    } else {
+                                        var Tenow = new Date();
+                                        var TetimeHours = Tenow.getHours();
+                                        var TetimeMinutes = Tenow.getMinutes();
+                                        var Teseconds = Tenow.getSeconds();
+                                        TestGetEventObject = TetimeHours + ":" + TetimeMinutes + ":" + Teseconds;
+                                    }
+                                    //================Check Sensor List
+                                    Adapter.log.debug("'And' check " + TestDevArray[0][RArrD].DeviceIDName + ": " + TestGetEventObject + " ? " + TestEventObjectString);
+                                    if (TestGetEventObject + '' == TestEventObjectString + '') {
+                                        //================Check State (Device)
+                                        if (TestDevArray[0][RArrD].activate) {
+                                            //================Check Schedule Time and Day (Device)
+                                            var DevRetDay = Adapter.getDayWeek(TestDevArray[0][RArrD]);
+                                            if (Adapter.inTime(TestDevArray[0][RArrD].Schedule_Start, TestDevArray[0][RArrD].Schedule_End, DevRetDay)) {
+                                                Adapter.log.info((iFa + 1) + "/" + fullArray.length + " : 'And' check Ok! " + TestDevArray[0][RArrD].DeviceIDName + ": " + TestGetEventObject + " <> " + TestEventObjectString + " => defined times returns true!");
+                                            } else {
+                                                TestAllEventObject = false;
+                                                Adapter.log.info("'And' check failed! " + TestDevArray[0][RArrD].DeviceIDName + ": " + TestGetEventObject + " <> " + TestEventObjectString + " => defined times returns false!");
+                                            }
+                                        }
+                                    } else {
+                                        TestAllEventObject = false;
+                                        Adapter.log.info("'And' check failed! " + TestDevArray[0][RArrD].DeviceIDName + ": " + TestGetEventObject + " <> " + TestEventObjectString + " => defined value returns false!");
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (TestAllEventObject == false) {
+                            Adapter.log.info("'And' check failed! " + TestDevArray[0][RArrD].DeviceIDName + ": " + TestGetEventObject + " <> " + TestEventObjectString + " => defined value returns false!");
+                            break;
+                        }
                     }
                 }
-                return fullArray;
+                return TestAllEventObject;
             }
             //**********************************************************************************************************************************************************
             //*************************************************************************Motion***************************************************************************
@@ -1394,10 +1481,22 @@ class alarmcontrol extends utils.Adapter {
         GetEntrance(strAdapterarray, strArrayDev) {
             const Adapter = this;
             if (strAdapterarray[strArrayDev].EntranceState) {
+                Adapter.log.info("Register " + strAdapterarray[strArrayDev].DeviceIDName + " as entrance..");
                 var iCdate = new Date();
                 var ICdate = iCdate.toString().replace(/\S+\s(\S+)\s(\d+)\s(\d+)\s.*/, '$2-$1-$3');
                 var ICtime = iCdate.toTimeString().split(' ')[0];
                 for (let ifa in GlobalFamArray[0]) {
+                    Adapter.setObjectNotExistsAsync("Family." + GlobalFamArray[0][ifa].IDName + ".Entrance", {
+                        type: "state",
+                        common: {
+                            name: 'Entrance',
+                            desc: 'Entrance',
+                            type: 'string',
+                            role: 'text',
+                            write: true
+                        },
+                        native: {}
+                    });
                     Adapter.setStateAsync("Family." + GlobalFamArray[0][ifa].IDName + ".Entrance", ICtime + " " + ICdate, true);
                 }
                 //============================Reset PresentGhost
@@ -1414,7 +1513,7 @@ class alarmcontrol extends utils.Adapter {
                 //***********************************************************Reed***********************************************
                 for (let ArrayReed in strAdapterarray) {
                     //================Check Device List
-                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArrayReed].trigerswitch);
+                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArrayReed].trigerswitch, "NO");//strAdapterarray[ArrayReed].SwitchMode);
                     var iFA;
                     for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                         //if (strAdapterarray[ArrayReed].trigerswitch == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
@@ -1478,7 +1577,7 @@ class alarmcontrol extends utils.Adapter {
             const Adapter = this;
             for (let ArrayOther in strAdapterarray) {
                 //================Check Device List
-                var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArrayOther].trigerswitch);
+                var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArrayOther].trigerswitch, "NO");//strAdapterarray[ArrayOther].SwitchMode);
                 var iFA;
                 for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                     if (FindAllTriger[iFA].toString() == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
@@ -1682,7 +1781,7 @@ class alarmcontrol extends utils.Adapter {
                                     //**************************************Start loop switch off***********************************************
                                     if (Adapterarray[0][ArrayDev].DeviceType == "Switch") {
                                         //================Check Device List
-                                        var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayDev].trigerswitch);
+                                        var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayDev].trigerswitch, "NO");//Adapterarray[0][ArrayDev].SwitchMode);
                                         var iFA;
                                         for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                                             if (FindAllTriger[iFA].toString() == TimeTimerIndex.toString()) {
@@ -1785,7 +1884,7 @@ class alarmcontrol extends utils.Adapter {
                 const Adapter = this;
                 for (let ArraySwitch in strAdapterarray) {
                     //================Check Device List
-                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArraySwitch].trigerswitch);
+                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArraySwitch].trigerswitch, strAdapterarray[ArraySwitch].SwitchMode);
                     var iFA;
                     for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                         if (FindAllTriger[iFA] == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
@@ -1893,7 +1992,7 @@ class alarmcontrol extends utils.Adapter {
                         //**************************************Start loop switch off***********************************************
                         if (Adapterarray[0][ArrayDev].DeviceType == "Switch") {
                             //================Check Device List
-                            var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayDev].trigerswitch);
+                            var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayDev].trigerswitch, "No");
                             var iFA;
                             for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                                 if (FindAllTriger[iFA].toString() == ClearSWName) {
@@ -2164,9 +2263,9 @@ class alarmcontrol extends utils.Adapter {
                         } else if (Adapterarray[0][ArrayDev].DeviceType == "Reed") {
                             if (id == Adapterarray[0][ArrayDev].ReedObject) {
                                 if (state.val.toString() == Adapterarray[0][ArrayDev].ReedObjectString) {
-                                    if (CommandSPTG.AlarmObject.toString() !== '0') {
-                                        Adapter.GetEntrance(Adapterarray[0], ArrayDev);
-                                    }
+                                    //if (CommandSPTG.AlarmObject.toString() !== '0') {
+                                    Adapter.GetEntrance(Adapterarray[0], ArrayDev);
+                                    //}
                                     var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
                                     if (GetAlarm) {
                                         //================Check State
@@ -2204,13 +2303,12 @@ class alarmcontrol extends utils.Adapter {
                             //=====================================================Other===========================================
                         } else if (Adapterarray[0][ArrayDev].DeviceType == "Other") {
                             if (id == Adapterarray[0][ArrayDev].OtherObject) {
-
                                 //=======================================check Value (comparison)=======================================
                                 if (/=|<|>/.test(Adapterarray[0][ArrayDev].OtherObjectValue)) {
                                     var getOtherStateVal = Adapter.CheckOtherState(Adapterarray[0][ArrayDev].OtherObjectValue, Adapterarray[0][ArrayDev].OtherObject);
                                     getOtherStateVal.then((val) => {
                                         if (val) {
-											var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
+                                            var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
                                             if (GetAlarm) {
                                                 //================Check State
                                                 if (Adapterarray[0][ArrayDev].activate) {
@@ -2243,7 +2341,7 @@ class alarmcontrol extends utils.Adapter {
                                             //***********************************************************Other False***********************************************
                                             for (let ArrayOther in Adapterarray[0]) {
                                                 //================Check Device List
-                                                var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayOther].trigerswitch);
+                                                var FindAllTriger = Adapter.checkTrigger(Adapterarray[0][ArrayOther].trigerswitch, "NO");//Adapterarray[0][ArrayOther].SwitchMode);
                                                 var iFA;
                                                 for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                                                     if (FindAllTriger[iFA].toString() == Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName) {
@@ -2289,7 +2387,7 @@ class alarmcontrol extends utils.Adapter {
                                 } else {
                                     //=======================================Check String=============================================
                                     if (state.val.toString() == Adapterarray[0][ArrayDev].OtherObjectValue) {
-										var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
+                                        var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
                                         if (GetAlarm) {
                                             //================Check State
                                             if (Adapterarray[0][ArrayDev].activate) {
@@ -2334,7 +2432,7 @@ class alarmcontrol extends utils.Adapter {
             //**********************************************************************************************************************************************************
         async onMessage(recivemsg) {
             const Adapter = this;
-            Adapter.log.debug('Got a Message: ' + recivemsg.command);
+            Adapter.log.info('Got a Message: ' + recivemsg.command);
             let ToCreateChannel = recivemsg.message.DeviceType + "." + recivemsg.message.DeviceIDName;
             if (recivemsg.command === 'adddevice') {
                 Adapter.createDeviceAsync(recivemsg.message.DeviceType);
@@ -2453,7 +2551,7 @@ class alarmcontrol extends utils.Adapter {
                             native: {}
                         });
                         Adapter.setStateAsync(ToCreateChannel + '.OffObjectString', recivemsg.message.OffObjectString, true);
-						await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.SwitchMode', {
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.SwitchMode', {
                             type: "state",
                             common: {
                                 name: 'SwitchMode',
@@ -2941,6 +3039,7 @@ class alarmcontrol extends utils.Adapter {
                                 let OffObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObject');
                                 let OffObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObjectString');
                                 let trigerswitch = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.trigerswitch');
+                                let SwitchMode = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SwitchMode');
                                 devicearray[MyChannelname] = {
                                     DeviceIDName: DeviceIDName.val,
                                     DeviceType: DeviceType.val,
@@ -2964,6 +3063,7 @@ class alarmcontrol extends utils.Adapter {
                                     Echos: Echos.val,
                                     SpeachString: SpeachString.val,
                                     AlarmNumber: AlarmNumber.val,
+                                    SwitchMode: SwitchMode.val,
                                     trigerswitch: trigerswitch.val,
                                     activate: activate.val
                                 };
