@@ -334,7 +334,6 @@
                 }
                 switch ($('#DeviceType').val()) {
                     case "Switch":
-
                         sendTo(null, 'adddevice', {
                             DeviceIDName: $('#DeviceIDName').val(),
                             DeviceType: $('#DeviceType').val(),
@@ -358,7 +357,7 @@
                             Echos: $('#Echos').val(),
                             SpeachString: $('#SpeachString').val(),
                             AlarmNumber: $('#AlarmNumber').val(),
-							SwitchMode: $('#AndOr').val(),
+                            SwitchMode: $('#AndOr').val(),
                             trigerswitch: $('#trigerswitch').val(),
                             activate: chboxActivateWrite
                         }, response => {
@@ -394,7 +393,7 @@
                             $('#Echos').val('').trigger('change');
                             $('#SpeachString').val('');
                             $('#AlarmNumber').val('0').trigger('change');
-							$('#AndOr').val('Or').trigger('change');
+                            $('#AndOr').val('Or').trigger('change');
                             $('#trigerswitch').val('').trigger('change');
                             $('#activate').prop('checked', false);
                         });
@@ -644,13 +643,36 @@
                         });
                         break;
                 }
-				HideMotion();
-				HideReed();
-				HideTemperature();
-				HideOther();
-				HideTimer();
-				ShowSwitch();
-				UpdateSelect();
+                $('#DeviceIDName').val('');
+                $('#DeviceType').val('Switch').trigger('change');
+                $('#OnObject').val('');
+                $('#OnObjectString').val('');
+                $('#OffObject').val('');
+                $('#OffObjectString').val('');
+                $('#Schedule_Start').val('00:00');
+                $('#Schedule_End').val('23:59');
+                $('#Schedule_Enabled').prop('checked', false);
+                $('#Schedule_Monday').prop('checked', false);
+                $('#Schedule_Tuesday').prop('checked', false);
+                $('#Schedule_Wednesday').prop('checked', false);
+                $('#Schedule_Thursday').prop('checked', false);
+                $('#Schedule_Friday').prop('checked', false);
+                $('#Schedule_Saturday').prop('checked', false);
+                $('#Schedule_Sunday').prop('checked', false);
+                $('#Speach').prop('checked', false);
+                $('#Echos').val('').trigger('change');
+                $('#SpeachString').val('');
+                $('#AlarmNumber').val('0').trigger('change');
+                $('#AndOr').val('Or').trigger('change');
+                $('#trigerswitch').val('').trigger('change');
+                $('#activate').prop('checked', false);
+                HideMotion();
+                HideReed();
+                HideTemperature();
+                HideOther();
+                HideTimer();
+                ShowSwitch();
+                UpdateSelect();
             });
             //*******************************************************Show / Hide Control*****************************************************************************/
             $('#DeviceType').change(function() {
@@ -715,13 +737,15 @@
         }
 
         function UpdateSelect() {
-		 setTimeout(function() {
-		        M.FormSelect.init($('#Echos'));
+            setTimeout(function() {
+                M.FormSelect.init($('#Echos'));
                 M.FormSelect.init($('#trigerswitch'));
                 M.FormSelect.init($('#AlarmNumber'));
                 M.FormSelect.init($('#DeviceType'));
-			    M.updateTextFields();
-				}, 500);
+                M.FormSelect.init($('#AndOr'));
+                M.FormSelect.init($('#trigerswitch'));
+                M.updateTextFields();
+            }, 500);
         }
         //*******************************************************Show / Hide Control Function*****************************************************************************/
         function ShowSwitch() {
@@ -737,8 +761,8 @@
             ShowCtrl("OffObjectStringLbl");
             $("#trigerswitch").prop("disabled", false);
             M.FormSelect.init($('#trigerswitch'));
-			$("#AndOr").prop("disabled", false);
-			M.FormSelect.init($('#AndOr'));
+            $("#AndOr").prop("disabled", false);
+            M.FormSelect.init($('#AndOr'));
         }
 
         function HideSwitch() {
@@ -755,8 +779,8 @@
             HideCtrl("OffObjectStringLbl");
             $("#trigerswitch").prop("disabled", true);
             M.FormSelect.init($('#trigerswitch'));
-			$("#AndOr").prop("disabled", true);
-			 M.FormSelect.init($('#AndOr'));
+            $("#AndOr").prop("disabled", true);
+            M.FormSelect.init($('#AndOr'));
         }
 
         function ShowMotion() {
@@ -992,10 +1016,10 @@
                     TagSwitch += '<td><label><input type="checkbox" id="SwitchCheckBOff-' + IDEditDelete + '" ' + chboxOffState + '/><span></span></label></td>';
                     TagSwitch += '<td>' + DeviceGetArray.OffObject + '</td> ';
                     TagSwitch += '<td>' + DeviceGetArray.OffObjectString + '</td> ';
-					let TriggerSwitchMode = DeviceGetArray.trigerswitch;
-					if (DeviceGetArray.SwitchMode.toString() == "And"){
-						 TriggerSwitchMode = DeviceGetArray.trigerswitch.replace(/,/g, "+");
-						}
+                    let TriggerSwitchMode = DeviceGetArray.trigerswitch;
+                    if (DeviceGetArray.SwitchMode == "And") {
+                        TriggerSwitchMode = DeviceGetArray.trigerswitch.toString().replace(/,/g, " + ");
+                    }
                     TagSwitch += '<td>' + TriggerSwitchMode + '</td>';
                     let Collectdays = '';
                     if (DeviceGetArray.Schedule_Enabled) {
@@ -1395,16 +1419,16 @@
                     $('#SpeachString').val(state.val);
                 });
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.AlarmNumber`, (error, state) => {
-                    $('#AlarmNumber').val(state.val.trigger('change'));
+                    $('#AlarmNumber').val(state.val).trigger('change');
                 });
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, (error, state) => {
                     $('#activate').prop('checked', state.val);
                 });
-				socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SwitchMode`, (error, state) => {
-					$('#AndOr').val(state.val).trigger('change');
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SwitchMode`, (error, state) => {
+                    $('#AndOr').val(state.val).trigger('change');
                 });
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.trigerswitch`, (error, state) => {
-				   $('#trigerswitch').val(state.val).trigger('change');
+                    $('#trigerswitch').val(state.val).trigger('change');
                 });
                 UpdateSelect();
             });
@@ -2011,7 +2035,7 @@
                 <div class="col s3"><input type="text" id="DeviceIDName" class="value" placeholder="Name your Device" />
                     <div id="elementBottom"><label for="DeviceIDName" class="translate">Name</label></div>
                 </div>
-				<div class="col s2"> <select id="AndOr">
+                <div class="col s2"> <select id="AndOr">
 				            <option value="Or" selected class="translate">Or Mode</option>
 							<option value="And" selected class="translate">And Mode</option>
 							</select> </div>
@@ -2066,10 +2090,10 @@
                 <div class="col s2"><input type="text" id="ReedObjectString" class="value" placeholder="true / 0" />
                     <div id="elementBottom"><label id="ReedObjectStringLbl" class="translate">Sensor value</label></div>
                 </div>
-                <div class="col s2"><input type="time" id="ReedTimeValue" value="00:00:00" step="1"/>
+                <div class="col s2"><input type="time" id="ReedTimeValue" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="ReedTimeValueLbl" class="translate">Trigger time</label></div>
                 </div>
-                <div class="col s2"><input type="time" id="ReedCountdownValue" value="00:00:00" step="1"/>
+                <div class="col s2"><input type="time" id="ReedCountdownValue" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="ReedCountdownValueLbl" class="translate">Countdown</label></div>
                 </div>
                 <!--Temperature section-->
@@ -2093,27 +2117,27 @@
                 <div class="col s2"><input type="text" id="OtherObjectValue" class="value" placeholder="100/true" />
                     <div id="elementBottom"><label id="OtherObjectValueLbl" class="translate">Sensor value</label></div>
                 </div>
-                <div class="col s2"><input type="time" id="OtherTimeValue" value="00:00:00" step="1"/>
+                <div class="col s2"><input type="time" id="OtherTimeValue" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="OtherTimeValueLbl" class="translate">Trigger time</label></div>
                 </div>
-                <div class="col s2"><input type="time" id="OtherCountdownValue" value="00:00:00" step="1"/>
+                <div class="col s2"><input type="time" id="OtherCountdownValue" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="OtherCountdownValueLbl" class="translate">Countdown</label></div>
                 </div>
                 <!--Timer section-->
-                <div class="col s2"><input type="time" id="TimerObject" value="00:00:00" step="1"/>
+                <div class="col s2"><input type="time" id="TimerObject" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="TimerObjectLbl" class="translate">Timer</label></div>
                 </div>
-                <div class="col s2"><input type="time" id="TimerTimeValue" value="00:00:00" step="1"/>
+                <div class="col s2"><input type="time" id="TimerTimeValue" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="TimerTimeValueLbl" class="translate">Trigger time</label></div>
                 </div>
-                <div class="col s2"><input type="time" id="TimerCountdownValue" value="00:00:00" step="1"/>
+                <div class="col s2"><input type="time" id="TimerCountdownValue" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="TimerCountdownValueLbl" class="translate">Countdown</label></div>
                 </div>
             </div>
             <div class="row">
                 <div class="col s2"><input type="checkbox" id="Schedule_Enabled" class="value" /> <label for="Schedule_Enabled" class="translate">Activate schedule</label> </div>
-                <div class="col s2"><input type="time" id="Schedule_Start" value="00:00:00" step="60"/> <label for="Schedule_Start" class="translate">Start</label> </div>
-                <div class="col s2"><input type="time" id="Schedule_End" value="23:59:00" step="60"/> <label for="Schedule_End" class="translate">End</label> </div>
+                <div class="col s2"><input type="time" id="Schedule_Start" value="00:00:00" step="60" /> <label for="Schedule_Start" class="translate">Start</label> </div>
+                <div class="col s2"><input type="time" id="Schedule_End" value="23:59:00" step="60" /> <label for="Schedule_End" class="translate">End</label> </div>
                 <div class="col s6"><input type="checkbox" id="Schedule_Monday" class="value" /> <label for="Schedule_Monday" class="translate">Monday</label><input type="checkbox" id="Schedule_Tuesday" class="value" /> <label for="Schedule_Tuesday" class="translate">Tuesday</label><input type="checkbox" id="Schedule_Wednesday" class="value" /> <label for="Schedule_Wednesday" class="translate">Wednesday</label><input type="checkbox" id="Schedule_Thursday" class="value" /> <label for="Schedule_Thursday" class="translate">Thursday</label><input type="checkbox" id="Schedule_Friday" class="value" /> <label for="Schedule_Friday" class="translate">Friday</label><input type="checkbox" id="Schedule_Saturday" class="value" /> <label for="Schedule_Saturday" class="translate">Saturday</label><input type="checkbox" id="Schedule_Sunday" class="value" /> <label for="Schedule_Sunday" class="translate">Sunday</label> </div>
             </div>
             <div class="row">
