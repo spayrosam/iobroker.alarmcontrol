@@ -35,8 +35,6 @@ SOFTWARE.
 
 ![](https://github.com/spayrosam/iobroker.alarmcontrol/blob/master/alarmcontrol1.png)
 
-
 ![](https://github.com/spayrosam/iobroker.alarmcontrol/blob/master/alarmcontrol3.png)
-
 
 ![](https://github.com/spayrosam/iobroker.alarmcontrol/blob/master/alarmcontrol2.png)
