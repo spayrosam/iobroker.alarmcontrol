@@ -74,7 +74,6 @@
             });
             //*******************************************************Get / Update Family*****************************************************************************/
             sendTo(null, 'getFamily', {}, response => {
-                //$("#Family > tr").remove();
                 $("#Family").html("");
                 for (let ArrayFam in response.Familyarray) {
                     ShowFamily(response.Familyarray[ArrayFam]);
@@ -83,18 +82,22 @@
             });
             //*******************************************************Get / Update Device*****************************************************************************/
             sendTo(null, 'getdevice', {}, response => {
-                //$("#SwitchDevices > tr").remove();
-                //$("#MotionDevices > tr").remove();
                 $("#SwitchDevices").html("");
                 $("#MotionDevices").html("");
                 $("#ReedDevices").html("");
                 $("#OtherDevices").html("");
                 $("#TimerDevices").html("");
                 for (let ArrayDev in response.devicearray) {
-                    //alert(response.devicearray[ArrayDev].DeviceIDName);
                     ShowDevices(response.devicearray[ArrayDev]);
                     console.log(response);
                 }
+            });
+            //*******************************************************Astro Menu************************************************************************************/
+            $('#AstroBtn').click(function() {
+                $("#PopUpDropdown").show();
+            });
+            $("#SunlightPhases").change(function() {
+                //~                 $("#AstroBtn").html(SunlightPhases.options[SunlightPhases.selectedIndex].text);
             });
             //*******************************************************Add Family Member****************************************************************************/
             $('#AddFamily').click(function() {
@@ -373,29 +376,10 @@
                                 }
                                 onChange(true);
                             });
-                            $('#DeviceIDName').val('');
-                            $('#DeviceType').val('Switch').trigger('change');
                             $('#OnObject').val('');
                             $('#OnObjectString').val('');
                             $('#OffObject').val('');
                             $('#OffObjectString').val('');
-                            $('#Schedule_Start').val('00:00');
-                            $('#Schedule_End').val('23:59');
-                            $('#Schedule_Enabled').prop('checked', false);
-                            $('#Schedule_Monday').prop('checked', false);
-                            $('#Schedule_Tuesday').prop('checked', false);
-                            $('#Schedule_Wednesday').prop('checked', false);
-                            $('#Schedule_Thursday').prop('checked', false);
-                            $('#Schedule_Friday').prop('checked', false);
-                            $('#Schedule_Saturday').prop('checked', false);
-                            $('#Schedule_Sunday').prop('checked', false);
-                            $('#Speach').prop('checked', false);
-                            $('#Echos').val('').trigger('change');
-                            $('#SpeachString').val('');
-                            $('#AlarmNumber').val('0').trigger('change');
-                            $('#AndOr').val('Or').trigger('change');
-                            $('#trigerswitch').val('').trigger('change');
-                            $('#activate').prop('checked', false);
                         });
                         break;
                     case "Reed":
@@ -436,28 +420,10 @@
                                 }
                                 onChange(true);
                             });
-                            $('#DeviceIDName').val('');
-                            $('#DeviceType').val('Switch').trigger('change');
                             $('#ReedObject').val('');
                             $('#ReedObjectString').val('');
                             $('#ReedTimeValue').val('00:00:00');
                             $('#ReedCountdownValue').val('00:00:00');
-                            $('#Schedule_Start').val('00:00');
-                            $('#Schedule_End').val('23:59');
-                            $('#Schedule_Enabled').prop('checked', false);
-                            $('#Schedule_Monday').prop('checked', false);
-                            $('#Schedule_Tuesday').prop('checked', false);
-                            $('#Schedule_Wednesday').prop('checked', false);
-                            $('#Schedule_Thursday').prop('checked', false);
-                            $('#Schedule_Friday').prop('checked', false);
-                            $('#Schedule_Saturday').prop('checked', false);
-                            $('#Schedule_Sunday').prop('checked', false);
-                            $('#Speach').prop('checked', false);
-                            $('#Echos').val('').trigger('change');
-                            $('#SpeachString').val('');
-                            $('#AlarmNumber').val('0').trigger('change');
-                            $('#trigerswitch').val('').trigger('change');
-                            $('#activate').prop('checked', false);
                         });
                         break;
                     case "Motion":
@@ -498,28 +464,11 @@
                                 }
                                 onChange(true);
                             });
-                            $('#DeviceIDName').val('');
-                            $('#DeviceType').val('Switch').trigger('change');
                             $('#MotionObject').val('');
                             $('#MotionObjectString').val('');
                             $('#IlluminationObject').val('');
                             $('#IlluminationValue').val('');
                             $('#MotionTimeValue').val('');
-                            $('#Schedule_Start').val('00:00');
-                            $('#Schedule_End').val('23:59');
-                            $('#Schedule_Enabled').prop('checked', false);
-                            $('#Schedule_Monday').prop('checked', false);
-                            $('#Schedule_Tuesday').prop('checked', false);
-                            $('#Schedule_Wednesday').prop('checked', false);
-                            $('#Schedule_Thursday').prop('checked', false);
-                            $('#Schedule_Friday').prop('checked', false);
-                            $('#Schedule_Saturday').prop('checked', false);
-                            $('#Schedule_Sunday').prop('checked', false);
-                            $('#Speach').prop('checked', false);
-                            $('#Echos').val('').trigger('change');
-                            $('#SpeachString').val('').trigger('change');
-                            $('#AlarmNumber').val('0').trigger('change');
-                            $('#activate').prop('checked', false);
                         });
                         break;
                     case "Other":
@@ -559,34 +508,17 @@
                                 }
                                 onChange(true);
                             });
-                            $('#DeviceIDName').val('');
-                            $('#DeviceType').val('Switch').trigger('change');
                             $('#OtherObject').val('');
                             $('#OtherObjectValue').val('');
                             $('#OtherTimeValue').val('00:00:00');
                             $('#OtherCountdownValue').val('00:00:00');
-                            $('#Schedule_Start').val('00:00');
-                            $('#Schedule_End').val('23:59');
-                            $('#Schedule_Enabled').prop('checked', false);
-                            $('#Schedule_Monday').prop('checked', false);
-                            $('#Schedule_Tuesday').prop('checked', false);
-                            $('#Schedule_Wednesday').prop('checked', false);
-                            $('#Schedule_Thursday').prop('checked', false);
-                            $('#Schedule_Friday').prop('checked', false);
-                            $('#Schedule_Saturday').prop('checked', false);
-                            $('#Schedule_Sunday').prop('checked', false);
-                            $('#Speach').prop('checked', false);
-                            $('#Echos').val('').trigger('change');
-                            $('#SpeachString').val('');
-                            $('#AlarmNumber').val('0').trigger('change');
-                            $('#trigerswitch').val('').trigger('change');
-                            $('#activate').prop('checked', false);
                         });
                         break;
                     case "Timer":
                         sendTo(null, 'adddevice', {
                             DeviceIDName: $('#DeviceIDName').val(),
                             DeviceType: $('#DeviceType').val(),
+                            SetSunlight: $('#SunlightPhases').val(),
                             TimerObject: $('#TimerObject').val(),
                             TimerTimeValue: $('#TimerTimeValue').val(),
                             TimerCountdownValue: $('#TimerCountdownValue').val(),
@@ -619,27 +551,12 @@
                                 }
                                 onChange(true);
                             });
-                            $('#DeviceIDName').val('');
-                            $('#DeviceType').val('Switch').trigger('change');
-                            $('#TimerObject').val('00:00:00');
+                            $('#SunlightPhases').val('SetNow');
+                            var idate = new Date();
+                            var iNowTime = idate.getHours() + ":" + idate.getMinutes() + ":" + idate.getSeconds();
+                            $('#TimerObject').val(iNowTime).trigger('change');
                             $('#TimerTimeValue').val('00:00:00');
                             $('#TimerCountdownValue').val('00:00:00');
-                            $('#Schedule_Start').val('00:00');
-                            $('#Schedule_End').val('23:59');
-                            $('#Schedule_Enabled').prop('checked', false);
-                            $('#Schedule_Monday').prop('checked', false);
-                            $('#Schedule_Tuesday').prop('checked', false);
-                            $('#Schedule_Wednesday').prop('checked', false);
-                            $('#Schedule_Thursday').prop('checked', false);
-                            $('#Schedule_Friday').prop('checked', false);
-                            $('#Schedule_Saturday').prop('checked', false);
-                            $('#Schedule_Sunday').prop('checked', false);
-                            $('#Speach').prop('checked', false);
-                            $('#Echos').val('').trigger('change');
-                            $('#SpeachString').val('');
-                            $('#AlarmNumber').val('0').trigger('change');
-                            $('#trigerswitch').val('').trigger('change');
-                            $('#activate').prop('checked', false);
                         });
                         break;
                 }
@@ -651,14 +568,14 @@
                 $('#OffObjectString').val('');
                 $('#Schedule_Start').val('00:00');
                 $('#Schedule_End').val('23:59');
-                $('#Schedule_Enabled').prop('checked', false);
-                $('#Schedule_Monday').prop('checked', false);
-                $('#Schedule_Tuesday').prop('checked', false);
-                $('#Schedule_Wednesday').prop('checked', false);
-                $('#Schedule_Thursday').prop('checked', false);
-                $('#Schedule_Friday').prop('checked', false);
-                $('#Schedule_Saturday').prop('checked', false);
-                $('#Schedule_Sunday').prop('checked', false);
+                $('#Schedule_Enabled').prop('checked', true);
+                $('#Schedule_Monday').prop('checked', true);
+                $('#Schedule_Tuesday').prop('checked', true);
+                $('#Schedule_Wednesday').prop('checked', true);
+                $('#Schedule_Thursday').prop('checked', true);
+                $('#Schedule_Friday').prop('checked', true);
+                $('#Schedule_Saturday').prop('checked', true);
+                $('#Schedule_Sunday').prop('checked', true);
                 $('#Speach').prop('checked', false);
                 $('#Echos').val('').trigger('change');
                 $('#SpeachString').val('');
@@ -735,7 +652,17 @@
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             if (M) M.updateTextFields();
         }
-
+        //*******************************************************Astro Menu************************************************************************************/
+        function GetAstroTranslated(IdtoSearch) {
+            var list = document.getElementById("SunlightPhases").options;
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].value == IdtoSearch) {
+                    return list[i].text;
+                }
+            }
+            return ''
+        }
+        //*******************************************************UpdateSelect************************************************************************************/
         function UpdateSelect() {
             setTimeout(function() {
                 M.FormSelect.init($('#Echos'));
@@ -744,6 +671,7 @@
                 M.FormSelect.init($('#DeviceType'));
                 M.FormSelect.init($('#AndOr'));
                 M.FormSelect.init($('#trigerswitch'));
+                M.FormSelect.init($('#SunlightPhases'));
                 M.updateTextFields();
             }, 500);
         }
@@ -888,6 +816,13 @@
             ShowCtrl("TimerTimeValueLbl");
             ShowCtrl("TimerCountdownValue");
             ShowCtrl("TimerCountdownValueLbl");
+            ShowCtrl("SunlightPhases");
+            ShowCtrl("AstroBtn");
+            $("#PopUpDropdown").show();
+            var idate = new Date();
+            var iNowTime = idate.getHours() + ":" + idate.getMinutes() + ":" + idate.getSeconds();
+            $('#TimerObject').val(iNowTime).trigger('change');
+            $('#SunlightPhases').val("SetNow").trigger('change');;
         }
 
         function HideTimer() {
@@ -897,6 +832,9 @@
             HideCtrl("TimerTimeValueLbl");
             HideCtrl("TimerCountdownValue");
             HideCtrl("TimerCountdownValueLbl");
+            HideCtrl("SunlightPhases");
+            HideCtrl("AstroBtn");
+            $("#PopUpDropdown").hide();
         }
         //*******************************************************Show / Hide Control Function*****************************************************************************/
         function ShowCtrl(CtrlId) {
@@ -1011,10 +949,10 @@
                     TagSwitch += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
                     TagSwitch += '<td>' + DeviceGetArray.DeviceIDName + '</td> ';
                     TagSwitch += '<td><label><input type="checkbox" id="SwitchCheckBOn-' + IDEditDelete + '" ' + chboxOnState + '/><span></span></label></td>';
-                    TagSwitch += '<td>' + DeviceGetArray.OnObject + '</td> ';
+                    //~                     TagSwitch += '<td>' + DeviceGetArray.OnObject + '</td> ';
                     TagSwitch += '<td>' + DeviceGetArray.OnObjectString + '</td> ';
                     TagSwitch += '<td><label><input type="checkbox" id="SwitchCheckBOff-' + IDEditDelete + '" ' + chboxOffState + '/><span></span></label></td>';
-                    TagSwitch += '<td>' + DeviceGetArray.OffObject + '</td> ';
+                    //~                     TagSwitch += '<td>' + DeviceGetArray.OffObject + '</td> ';
                     TagSwitch += '<td>' + DeviceGetArray.OffObjectString + '</td> ';
                     let TriggerSwitchMode = DeviceGetArray.trigerswitch;
                     if (DeviceGetArray.SwitchMode == "And") {
@@ -1245,10 +1183,15 @@
                     break;
                     //*******************************************************Timer************************************************************************************/
                 case "Timer":
+                    var SetTimeName = ''
+                    if (DeviceGetArray.SetSunlight !== "SetNow") {
+                        SetTimeName = GetAstroTranslated(DeviceGetArray.SetSunlight);
+                    }
                     let TagTimer = '<tr> ';
                     TagTimer += '<td><label><input type="checkbox" id="TimerCheckBActive-' + IDEditDelete + '"  ' + chbox + '/><span></span></label></td>';
                     TagTimer += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
                     TagTimer += '<td>' + DeviceGetArray.DeviceIDName + '</td> ';
+                    TagTimer += '<td>' + SetTimeName + '</td> ';
                     TagTimer += '<td>' + DeviceGetArray.TimerObject + '</td> ';
                     TagTimer += '<td>' + DeviceGetArray.TimerTimeValue + '</td> ';
                     TagTimer += '<td>' + DeviceGetArray.TimerCountdownValue + '</td>';
@@ -1801,6 +1744,9 @@
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceType`, (error, state) => {
                     $('#DeviceType').val(state.val).trigger('change');
                 });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SetSunlight`, (error, state) => {
+                    $('#SunlightPhases').val(state.val).trigger('change');;
+                });
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.TimerObject`, (error, state) => {
                     $('#TimerObject').val(state.val);
                 });
@@ -1860,6 +1806,68 @@
                 });
                 UpdateSelect();
             });
+        }
+
+        function UpdateSunTimes() {
+            var MySunlightPhases = {
+                sunrise: {
+                    Name: 'Sunrise'
+                },
+                sunriseEnd: {
+                    Name: 'Sunrise end'
+                },
+                goldenHourEnd: {
+                    Name: 'Morning golden hour end'
+                },
+                solarNoon: {
+                    Name: 'Solar noon'
+                },
+                goldenHour: {
+                    Name: 'Evening golden hour start'
+                },
+                sunsetStart: {
+                    Name: 'Sunset start'
+                },
+                sunset: {
+                    Name: 'Sunset'
+                },
+                dusk: {
+                    Name: 'Dusk'
+                },
+                nauticalDusk: {
+                    Name: 'Nautical dusk'
+                },
+                night: {
+                    Name: 'Night start'
+                },
+                nadir: {
+                    Name: 'Nadir'
+                },
+                nightEnd: {
+                    Name: 'Night end'
+                },
+                nauticalDawn: {
+                    Name: 'Nautical dawn'
+                },
+                dawn: {
+                    Name: 'Dawn'
+                }
+            }
+            var SelectedSunlight = document.getElementById("SunlightPhases").value;
+            if (SelectedSunlight == "SetNow") {
+                var idate = new Date();
+                var iNowTime = idate.getHours() + ":" + idate.getMinutes() + ":" + idate.getSeconds();
+                $('#TimerObject').val(iNowTime).trigger('change');
+            } else {
+                for (let iSP in MySunlightPhases) {
+                    if (iSP == SelectedSunlight) {
+                        socket.emit('getState', `${adapter}.${instance}.` + `Settings.SunlightPhases.` + MySunlightPhases[iSP].Name, (error, state) => {
+                            $('#TimerObject').val(state.val).trigger('change');
+                        });
+                    }
+                }
+            }
+            //~             $("#PopUpDropdown").hide();
         }
         // This will be called by the admin adapter when the user presses the save button
         function save(callback) {
@@ -1938,68 +1946,73 @@
 
 <body>
     <div class="m adapter-container">
-        <div>
+        <div class="col s12 page">
             <div class="row">
                 <div class="col s12"> <img src="alarmcontrol.png" class="logo" /> </div>
             </div>
             <div class="row">
                 <!--Alarm section-->
-                <button class="collapsible translate">Notification settings</button>
-                <div class="collapContent">
-                    <div class="row">
-                        <div class="col s6"><input type="checkbox" class="value" id="SendAlarmChanges" onchange="EventChBoxTelegram()" /> <label id="SendAlarmChangesLbl" class="translate">Report alarm changes</label></div>
-                        <div class="col s6"><input type="checkbox" class="value" id="AlarmVoice" onchange="EventChBoxVoice()" /> <label id="AlarmVoiceLbl" class="translate">Voice notification</label></div>
+                <div class="col s12">
+				<button class="collapsible"><i class="material-icons left">build</i><span class="translate SetFontUppercase">Notification settings</span> </button>
+
+                    <div class="collapContent">
+                        <div class="row">
+                            <div class="col s6"><input type="checkbox" class="value" id="SendAlarmChanges" onchange="EventChBoxTelegram()" /> <label id="SendAlarmChangesLbl" class="translate">Report alarm changes</label></div>
+                            <div class="col s6"><input type="checkbox" class="value" id="AlarmVoice" onchange="EventChBoxVoice()" /> <label id="AlarmVoiceLbl" class="translate">Voice notification</label></div>
+                        </div>
+                        <div class="row">
+                            <div class="col s6">
+                                <div id="elementLeft"><a id="BTNSpeak" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                                <div id="elementRight"><input type="text" id="SpeakObject" class="value" /></div>
+                                <div id="elementBottom"><label id="SpeakObjectLbl" class="translate">Spoken object</label></div>
+                            </div>
+                            <div class="col s6">
+                                <div id="elementLeft"><a id="BTNTelegram" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                                <div id="elementRight"><input type="text" id="TelegramObject" class="value" /></div>
+                                <div id="elementBottom"><label id="TelegramObjectLbl" class="translate">Telegram object</label></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col s6">
+                                <div id="elementRight"><input type="number" id="AlarmCountdownValue" class="value" placeholder="60" /></div>
+                                <div id="elementBottom"><label id="AlarmCountdownValueLbl" class="translate">Alarm activation time (no one present)</label></div>
+                            </div>
+                            <div class="col s6">
+                                <div id="elementRight"><input type="text" id="Welcomephrase" class="value" placeholder="Welcome Home" /></div>
+                                <div id="elementBottom"><label for="Welcomephrase" class="translate">Welcome phrase</label></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col s6">
+                                <div id="elementRight"><input type="text" id="WarningphraseEntrance" class="value" placeholder="Attention! entrance is open since" /></div>
+                                <div id="elementBottom"><label for="WarningphraseEntrance" class="translate">Warning phrase: If the set opening time is exceeded (Entrance).</label></div>
+                            </div>
+                            <div class="col s6">
+                                <div id="elementRight"><input type="text" id="WarningphraseMotion" class="value" placeholder="Attention! Movement was detected" /></div>
+                                <div id="elementBottom"><label for="WarningphraseMotion" class="translate">Warning phrase: when motion is detected</label></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col s6">
+                                <div id="elementRight"><input type="text" id="VoiceChangeLevel" class="value" placeholder="Alarm to level" /></div>
+                                <div id="elementBottom"><label for="VoiceChangeLevel" class="translate">Voice command to change the alarm level (without number)</label></div>
+                            </div>
+                            <div class="col s6">
+                                <div id="elementRight"><input type="text" id="VoiceResetLevel" class="value" placeholder="I'm here" /></div>
+                                <div id="elementBottom"><label for="VoiceResetLevel" class="translate">Voice command to turn off the alarm (Level 2)</label></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="row">
-                        <div class="col s6">
-                            <div id="elementLeft"><a id="BTNSpeak" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
-                            <div id="elementRight"><input type="text" id="SpeakObject" class="value" /></div>
-                            <div id="elementBottom"><label id="SpeakObjectLbl" class="translate">Spoken object</label></div>
-                        </div>
-                        <div class="col s6">
-                            <div id="elementLeft"><a id="BTNTelegram" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
-                            <div id="elementRight"><input type="text" id="TelegramObject" class="value" /></div>
-                            <div id="elementBottom"><label id="TelegramObjectLbl" class="translate">Telegram object</label></div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col s6">
-                            <div id="elementRight"><input type="number" id="AlarmCountdownValue" class="value" placeholder="60" /></div>
-                            <div id="elementBottom"><label id="AlarmCountdownValueLbl" class="translate">Alarm activation time (no one present)</label></div>
-                        </div>
-                        <div class="col s6">
-                            <div id="elementRight"><input type="text" id="Welcomephrase" class="value" placeholder="Welcome Home" /></div>
-                            <div id="elementBottom"><label for="Welcomephrase" class="translate">Welcome phrase</label></div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col s6">
-                            <div id="elementRight"><input type="text" id="WarningphraseEntrance" class="value" placeholder="Attention! entrance is open since" /></div>
-                            <div id="elementBottom"><label for="WarningphraseEntrance" class="translate">Warning phrase: If the set opening time is exceeded (Entrance).</label></div>
-                        </div>
-                        <div class="col s6">
-                            <div id="elementRight"><input type="text" id="WarningphraseMotion" class="value" placeholder="Attention! Movement was detected" /></div>
-                            <div id="elementBottom"><label for="WarningphraseMotion" class="translate">Warning phrase: when motion is detected</label></div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col s6">
-                            <div id="elementRight"><input type="text" id="VoiceChangeLevel" class="value" placeholder="Alarm to level" /></div>
-                            <div id="elementBottom"><label for="VoiceChangeLevel" class="translate">Voice command to change the alarm level (without number)</label></div>
-                        </div>
-                        <div class="col s6">
-                            <div id="elementRight"><input type="text" id="VoiceResetLevel" class="value" placeholder="I'm here" /></div>
-                            <div id="elementBottom"><label for="VoiceResetLevel" class="translate">Voice command to turn off the alarm (Level 2)</label></div>
-                        </div>
-                    </div>
-                </div><br>
-                <hr><br>
+
+                </div>
+                <br>
+                <hr><br><br><br>
 
                 <div class="col s12">
-                    <a class="waves-effect waves-Illumination btn" id="AddFamily"> <i class="material-icons left">add</i><span class="translate">Add Family member</span> </a>
+                    <a class="waves-effect waves-Illumination btn" id="AddFamily"> <i class="material-icons left">people</i><span class="translate">Add Family member</span> </a>
                 </div><br><br><br>
-                <div>
-                    <div class="mytableoutter">
+                <div class="col s12">
+                    <div class="mytableoutterscroll wrapper">
                         <table id="mytable">
                             <thead>
                                 <tr>
@@ -2123,7 +2136,33 @@
                 <div class="col s2"><input type="time" id="OtherCountdownValue" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="OtherCountdownValueLbl" class="translate">Countdown</label></div>
                 </div>
-                <!--Timer section-->
+                <!--Timer section -->
+                <div class="col s4">
+                    <div id="elementLeft">
+                        <a class="Astrobutton" id="AstroBtn"><i class="material-icons left">wb_sunny</i></a>
+                    </div>
+                    <div id="PopUpDropdown">
+                        <select id="SunlightPhases" onchange="UpdateSunTimes()">
+				            <option value="SetNow" selected class="translate">Now</option>
+							<option value="sunrise" selected class="translate">Sunrise</option>
+							<option value="sunriseEnd" class="translate">Sunrise end</option>
+							<option value="goldenHourEnd" class="translate">Morning golden hour end</option>
+							<option value="solarNoon" class="translate">Solar noon</option>
+							<option value="goldenHour" class="translate">Evening golden hour start</option>
+                            <option value="sunsetStart" class="translate">Sunset start</option>
+							<option value="sunset" class="translate">Sunset</option>
+							<option value="dusk" class="translate">Dusk</option>
+							<option value="nauticalDusk" class="translate">Nautical dusk</option>
+							<option value="night" class="translate">Night start</option>
+							<option value="nadir" class="translate">Nadir</option>
+							<option value="nightEnd" class="translate">Night end</option>
+							<option value="nauticalDawn" class="translate">Nautical dawn</option>
+							<option value="dawn" class="translate">Dawn</option>
+							</select>
+                    </div>
+
+                </div>
+
                 <div class="col s2"><input type="time" id="TimerObject" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="TimerObjectLbl" class="translate">Timer</label></div>
                 </div>
@@ -2163,16 +2202,16 @@
                         <thead>
                             <tr>
                                 <th class="header translate" data-name="MotionActivTable" data-type="checkbox">Active</th>
-                                <th class="header translate" data-name="MotionAlarmTable">Alarm</th>
+                                <th class="header" data-name="MotionAlarmTable"><i class="material-icons left">security</i></th>
                                 <th class="header translate" data-name="MotionDeviceIDTable">Name</th>
                                 <th class="header translate" data-name="MotionObjectTable">Motion object</th>
                                 <th class="header translate" data-name="MotionStringTable">Value</th>
-                                <th class="header translate" data-name="MotionIlluminationActivTable" data-type="checkbox"></th>
+                                <th class="header" data-name="MotionIlluminationActivTable" data-type="checkbox"><i class="material-icons left">brightness_medium</i></th>
                                 <th class="header translate" data-name="MotionIlluminationObjectTable">Illumination object</th>
                                 <th class="header translate" data-name="MotionIlluminationStringTable">Value</th>
-                                <th class="header translate" data-name="MotionIlluminationTimeTable">Time</th>
+                                <th class="header" data-name="MotionIlluminationTimeTable"><i class="material-icons left">snooze</i></th>
                                 <th class="header translate" data-name="MotionScheduleTable">Schedule</th>
-                                <th class="header translate" data-name="MotionSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header" data-name="MotionSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
                                 <th class="header translate" data-name="MotionSpeachStringTable">Sentence</th>
                                 <th class="header translate" data-buttons="Motion edit delete">Edit</th>
                             </tr>
@@ -2187,15 +2226,15 @@
                         <thead>
                             <tr>
                                 <th class="header translate" data-name="ReedActivTable" data-type="checkbox">Active</th>
-                                <th class="header translate" data-name="ReedAlarmTable">Alarm</th>
+                                <th class="header" data-name="ReedAlarmTable"><i class="material-icons left">security</i></th>
                                 <th class="header translate" data-name="ReedDeviceIDTable">Name</th>
                                 <th class="header translate" data-name="ReedObjectTable">Sensor object</th>
                                 <th class="header translate" data-name="ReedStringTable">Value</th>
                                 <th class="header translate" data-name="EntranceStateTable" data-type="checkbox">Entrance</th>
-                                <th class="header translate" data-name="ReedTimeTable">Time</th>
-                                <th class="header translate" data-name="ReedCountdownTable">Countdown</th>
+                                <th class="header" data-name="ReedTimeTable"><i class="material-icons left">hourglass_empty</i></th>
+                                <th class="header" data-name="ReedCountdownTable"><i class="material-icons left">timer</i></th>
                                 <th class="header translate" data-name="ReedScheduleTable">Schedule</th>
-                                <th class="header translate" data-name="ReedSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header" data-name="ReedSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
                                 <th class="header translate" data-name="ReedSpeachStringTable">Sentence</th>
                                 <th class="header translate" data-buttons="Reed edit delete">Edit</th>
                             </tr>
@@ -2210,13 +2249,13 @@
                         <thead>
                             <tr>
                                 <th class="header translate" data-name="TemperatureActivTable" data-type="checkbox">Active</th>
-                                <th class="header translate" data-name="TemperatureAlarmTable">Alarm</th>
+                                <th class="header" data-name="TemperatureAlarmTable"><i class="material-icons left">security</i></th>
                                 <th class="header translate" data-name="TemperatureDeviceIDTable">Name</th>
                                 <th class="header translate" data-name="TemperatureObjectTable">Temperature object</th>
                                 <th class="header translate" data-name="TemperatureValueTable">Value</th>
-                                <th class="header translate" data-name="TemperatureTimeTable">Time</th>
+                                <th class="header" data-name="TemperatureTimeTable"><i class="material-icons left">hourglass_empty</i></th>
                                 <th class="header translate" data-name="TemperatureScheduleTable">Schedule</th>
-                                <th class="header translate" data-name="TemperatureSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header" data-name="TemperatureSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
                                 <th class="header translate" data-name="TemperatureSpeachStringTable">Sentence</th>
                                 <th class="header translate" data-buttons="Temperature edit delete">Edit</th>
                             </tr>
@@ -2231,14 +2270,14 @@
                         <thead>
                             <tr>
                                 <th class="header translate" data-name="OtherActivTable" data-type="checkbox">Active</th>
-                                <th class="header translate" data-name="OtherAlarmTable">Alarm</th>
+                                <th class="header" data-name="OtherAlarmTable"><i class="material-icons left">security</i></th>
                                 <th class="header translate" data-name="OtherDeviceIDTable">Name</th>
                                 <th class="header translate" data-name="OtherObjectTable">Sensor object</th>
                                 <th class="header translate" data-name="OtherValueTable">Value</th>
-                                <th class="header translate" data-name="OtherTimeTable">Time</th>
-                                <th class="header translate" data-name="OtherCountdownTable">Countdown</th>
+                                <th class="header" data-name="OtherTimeTable"><i class="material-icons left">hourglass_empty</i></th>
+                                <th class="header" data-name="OtherCountdownTable"><i class="material-icons left">timer</i></th>
                                 <th class="header translate" data-name="OtherScheduleTable">Schedule</th>
-                                <th class="header translate" data-name="OtherSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header" data-name="OtherSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
                                 <th class="header translate" data-name="OtherSpeachStringTable">Sentence</th>
                                 <th class="header translate" data-buttons="Other edit delete">Edit</th>
                             </tr>
@@ -2253,13 +2292,14 @@
                         <thead>
                             <tr>
                                 <th class="header translate" data-name="TimerActivTable" data-type="checkbox">Active</th>
-                                <th class="header translate" data-name="TimerAlarmTable">Alarm</th>
+                                <th class="header" data-name="TimerAlarmTable"><i class="material-icons left">security</i></th>
                                 <th class="header translate" data-name="TimerDeviceIDTable">Name</th>
+                                <th class="header" data-name="TimerObjectTable"><i class="material-icons left">wb_sunny</i></th>
                                 <th class="header translate" data-name="TimerObjectTable">Timer</th>
-                                <th class="header translate" data-name="TimerTimeTable">Time</th>
-                                <th class="header translate" data-name="TimerCountdownTable">Countdown</th>
+                                <th class="header" data-name="TimerTimeTable"><i class="material-icons left">hourglass_empty</i></th>
+                                <th class="header" data-name="TimerCountdownTable"><i class="material-icons left">timer</i></th>
                                 <th class="header translate" data-name="TimerScheduleTable">Schedule</th>
-                                <th class="header translate" data-name="TimerSpeachTable" data-type="checkbox">Speach</th>
+                                <th class="header" data-name="TimerSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
                                 <th class="header translate" data-name="TimerSpeachStringTable">Sentence</th>
                                 <th class="header translate" data-buttons="Timer edit delete">Edit</th>
                             </tr>
@@ -2274,20 +2314,20 @@
                         <!-- id="SwitchDevices">-->
                         <thead>
                             <tr>
-                                <th style="width: 60px" class="header translate" data-name="SwitchActivTable" data-type="checkbox">Active</th>
-                                <th style="width: 70px" class="header translate" data-name="SwitchAlarmTable">Alarm</th>
-                                <th style="width: 120px" class="header translate" data-name="SwitchDeviceIDTable">Name</th>
-                                <th style="width: 60px" class="header translate" data-name="SwitchOnActiveTable" data-type="checkbox"></th>
-                                <th style="width: 110px" class="header translate" data-name="SwitchOnObjectTable">On object</th>
-                                <th style="width: 70px" class="header translate" data-name="SwitchOnStringTable">Value</th>
-                                <th style="width: 60px" class="header translate" data-name="SwitchOffActiveTable" data-type="checkbox"></th>
-                                <th style="width: 110px" class="header translate" data-name="SwitchOnffbjectTable">Off object</th>
-                                <th style="width: 70px" class="header translate" data-name="SwitchOffStringTable">Value</th>
-                                <th style="width: 110px" class="header translate" data-name="SwitchExecuteTable">Trigger</th>
-                                <th style="width: 110px" class="header translate" data-name="SwitchScheduleTable">Schedule</th>
-                                <th style="width: 70px" class="header translate" data-name="SwitchSpeachTable" data-type="checkbox">Speach</th>
-                                <th style="width: 110px" class="header translate" data-name="SwitchSpeachStringTable">Sentence</th>
-                                <th style="width: 70px" class="header translate" data-buttons="Switch edit delete">Edit</th>
+                                <th class="header translate" data-name="SwitchActivTable" data-type="checkbox">Active</th>
+                                <th class="header" data-name="SwitchAlarmTable"><i class="material-icons left">security</i></th>
+                                <th class="header translate" data-name="SwitchDeviceIDTable">Name</th>
+                                <th class="header" data-name="SwitchOnActiveTable" data-type="checkbox"><i class="material-icons left green">power_settings_new</i></th>
+                                <!-- <th class="header translate" data-name="SwitchOnObjectTable">On object</th>-->
+                                <th class="header translate" data-name="SwitchOnStringTable">Value</th>
+                                <th class="header" data-name="SwitchOffActiveTable" data-type="checkbox"><i class="material-icons left red">power_settings_new</i></th>
+                                <!-- <th class="header translate" data-name="SwitchOnffbjectTable">Off object</th>-->
+                                <th class="header translate" data-name="SwitchOffStringTable">Value</th>
+                                <th class="header translate" data-name="SwitchExecuteTable">Trigger</th>
+                                <th class="header translate" data-name="SwitchScheduleTable">Schedule</th>
+                                <th class="header" data-name="SwitchSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
+                                <th class="header translate" data-name="SwitchSpeachStringTable">Sentence</th>
+                                <th class="header translate" data-buttons="Switch edit delete">Edit</th>
                             </tr>
                         </thead>
                         <tbody id="SwitchDevices"></tbody>
