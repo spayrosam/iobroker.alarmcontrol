@@ -1,4 +1,4 @@
-![Logo](admin/AlarmControl.png)
+![Logo](admin/alarmcontrol.png)
 # ioBroker.AlarmControl
 
 ## AlarmControl adapter for ioBroker
