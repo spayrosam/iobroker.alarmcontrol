@@ -2,6 +2,7 @@
 const utils = require('@iobroker/adapter-core');
 const moment = require("moment");
 const momentDurationFormatSetup = require("moment-duration-format");
+const SunCalc = require("suncalc");
 //**********************************************************************************************************************************************************
 //******************************************************************Variable********************************************************************************
 //**********************************************************************************************************************************************************
@@ -62,8 +63,68 @@ var devicearray = {};
 var Adapterarray = [];
 //========================Echo
 var MyEchos = [];
+//========================SunCalc
+var MySunlightPhases = {
+        sunrise: {
+            Name: 'Sunrise',
+            Data: ''
+        },
+        sunriseEnd: {
+            Name: 'Sunrise end',
+            Data: ''
+        },
+        goldenHourEnd: {
+            Name: 'Morning golden hour end',
+            Data: ''
+        },
+        solarNoon: {
+            Name: 'Solar noon',
+            Data: ''
+        },
+        goldenHour: {
+            Name: 'Evening golden hour start',
+            Data: ''
+        },
+        sunsetStart: {
+            Name: 'Sunset start',
+            Data: ''
+        },
+        sunset: {
+            Name: 'Sunset',
+            Data: ''
+        },
+        dusk: {
+            Name: 'Dusk',
+            Data: ''
+        },
+        nauticalDusk: {
+            Name: 'Nautical dusk',
+            Data: ''
+        },
+        night: {
+            Name: 'Night start',
+            Data: ''
+        },
+        nadir: {
+            Name: 'Nadir',
+            Data: ''
+        },
+        nightEnd: {
+            Name: 'Night end',
+            Data: ''
+        },
+        nauticalDawn: {
+            Name: 'Nautical dawn',
+            Data: ''
+        },
+        dawn: {
+            Name: 'Dawn',
+            Data: ''
+        }
+    }
+    //========================Motion
+var TimerMotion = [];
 //========================Reed
-var Timer = [];
 var TimerReed = [];
 var Reedcountdown = [];
 var ReedTimestamp = [];
@@ -396,6 +457,8 @@ class alarmcontrol extends utils.Adapter {
                         }
                     }
                 });
+                //===============================================Suncalc============================================
+                Adapter.SetTodayCalcSun();
                 //===============================================Settings============================================
                 for (const [key, value] of Object.entries(CommandSPTG)) {
                     var typeWrite = 'string',
@@ -700,12 +763,14 @@ class alarmcontrol extends utils.Adapter {
                                 let TimerObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerObject');
                                 let TimerTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerTimeValue');
                                 let TimerCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerCountdownValue');
+                                let SetSunlight = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SetSunlight');
                                 devicearray[MyChannelname] = {
                                     DeviceIDName: DeviceIDName.val,
                                     DeviceType: DeviceType.val,
                                     TimerObject: TimerObject.val,
                                     TimerTimeValue: TimerTimeValue.val,
                                     TimerCountdownValue: TimerCountdownValue.val,
+                                    SetSunlight: SetSunlight.val,
                                     Schedule_Enabled: Schedule_Enabled,
                                     Schedule_Start: Schedule_Start.val,
                                     Schedule_End: Schedule_End.val,
@@ -727,13 +792,24 @@ class alarmcontrol extends utils.Adapter {
                                 var TimeTimerIndex = [devicearray[MyChannelname].DeviceType + "-" + devicearray[MyChannelname].DeviceIDName];
                                 if (TimerTimer[TimeTimerIndex] === undefined) {
                                     TimerTimer.push(TimeTimerIndex);
-                                    TimerTimer[TimeTimerIndex] = devicearray[MyChannelname].TimerObject
+                                    if (devicearray[MyChannelname].SetSunlight !== "SetNow") {
+                                        for (let iSP in MySunlightPhases) {
+                                            if (devicearray[MyChannelname].SetSunlight == iSP) {
+                                                //~ MySunlightPhases[iSP].Name
+                                                TimerTimer[TimeTimerIndex] = MySunlightPhases[iSP].Data;
+                                                break;
+                                            }
+                                        }
+                                    } else {
+                                        TimerTimer[TimeTimerIndex] = devicearray[MyChannelname].TimerObject
+                                    }
                                 }
                                 break;
                         }
                     }
                 }
-                Adapter.log.info("Adapter: databases are connected | The alarm is already set to level " + CommandSPTG.AlarmObject);
+                Adapter.log.warn("Databases are connected | The alarm is already set to level " + CommandSPTG.AlarmObject);
+                Adapter.log.warn("The voice notification is set to " + CommandSPTG.AlarmVoice + " | " + "the Report notification is set to " + CommandSPTG.SendAlarmChanges);
                 Adapter.log.info('Found: ' + LogTextNumberSwitch + ' Switchs: ' + LogTextStringSwitch);
                 Adapter.log.info('Found: ' + LogTextNumberReed + ' Reeds: ' + LogTextStringReed);
                 Adapter.log.info('Found: ' + LogTextNumberMotion + ' Motions: ' + LogTextStringMotion);
@@ -1104,22 +1180,98 @@ class alarmcontrol extends utils.Adapter {
                 if (strSpeakArray[strSpeakIndex].EntranceState) {
                     Adapter.CheckAlarmState();
                 }
-                Adapter.log.info(strSpeakArray[strSpeakIndex].DeviceIDName + " ==> Speak ==> " + strSpeakArray[strSpeakIndex].Echos);
-                switch (CommandSPTG.AlarmObject.toString()) {
-                    case "2":
-                    case "3":
-                        if (strSpeakArray[strSpeakIndex].Speach) {
-                            Adapter.SplitSpeak(strSpeakArray[strSpeakIndex].Echos, strSpeakArray[strSpeakIndex].SpeachString);
-                        }
-                        break;
-                    case "1":
-                        if (strSpeakArray[strSpeakIndex].EntranceState) {
+                if (CommandSPTG.AlarmVoice) {
+                    Adapter.log.info(strSpeakArray[strSpeakIndex].DeviceIDName + " ==> Speak ==> " + strSpeakArray[strSpeakIndex].Echos);
+                    switch (CommandSPTG.AlarmObject.toString()) {
+                        case "2":
+                        case "3":
                             if (strSpeakArray[strSpeakIndex].Speach) {
                                 Adapter.SplitSpeak(strSpeakArray[strSpeakIndex].Echos, strSpeakArray[strSpeakIndex].SpeachString);
                             }
-                        }
-                        break;
+                            break;
+                        case "1":
+                            if (strSpeakArray[strSpeakIndex].EntranceState) {
+                                if (strSpeakArray[strSpeakIndex].Speach) {
+                                    Adapter.SplitSpeak(strSpeakArray[strSpeakIndex].Echos, strSpeakArray[strSpeakIndex].SpeachString);
+                                }
+                            }
+                            break;
+                    }
                 }
+            }
+            //**********************************************************************************************************************************************************
+            //***********************************************************************SunCalc******************************************************************************
+            //**********************************************************************************************************************************************************
+        async SetTodayCalcSun() {
+            const Adapter = this;
+            Adapter.ClacSunlightPhases();
+            for (let iSP in MySunlightPhases) {
+                Adapter.createChannelAsync("Settings.SunlightPhases", "Settings.SunlightPhases");
+                Adapter.setObjectNotExistsAsync("Settings.SunlightPhases", {
+                    type: "channel",
+                    common: {
+                        name: "Settings.SunlightPhases",
+                        write: false
+                    },
+                    native: {}
+                });
+                await Adapter.setObjectNotExistsAsync("Settings.SunlightPhases." + MySunlightPhases[iSP].Name, {
+                    type: "state",
+                    common: {
+                        name: MySunlightPhases[iSP].Name,
+                        desc: MySunlightPhases[iSP].Name,
+                        type: 'string',
+                        role: 'text',
+                        write: true
+                    },
+                    native: {}
+                });
+                Adapter.setStateAsync("Settings.SunlightPhases." + MySunlightPhases[iSP].Name, MySunlightPhases[iSP].Data, true);
+            }
+        }
+         ClacSunlightPhases() {
+                const Adapter = this;
+                Adapter.getForeignObject('system.config', (err, SysConfig) => {
+                    var MyCurrentLongitude = "0";
+                    var MyCurrentLatitude = "0";
+                    MyCurrentLatitude = SysConfig.common.latitude;
+                    MyCurrentLongitude = SysConfig.common.longitude;
+                    if (MyCurrentLongitude === "0") {
+                        Adapter.log.error("No Latitude and Longitude in ioBroker settings found!");
+                    } else {
+                        Adapter.log.warn("Current Latitude and Longitude: " + MyCurrentLatitude + " and " + MyCurrentLongitude);
+                        var GetSunTimes = SunCalc.getTimes(new Date(), MyCurrentLatitude, MyCurrentLongitude);
+                        for (let iSP in MySunlightPhases) {
+                            Adapter.log.info("Set new time for " + MySunlightPhases[iSP].Name + ": " + GetSunTimes[iSP].toTimeString().split(' ')[0].replace(/(\d+)-(\S+)-(\d+)/, '$2 $1 $3'));
+                            MySunlightPhases[iSP].Data = GetSunTimes[iSP].toTimeString().split(' ')[0].replace(/(\d+)-(\S+)-(\d+)/, '$2 $1 $3')
+                        }
+                        if (GetSunTimes == undefined) {
+                            Adapter.log.warn("Cannot calc sunlight phases, please check your lat long value in the ioBroker settings");
+                        } else {
+                            TimerTimer.forEach(async(TimeIndexName) => {
+                                try {
+                                    var TimeIndexVar = TimeIndexName.toString().split('-')
+                                    var GetSetSunlight = await Adapter.getStateAsync(TimeIndexVar[0] + "." + TimeIndexVar[1] + ".SetSunlight");
+                                    if (GetSetSunlight !== undefined) {
+                                        if (GetSetSunlight.val !== "SetNow") {
+                                            for (let iSP in MySunlightPhases) {
+                                                if (GetSetSunlight.val == iSP) {
+                                                    //~ MySunlightPhases[iSP].Name
+                                                    Adapter.setStateAsync(TimeIndexVar[0] + "." + TimeIndexVar[1] + ".TimerObject", MySunlightPhases[iSP].Data, true);
+                                                    TimerTimer[TimeIndexName] = MySunlightPhases[iSP].Data;
+                                                    Adapter.log.warn("Update " + TimeIndexName + ": New " + MySunlightPhases[iSP].Name + " is " + MySunlightPhases[iSP].Data);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (error) {
+                                    this.log.error(error.stack);
+                                }
+                            });
+                        }
+                    }
+                });
             }
             //**********************************************************************************************************************************************************
             //*************************************************************************Helper***************************************************************************
@@ -1274,7 +1426,7 @@ class alarmcontrol extends utils.Adapter {
                 }
             }
             if (strSwitchMode && (strSwitchMode.toString() == "And")) {
-                var RetAndMode = Adapter.ChackAndTriger(fullArray);
+                var RetAndMode = Adapter.CheckAndTriger(fullArray);
                 if (RetAndMode) {
                     return fullArray;
                 } else {
@@ -1287,7 +1439,7 @@ class alarmcontrol extends utils.Adapter {
                 return fullArray;
             }
         }
-        async ChackAndTriger(fullArray) {
+        async CheckAndTriger(fullArray) {
                 const Adapter = this;
                 var TestDevArray = [];
                 var TestAllEventObject = true;
@@ -1360,7 +1512,7 @@ class alarmcontrol extends utils.Adapter {
                 return TestAllEventObject;
             }
             //**********************************************************************************************************************************************************
-            //*************************************************************************Motion***************************************************************************
+            //*************************************************************************Illumination***************************************************************************
             //**********************************************************************************************************************************************************
         Checkillumination(strVal, strObj) {
                 strVal.trim()
@@ -1410,6 +1562,75 @@ class alarmcontrol extends utils.Adapter {
                         resolve(false);
                     }
                 });
+            }
+            //**********************************************************************************************************************************************************
+            //**************************************************************************Motion**************************************************************************
+            //**********************************************************************************************************************************************************
+        triggerMotion(strAdapterarray, strArrayDev) {
+                const Adapter = this;
+                for (let ArraySwitch in strAdapterarray) {
+                    //================Check Device List
+                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArraySwitch].trigerswitch, strAdapterarray[ArraySwitch].SwitchMode);
+                    var iFA;
+                    for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
+                        if (FindAllTriger[iFA] == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
+                            Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + (iFA + 1) + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
+                            var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArraySwitch].AlarmNumber);
+                            if (GetAlarm) {
+                                var TimeIndex = [strAdapterarray[ArraySwitch].DeviceType + "-" + strAdapterarray[ArraySwitch].DeviceIDName + "-" +
+                                    strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName
+                                ];
+                                if (TimerMotion[TimeIndex] === undefined) {
+                                    TimerMotion.push(TimeIndex);
+                                }
+                                if (TimerMotion[TimeIndex]) {
+                                    clearTimeout(TimerMotion[TimeIndex]);
+                                    TimerMotion[TimeIndex] = null;
+                                }
+                                //================Check State (Device)
+                                if (strAdapterarray[ArraySwitch].activate) {
+                                    //================Check Schedule Time and Day (Device)
+                                    var DevRetDay = Adapter.getDayWeek(strAdapterarray[ArraySwitch]);
+                                    if (Adapter.inTime(strAdapterarray[ArraySwitch].Schedule_Start, strAdapterarray[ArraySwitch].Schedule_End, DevRetDay)) {
+                                        Adapter.log.info("defined times: " + strAdapterarray[ArraySwitch].Schedule_Start + "-" + strAdapterarray[ArraySwitch].Schedule_End + " Week Days: " + DevRetDay);
+                                        Adapter.trigerSpeak(strAdapterarray, ArraySwitch);
+                                        if (strAdapterarray[ArraySwitch].OnState) {
+                                            var StringToCommandon = strAdapterarray[ArraySwitch].OnObjectString;
+                                            var ObjectToCommandon = strAdapterarray[ArraySwitch].OnObject;
+                                            var StringToCommandoff = strAdapterarray[ArraySwitch].OffObjectString;
+                                            var ObjectToCommandoff = strAdapterarray[ArraySwitch].OffObject;
+                                        } else {
+                                            var StringToCommandon = strAdapterarray[ArraySwitch].OffObjectString;
+                                            var ObjectToCommandon = strAdapterarray[ArraySwitch].OffObject;
+                                            var StringToCommandoff = strAdapterarray[ArraySwitch].OnObjectString;
+                                            var ObjectToCommandoff = strAdapterarray[ArraySwitch].OnObject;
+                                        }
+                                        Adapter.log.info("FoundSwitch: " + ObjectToCommandon + " with: " + StringToCommandon);
+                                        if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) {
+                                            Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
+                                        } else {
+                                            Adapter.setForeignStateAsync(ObjectToCommandon, eval(StringToCommandon));
+                                        }
+                                        TimerMotion[TimeIndex] = setTimeout(function() {
+                                            TimerMotion[TimeIndex] = null;
+                                            Adapter.log.info("FoundSwitch: " + ObjectToCommandoff + " with: " + StringToCommandoff);
+                                            if (/^#[0-9A-F]{6}$/i.test(StringToCommandoff)) {
+                                                Adapter.setForeignStateAsync(ObjectToCommandoff, StringToCommandoff); // Licht/Gerät aus nach Ablauf Timer
+                                            } else {
+                                                Adapter.setForeignStateAsync(ObjectToCommandoff, eval(StringToCommandoff)); // Licht/Gerät aus nach Ablauf Timer
+                                            }
+                                        }, strAdapterarray[strArrayDev].MotionTimeValue * 1000); // Timer setzen auf X Minuten
+                                        Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": motion detected, event is triggered for " + strAdapterarray[strArrayDev].MotionTimeValue + " seconds.");
+                                    } else {
+                                        Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": motion detected, defined times returns false!");
+                                    }
+                                }
+                            } else {
+                                Adapter.log.info("Alarm returns incorrect settings! Alarm setting is " + strAdapterarray[ArraySwitch].AlarmNumber + ", the current alarm is " + CommandSPTG.AlarmObject);
+                            }
+                        }
+                    }
+                }
             }
             //**********************************************************************************************************************************************************
             //***************************************************************************Reed***************************************************************************
@@ -1518,10 +1739,12 @@ class alarmcontrol extends utils.Adapter {
                     for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                         //if (strAdapterarray[ArrayReed].trigerswitch == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
                         if (FindAllTriger[iFA].toString() == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
-                            Adapter.log.info("==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
+                            Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + (iFA + 1) + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
                             var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArrayReed].AlarmNumber);
                             if (GetAlarm) {
-                                var TimeReedIndex = [strAdapterarray[ArrayReed].DeviceType + "-" + strAdapterarray[ArrayReed].DeviceIDName + "-" + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName];
+                                var TimeReedIndex = [strAdapterarray[ArrayReed].DeviceType + "-" + strAdapterarray[ArrayReed].DeviceIDName + "-" +
+                                    strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName
+                                ];
                                 if (TimerReed[TimeReedIndex] === undefined) {
                                     TimerReed.push(TimeReedIndex);
                                 }
@@ -1581,10 +1804,12 @@ class alarmcontrol extends utils.Adapter {
                 var iFA;
                 for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                     if (FindAllTriger[iFA].toString() == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
-                        Adapter.log.info("==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
+                        Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + (iFA + 1) + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
                         var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArrayOther].AlarmNumber);
                         if (GetAlarm) {
-                            var TimeOtherIndex = [strAdapterarray[ArrayOther].DeviceType + "-" + strAdapterarray[ArrayOther].DeviceIDName + "-" + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName];
+                            var TimeOtherIndex = [strAdapterarray[ArrayOther].DeviceType + "-" + strAdapterarray[ArrayOther].DeviceIDName + "-" +
+                                strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName
+                            ];
                             if (TimerOther[TimeOtherIndex] === undefined) {
                                 TimerOther.push(TimeOtherIndex);
                             }
@@ -1714,7 +1939,7 @@ class alarmcontrol extends utils.Adapter {
                 }
             }, 1000);
         }
-        CheckOtherState(strVal, strObj) {
+        CheckOtherState(strVal, strObj, strIdname) {
                 strVal.trim()
                 var Compareevent = strVal.match(/=|<|>/);
                 var strnumber = strVal.match(/-*[0-9]+/);
@@ -1730,28 +1955,28 @@ class alarmcontrol extends utils.Adapter {
                                 case "=":
                                     if (iGetnumber == iSetnumber) {
                                         OthRange = true;
-                                        this.log.info("Measured " + iGetnumber + " == Threshold of " + iSetnumber + ", therefore switched on.");
+                                        this.log.info(strIdname + ": Measured " + iGetnumber + " == Threshold of " + iSetnumber + ", therefore switched on.");
                                     } else {
                                         OthRange = false;
-                                        this.log.info("Measured " + iGetnumber + " == Threshold of " + iSetnumber + ", therefore is not switched.");
+                                        this.log.info(strIdname + ": Measured " + iGetnumber + " == Threshold of " + iSetnumber + ", therefore is not switched.");
                                     }
                                     break;
                                 case "<":
                                     if (iGetnumber < iSetnumber) {
                                         OthRange = true;
-                                        this.log.info("Measured " + iGetnumber + " < Threshold of " + iSetnumber + ", therefore switched on.");
+                                        this.log.info(strIdname + ": Measured " + iGetnumber + " < Threshold of " + iSetnumber + ", therefore switched on.");
                                     } else {
                                         OthRange = false;
-                                        this.log.info("Measured " + iGetnumber + " < Threshold of " + iSetnumber + ", therefore is not switched.");
+                                        this.log.info(strIdname + ": Measured " + iGetnumber + " < Threshold of " + iSetnumber + ", therefore is not switched.");
                                     }
                                     break;
                                 case ">":
                                     if (iGetnumber > iSetnumber) {
                                         OthRange = true;
-                                        this.log.info("Measured " + iGetnumber + " > Threshold of " + iSetnumber + ", therefore switched on.");
+                                        this.log.info(strIdname + ": Measured " + iGetnumber + " > Threshold of " + iSetnumber + ", therefore switched on.");
                                     } else {
                                         OthRange = false;
-                                        this.log.info("Measured " + iGetnumber + " > Threshold of " + iSetnumber + ", therefore is not switched.");
+                                        this.log.info(strIdname + ": Measured " + iGetnumber + " > Threshold of " + iSetnumber + ", therefore is not switched.");
                                     }
                                     break;
                             }
@@ -1768,6 +1993,10 @@ class alarmcontrol extends utils.Adapter {
             //**********************************************************************************************************************************************************
         async checkTimerStart() {
                 const Adapter = this;
+                if (moment().isSame(moment("15:41:20", "hh:mm:ss"), "second")) {
+                    Adapter.log.warn("Calculate the position of the sun in the sky for the current location..");
+                    Adapter.SetTodayCalcSun();
+                }
                 TimerTimer.forEach(async(TimeTimerIndex) => {
                     if (moment().isSame(moment(TimerTimer[TimeTimerIndex], "hh:mm:ss"), "second")) {
                         var SplitTimerName = TimeTimerIndex.toString().split('-');
@@ -1878,73 +2107,6 @@ class alarmcontrol extends utils.Adapter {
                 });
             }
             //**********************************************************************************************************************************************************
-            //**************************************************************************Switch**************************************************************************
-            //**********************************************************************************************************************************************************
-        triggerDevice(strAdapterarray, strArrayDev) {
-                const Adapter = this;
-                for (let ArraySwitch in strAdapterarray) {
-                    //================Check Device List
-                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray[ArraySwitch].trigerswitch, strAdapterarray[ArraySwitch].SwitchMode);
-                    var iFA;
-                    for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
-                        if (FindAllTriger[iFA] == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
-                            Adapter.log.info("==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
-                            var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArraySwitch].AlarmNumber);
-                            if (GetAlarm) {
-                                var TimeIndex = [strAdapterarray[ArraySwitch].DeviceType + "-" + strAdapterarray[ArraySwitch].DeviceIDName + "-" + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName];
-                                if (Timer[TimeIndex] === undefined) {
-                                    Timer.push(TimeIndex);
-                                }
-                                if (Timer[TimeIndex]) {
-                                    clearTimeout(Timer[TimeIndex]);
-                                    Timer[TimeIndex] = null;
-                                }
-                                //================Check State (Device)
-                                if (strAdapterarray[ArraySwitch].activate) {
-                                    //================Check Schedule Time and Day (Device)
-                                    var DevRetDay = Adapter.getDayWeek(strAdapterarray[ArraySwitch]);
-                                    if (Adapter.inTime(strAdapterarray[ArraySwitch].Schedule_Start, strAdapterarray[ArraySwitch].Schedule_End, DevRetDay)) {
-                                        Adapter.log.info("defined times: " + strAdapterarray[ArraySwitch].Schedule_Start + "-" + strAdapterarray[ArraySwitch].Schedule_End + " Week Days: " + DevRetDay);
-                                        Adapter.trigerSpeak(strAdapterarray, ArraySwitch);
-                                        if (strAdapterarray[ArraySwitch].OnState) {
-                                            var StringToCommandon = strAdapterarray[ArraySwitch].OnObjectString;
-                                            var ObjectToCommandon = strAdapterarray[ArraySwitch].OnObject;
-                                            var StringToCommandoff = strAdapterarray[ArraySwitch].OffObjectString;
-                                            var ObjectToCommandoff = strAdapterarray[ArraySwitch].OffObject;
-                                        } else {
-                                            var StringToCommandon = strAdapterarray[ArraySwitch].OffObjectString;
-                                            var ObjectToCommandon = strAdapterarray[ArraySwitch].OffObject;
-                                            var StringToCommandoff = strAdapterarray[ArraySwitch].OnObjectString;
-                                            var ObjectToCommandoff = strAdapterarray[ArraySwitch].OnObject;
-                                        }
-                                        Adapter.log.info("FoundSwitch: " + ObjectToCommandon + " with: " + StringToCommandon);
-                                        if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) {
-                                            Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
-                                        } else {
-                                            Adapter.setForeignStateAsync(ObjectToCommandon, eval(StringToCommandon));
-                                        }
-                                        Timer[TimeIndex] = setTimeout(function() {
-                                            Timer[TimeIndex] = null;
-                                            Adapter.log.info("FoundSwitch: " + ObjectToCommandoff + " with: " + StringToCommandoff);
-                                            if (/^#[0-9A-F]{6}$/i.test(StringToCommandoff)) {
-                                                Adapter.setForeignStateAsync(ObjectToCommandoff, StringToCommandoff); // Licht/Gerät aus nach Ablauf Timer
-                                            } else {
-                                                Adapter.setForeignStateAsync(ObjectToCommandoff, eval(StringToCommandoff)); // Licht/Gerät aus nach Ablauf Timer
-                                            }
-                                        }, strAdapterarray[strArrayDev].MotionTimeValue * 1000); // Timer setzen auf X Minuten
-                                        Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": motion detected, event is triggered for " + strAdapterarray[strArrayDev].MotionTimeValue + " seconds.");
-                                    } else {
-                                        Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": motion detected, defined times returns false!");
-                                    }
-                                }
-                            } else {
-                                Adapter.log.info("Alarm returns incorrect settings! Alarm setting is " + strAdapterarray[ArraySwitch].AlarmNumber + ", the current alarm is " + CommandSPTG.AlarmObject);
-                            }
-                        }
-                    }
-                }
-            }
-            //**********************************************************************************************************************************************************
             //******************************************************************Clean***********************************************************************************
             //**********************************************************************************************************************************************************
         async Cleareverything() {
@@ -1957,7 +2119,7 @@ class alarmcontrol extends utils.Adapter {
                     this.log.error(error.stack);
                 }
             });
-            Timer.forEach((TimeIndexName) => {
+            TimerMotion.forEach((TimeIndexName) => {
                 try {
                     var TimeIndexVar = TimeIndexName.toString().split('-')
                     Adapter.CleareverySwitch(TimeIndexVar[2] + '-' + TimeIndexVar[3]);
@@ -2245,20 +2407,20 @@ class alarmcontrol extends utils.Adapter {
                                                         RetIllumination.then((val) => {
                                                             //this.log.info(": return" + val);
                                                             if (val) {
-                                                                Adapter.triggerDevice(Adapterarray[0], ArrayDev)
+                                                                Adapter.triggerMotion(Adapterarray[0], ArrayDev)
                                                             } else {
                                                                 Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": (Measured lux differs from the threshold.) motion detected, event is triggered for " + Adapterarray[0][ArrayDev].MotionTimeValue + " seconds.");
                                                             }
                                                         });
                                                     } else {
                                                         //================No Illumination State
-                                                        Adapter.triggerDevice(Adapterarray[0], ArrayDev)
+                                                        Adapter.triggerMotion(Adapterarray[0], ArrayDev)
                                                         Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": (No Illumination) motion detected, event is triggered for " + Adapterarray[0][ArrayDev].MotionTimeValue + " seconds.");
                                                     }
                                                 }
                                             } else {
                                                 //================No Schdule
-                                                Adapter.triggerDevice(Adapterarray[0], ArrayDev)
+                                                Adapter.triggerMotion(Adapterarray[0], ArrayDev)
                                                 Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": (No Schedule) motion detected, event is triggered for " + Adapterarray[0][ArrayDev].MotionTimeValue + " seconds.");
                                             }
                                         }
@@ -2287,7 +2449,6 @@ class alarmcontrol extends utils.Adapter {
                                                 if (Adapter.inTime(Adapterarray[0][ArrayDev].Schedule_Start, Adapterarray[0][ArrayDev].Schedule_End, RetDay)) {
                                                     Adapter.trigerSpeak(Adapterarray[0], ArrayDev);
                                                     Adapter.trigerReed(Adapterarray[0], ArrayDev);
-                                                    //~ Adapter.triggerDevice(Adapterarray[0], ArrayDev)
                                                     Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": Window & Door State changed, event is triggered");
                                                 }
                                             } else {
@@ -2313,7 +2474,7 @@ class alarmcontrol extends utils.Adapter {
                             if (id == Adapterarray[0][ArrayDev].OtherObject) {
                                 //=======================================check Value (comparison)=======================================
                                 if (/=|<|>/.test(Adapterarray[0][ArrayDev].OtherObjectValue)) {
-                                    var getOtherStateVal = Adapter.CheckOtherState(Adapterarray[0][ArrayDev].OtherObjectValue, Adapterarray[0][ArrayDev].OtherObject);
+                                    var getOtherStateVal = Adapter.CheckOtherState(Adapterarray[0][ArrayDev].OtherObjectValue, Adapterarray[0][ArrayDev].OtherObject, Adapterarray[0][ArrayDev].DeviceIDName);
                                     getOtherStateVal.then((val) => {
                                         if (val) {
                                             var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
@@ -2807,6 +2968,18 @@ class alarmcontrol extends utils.Adapter {
                             native: {}
                         });
                         Adapter.setStateAsync(ToCreateChannel + '.TimerCountdownValue', recivemsg.message.TimerCountdownValue, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.SetSunlight', {
+                            type: "state",
+                            common: {
+                                name: 'SetSunlight',
+                                desc: 'SetSunlight',
+                                type: 'string',
+                                role: 'text',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.SetSunlight', recivemsg.message.SetSunlight, true);
                         break;
                 }
                 await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Schedule_Enabled', {
@@ -3186,16 +3359,18 @@ class alarmcontrol extends utils.Adapter {
                                 //Adapter.log.info("Others: " + JSON.stringify(devicearray));
                                 //Adapter.log.info('Found: ' + LogTextNumberOther + ' Others: ' + LogTextStringOther);
                                 break;
-                                /*******************************************************Other***********************************************************************************/
+                                /*******************************************************Timer***********************************************************************************/
                             case "Timer":
                                 LogTextStringTimer += MyChannelname + ' | ';
                                 LogTextNumberTimer += 1;
                                 let TimerObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerObject');
                                 let TimerTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerTimeValue');
                                 let TimerCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerCountdownValue');
+                                let SetSunlight = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SetSunlight');
                                 devicearray[MyChannelname] = {
                                     DeviceIDName: DeviceIDName.val,
                                     DeviceType: DeviceType.val,
+                                    SetSunlight: SetSunlight.val,
                                     TimerObject: TimerObject.val,
                                     TimerTimeValue: TimerTimeValue.val,
                                     TimerCountdownValue: TimerCountdownValue.val,
