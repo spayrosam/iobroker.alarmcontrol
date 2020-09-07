@@ -34,3 +34,5 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ![](https://github.com/spayrosam/iobroker.alarmcontrol/blob/master/alarmcontrol1.png)
+![](https://github.com/spayrosam/iobroker.alarmcontrol/blob/master/alarmcontrol2.png)
+![](https://github.com/spayrosam/iobroker.alarmcontrol/blob/master/alarmcontrol3.png)
