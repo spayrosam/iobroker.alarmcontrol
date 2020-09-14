@@ -87,6 +87,7 @@
                 $("#ReedDevices").html("");
                 $("#OtherDevices").html("");
                 $("#TimerDevices").html("");
+				$("#TemperatureDevices").html("");
                 for (let ArrayDev in response.devicearray) {
                     ShowDevices(response.devicearray[ArrayDev]);
                     console.log(response);
@@ -370,6 +371,7 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
+								$("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -414,6 +416,7 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
+								$("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -458,6 +461,7 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
+								$("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -471,6 +475,47 @@
                             $('#MotionTimeValue').val('');
                         });
                         break;
+					 case "Temperature":
+					 sendTo(null, 'adddevice', {
+                            DeviceIDName: $('#DeviceIDName').val(),
+                            DeviceType: $('#DeviceType').val(),
+                            TemperatureObject: $('#TemperatureObject').val(),
+                            TemperatureObjectValue: $('#TemperatureObjectValue').val(),
+                            TimedOutValue: $('#TimedOutValue').val(),
+                            Schedule_Enabled: chboxScheduleWrite,
+                            Schedule_Monday: chboxScheduleMondayWrite,
+                            Schedule_Tuesday: chboxScheduleTuesdayWrite,
+                            Schedule_Wednesday: chboxScheduleWednesdayWrite,
+                            Schedule_Thursday: chboxScheduleThursdayWrite,
+                            Schedule_Friday: chboxScheduleFridayWrite,
+                            Schedule_Saturday: chboxScheduleSaturdayWrite,
+                            Schedule_Sunday: chboxScheduleSundayWrite,
+                            Schedule_Start: $('#Schedule_Start').val(),
+                            Schedule_End: $('#Schedule_End').val(),
+                            Speach: chboxSpeachWrite,
+                            Echos: $('#Echos').val(),
+                            SpeachString: $('#SpeachString').val(),
+                            AlarmNumber: $('#AlarmNumber').val(),
+                            activate: chboxActivateWrite
+                        }, response => {
+                            sendTo(null, 'getdevice', {}, response => {
+                                $("#SwitchDevices").html("");
+                                $("#MotionDevices").html("");
+                                $("#ReedDevices").html("");
+                                $("#OtherDevices").html("");
+                                $("#TimerDevices").html("");
+								$("#TemperatureDevices").html("");
+                                for (let ArrayDev in response.devicearray) {
+                                    ShowDevices(response.devicearray[ArrayDev]);
+                                    console.log(response);
+                                }
+                                onChange(true);
+                            });
+                            $('#TemperatureObject').val('');
+                            $('##TemperatureObjectValue').val('');
+                            $('##TimedOutValue').val('00:00:00');
+                        });
+					  break;
                     case "Other":
                         sendTo(null, 'adddevice', {
                             DeviceIDName: $('#DeviceIDName').val(),
@@ -502,6 +547,7 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
+								$("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -545,6 +591,7 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
+								$("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -771,8 +818,8 @@
             ShowCtrl("TemperatureObjectLbl");
             ShowCtrl("TemperatureObjectValue");
             ShowCtrl("TemperatureObjectValueLbl");
-            ShowCtrl("TemperatureTimeValue");
-            ShowCtrl("TemperatureTimeValueLbl");
+            ShowCtrl("TimedOutValue");
+            ShowCtrl("TimedOutValueLbl");
         }
 
         function HideTemperature() {
@@ -781,8 +828,8 @@
             HideCtrl("TemperatureObjectLbl");
             HideCtrl("TemperatureObjectValue");
             HideCtrl("TemperatureObjectValueLbl");
-            HideCtrl("TemperatureTimeValue");
-            HideCtrl("TemperatureTimeValueLbl");
+            HideCtrl("TimedOutValue");
+            HideCtrl("TimedOutValueLbl");
         }
 
         function ShowOther() {
@@ -1104,6 +1151,66 @@
                     TagMotion += '<a class="deleteMotion-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a></td>';
                     TagMotion += '</tr>';
                     $('#MotionDevices').append(TagMotion);
+                    optText = DeviceGetArray.DeviceIDName;
+                    optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                    optValue.trim();
+                    if ($('#trigerswitch').find("option[value='" + optValue + "']").length) {
+                        $('#trigerswitch').val(optValue).trigger('change');
+                    } else {
+                        //Create Option and pre-select
+                        var newOption = new Option(optText, optValue, true, false);
+                        // Append
+                        $('#trigerswitch').append(newOption).trigger('change');
+                        //Update Select
+                        let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                        instance.destroy();
+                        instances = M.FormSelect.init($('#trigerswitch'));
+                    }
+                    break;
+                    //*******************************************************Temperature************************************************************************************/
+				case "Temperature":
+                    let TagTemperature = '<tr> ';
+                    TagTemperature += '<td><label><input type="checkbox" id="TemperatureCheckBActive-' + IDEditDelete + '" ' + chbox + '/><span></span></label></td>';
+                    TagTemperature += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
+                    TagTemperature += '<td>' + DeviceGetArray.DeviceIDName + '</td> ';
+                    TagTemperature += '<td>' + DeviceGetArray.TemperatureObject + '</td> ';
+                    TagTemperature += '<td>' + DeviceGetArray.TemperatureObjectValue + '</td> ';
+                    TagTemperature += '<td>' + DeviceGetArray.TimedOutValue + '</td> ';
+                    let CollectdaysTemperature = '';
+                    if (DeviceGetArray.Schedule_Enabled) {
+                        CollectdaysTemperature += DeviceGetArray.Schedule_Start + '-';
+                        CollectdaysTemperature += DeviceGetArray.Schedule_End + ' ';
+                        if (DeviceGetArray.Schedule_Monday) {
+                            CollectdaysTemperature += 'Mo '
+                        }
+                        if (DeviceGetArray.Schedule_Tuesday) {
+                            CollectdaysTemperature += 'Tu '
+                        }
+                        if (DeviceGetArray.Schedule_Wednesday) {
+                            CollectdaysTemperature += 'We '
+                        }
+                        if (DeviceGetArray.Schedule_Thursday) {
+                            CollectdaysTemperature += 'Th '
+                        }
+                        if (DeviceGetArray.Schedule_Friday) {
+                            CollectdaysTemperature += 'Fr '
+                        }
+                        if (DeviceGetArray.Schedule_Saturday) {
+                            CollectdaysTemperature += 'Sa '
+                        }
+                        if (DeviceGetArray.Schedule_Sunday) {
+                            CollectdaysTemperature += 'Su '
+                        }
+                        TagTemperature += '<td>' + CollectdaysTemperature + '</td> ';
+                    } else {
+                        TagTemperature += '<td>' + CollectdaysTemperature + '</td> ';
+                    }
+                    TagTemperature += '<td><label><input type="checkbox" id="TemperatureCheckBSpeach-' + IDEditDelete + '" ' + chboxSpeach + '/><span></span></label></td>';
+                    TagTemperature += '<td>' + DeviceGetArray.SpeachString + '</td>';
+                    TagTemperature += '<td><a class="EditTemperature-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit" class="translate">edit</i></a>';
+                    TagTemperature += '<a class="deleteTemperature-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a></td>';
+                    TagTemperature += '</tr>';
+                    $('#TemperatureDevices').append(TagTemperature);
                     optText = DeviceGetArray.DeviceIDName;
                     optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
                     optValue.trim();
@@ -1553,6 +1660,104 @@
                 });
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.MotionTimeValue`, (error, state) => {
                     $('#MotionTimeValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Enabled`, (error, state) => {
+                    $('#Schedule_Enabled').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Start`, (error, state) => {
+                    $('#Schedule_Start').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_End`, (error, state) => {
+                    $('#Schedule_End').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Monday`, (error, state) => {
+                    $('#Schedule_Monday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Wednesday`, (error, state) => {
+                    $('#Schedule_Wednesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Thursday`, (error, state) => {
+                    $('#Schedule_Thursday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Friday`, (error, state) => {
+                    $('#Schedule_Friday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Saturday`, (error, state) => {
+                    $('#Schedule_Saturday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Sunday`, (error, state) => {
+                    $('#Schedule_Sunday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, (error, state) => {
+                    $('#Speach').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Echos`, (error, state) => {
+                    $('#Echos').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SpeachString`, (error, state) => {
+                    $('#SpeachString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.AlarmNumber`, (error, state) => {
+                    $('#AlarmNumber').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, (error, state) => {
+                    $('#activate').prop('checked', state.val);
+                });
+                UpdateSelect();
+            });
+			 //===========================================DELETE Temperature===================================================
+            $('.deleteTemperature-' + IDEditDelete).on('click', function() {
+                sendTo(null, 'deletedevice', {
+                    DeviceIDName: DeviceGetArray.DeviceIDName,
+                    DeviceType: DeviceGetArray.DeviceType
+                }, response => {
+                    console.log(response);
+                });
+                $(this).parents('tr').remove();
+                optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                $("#trigerswitch option[value='" + optValue + "']").remove();
+                let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                instance.destroy();
+                instances = M.FormSelect.init($('#trigerswitch'));
+            });
+            //===========================================Toggle Temperature===================================================
+            $('#TemperatureCheckBActive-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, false);
+                }
+            });
+            //===========================================Toggle Temperature Speach=============================================
+            $('#TemperatureCheckBSpeach-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, false);
+                }
+            });
+            //===========================================EDIT Temperature===================================================
+            $('.EditTemperature-' + IDEditDelete).on('click', function() {
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceIDName`, (error, state) => {
+                    $('#DeviceIDName').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceType`, (error, state) => {
+                    $('#DeviceType').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.TemperatureObject`, (error, state) => {
+                    $('#TemperatureObject').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.TemperatureObjectValue`, (error, state) => {
+                    $('#TemperatureObjectValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.TimedOutValue`, (error, state) => {
+                    $('#TimedOutValue').val(state.val);
                 });
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Enabled`, (error, state) => {
                     $('#Schedule_Enabled').prop('checked', state.val);
@@ -2115,11 +2320,11 @@
                     <div id="elementRight"><input type="text" id="TemperatureObject" class="value" placeholder="object ***Temperature" /></div>
                     <div id="elementBottom"><label id="TemperatureObjectLbl" class="translate">Temperature object</label></div>
                 </div>
-                <div class="col s2"><input type="number" id="TemperatureObjectValue" class="value" placeholder="18" />
+                <div class="col s2"><input type="text" id="TemperatureObjectValue" class="value" placeholder="<18" />
                     <div id="elementBottom"><label id="TemperatureObjectValueLbl" class="translate">Temperature value</label></div>
                 </div>
-                <div class="col s2"><input type="number" id="TemperatureTimeValue" class="value" placeholder="30" min="0" max="900" />
-                    <div id="elementBottom"><label id="TemperatureTimeValueLbl" class="translate">Trigger time</label></div>
+                <div class="col s2"><input type="time" id="TimedOutValue" value="00:00:00" step="1" />
+                    <div id="elementBottom"><label id="TimedOutValueLbl" class="translate">Timed out</label></div>
                 </div>
                 <!--Other section-->
                 <div class="col s6">
