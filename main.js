@@ -735,28 +735,28 @@ class alarmcontrol extends utils.Adapter {
                                 let TemperatureObjectValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TemperatureObjectValue');
                                 let TimedOutValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimedOutValue');
                                 devicearray[MyChannelname] = {
-                                    DeviceIDName: DeviceIDName.val,
-                                    DeviceType: DeviceType.val,
-                                    TemperatureObject: TemperatureObject.val,
-                                    TemperatureObjectValue: TemperatureObjectValue.val,
-                                    TimedOutValue: TimedOutValue.val,
-                                    Schedule_Enabled: Schedule_Enabled,
-                                    Schedule_Start: Schedule_Start.val,
-                                    Schedule_End: Schedule_End.val,
-                                    Schedule_Monday: Schedule_Monday.val,
-                                    Schedule_Tuesday: Schedule_Tuesday.val,
-                                    Schedule_Wednesday: Schedule_Wednesday.val,
-                                    Schedule_Thursday: Schedule_Thursday.val,
-                                    Schedule_Friday: Schedule_Friday.val,
-                                    Schedule_Saturday: Schedule_Saturday.val,
-                                    Schedule_Sunday: Schedule_Sunday.val,
-                                    Speach: Speach.val,
-                                    Echos: Echos.val,
-                                    SpeachString: SpeachString.val,
-                                    AlarmNumber: AlarmNumber.val,
-                                    activate: activate.val
-                                }
-                                //=======================================Reload History=======================================
+                                        DeviceIDName: DeviceIDName.val,
+                                        DeviceType: DeviceType.val,
+                                        TemperatureObject: TemperatureObject.val,
+                                        TemperatureObjectValue: TemperatureObjectValue.val,
+                                        TimedOutValue: TimedOutValue.val,
+                                        Schedule_Enabled: Schedule_Enabled,
+                                        Schedule_Start: Schedule_Start.val,
+                                        Schedule_End: Schedule_End.val,
+                                        Schedule_Monday: Schedule_Monday.val,
+                                        Schedule_Tuesday: Schedule_Tuesday.val,
+                                        Schedule_Wednesday: Schedule_Wednesday.val,
+                                        Schedule_Thursday: Schedule_Thursday.val,
+                                        Schedule_Friday: Schedule_Friday.val,
+                                        Schedule_Saturday: Schedule_Saturday.val,
+                                        Schedule_Sunday: Schedule_Sunday.val,
+                                        Speach: Speach.val,
+                                        Echos: Echos.val,
+                                        SpeachString: SpeachString.val,
+                                        AlarmNumber: AlarmNumber.val,
+                                        activate: activate.val
+                                    }
+                                    //=======================================Reload History=======================================
                                 var TemperatureIndex = devicearray[MyChannelname].DeviceType + "-" + devicearray[MyChannelname].DeviceIDName;
                                 if (TemperatureTOutObj[TemperatureIndex] == undefined) {
                                     //===========================Get History
@@ -1552,9 +1552,16 @@ class alarmcontrol extends utils.Adapter {
                                     } else if (TestDevArray[0][RArrD].DeviceType == "Timer") {
                                         //~ TestEventObject = TestDevArray[0][RArrD].TimerObject;
                                         TestEventObjectString = TestDevArray[0][RArrD].TimerObject;
-                                    } else if (TestDevArray[0][RArrD].DeviceType == "Temperature") {}
+                                    } else if (TestDevArray[0][RArrD].DeviceType == "Temperature") {
+                                        TestEventObject = TestDevArray[0][RArrD].DeviceType + "." + TestDevArray[0][RArrD].DeviceIDName + ".TemperatureResult";
+                                        TestEventObjectString = true;
+                                    }
                                     if (TestDevArray[0][RArrD].DeviceType !== "Timer") {
-                                        var ObTestGetEventObject = await Adapter.getForeignStateAsync(TestEventObject)
+                                        if (TestDevArray[0][RArrD].DeviceType == "Temperature") {
+                                            var ObTestGetEventObject = await Adapter.getStateAsync(TestEventObject);
+                                        } else {
+                                            var ObTestGetEventObject = await Adapter.getForeignStateAsync(TestEventObject)
+                                        }
                                         if (ObTestGetEventObject) {
                                             TestGetEventObject = ObTestGetEventObject.val;
                                         }
