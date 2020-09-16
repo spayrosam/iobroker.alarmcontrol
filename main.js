@@ -869,9 +869,9 @@ class alarmcontrol extends utils.Adapter {
                 Adapter.log.info('Found: ' + LogTextNumberTemperature + ' Temperature sensors: ' + LogTextStringTemperature);
                 Adapter.log.info('Found: ' + LogTextNumberOther + ' Other: ' + LogTextStringOther);
                 Adapter.log.info('Found: ' + LogTextNumberTimer + ' Timer: ' + LogTextStringTimer);
-                Adapter.log.info("Settings ==> " + JSON.stringify(devicearray));
+                //Adapter.log.info("Settings ==> " + JSON.stringify(devicearray));
                 Adapter.log.info('Found: ' + LogTextNumber + ' Family member: ' + LogTextString);
-                Adapter.log.info('Family ==> ' + JSON.stringify(Familyarray));
+                //Adapter.log.info('Family ==> ' + JSON.stringify(Familyarray));
                 Adapter.main(devicearray, Familyarray);
                 await Adapter.setState('Change', {
                     val: JSON.stringify(devicearray)
@@ -1915,46 +1915,48 @@ class alarmcontrol extends utils.Adapter {
             var iduration = parseInt(Adapter.convertTimeToseconds(strAdapterarray[strArrayDev].TimedOutValue))
             var ToSearch = strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName;
             for (let ArraySwitch in strAdapterarray) {
-                //================Check Device List
-                var FindAllTriger = Adapter.checkTrigger(strAdapterarray, ArraySwitch, ToSearch, false);
-                if (FindAllTriger !== false) {
-                    var iFA;
-                    for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
-                        if (FindAllTriger[iFA] == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
-                            Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + (iFA + 1) + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
-                            var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArraySwitch].AlarmNumber);
-                            if (GetAlarm) {
-                                //================Check State (Device)
-                                if (strAdapterarray[ArraySwitch].activate) {
-                                    //================Check Schedule Time and Day (Device)
-                                    var DevRetDay = Adapter.getDayWeek(strAdapterarray[ArraySwitch]);
-                                    if (Adapter.inTime(strAdapterarray[ArraySwitch].Schedule_Start, strAdapterarray[ArraySwitch].Schedule_End, DevRetDay)) {
-                                        Adapter.log.info("defined times: " + strAdapterarray[ArraySwitch].Schedule_Start + "-" + strAdapterarray[ArraySwitch].Schedule_End + " Week Days: " + DevRetDay);
-                                        Adapter.trigerSpeak(strAdapterarray, ArraySwitch);
-                                        if (strAdapterarray[ArraySwitch].OnState) {
-                                            var StringToCommandon = strAdapterarray[ArraySwitch].OnObjectString;
-                                            var ObjectToCommandon = strAdapterarray[ArraySwitch].OnObject;
-                                            var StringToCommandoff = strAdapterarray[ArraySwitch].OffObjectString;
-                                            var ObjectToCommandoff = strAdapterarray[ArraySwitch].OffObject;
+                if (strAdapterarray[strArrayDev].DeviceType == "Switch") {
+                    //================Check Device List
+                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray, ArraySwitch, ToSearch, false);
+                    if (FindAllTriger !== false) {
+                        var iFA;
+                        for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
+                            if (FindAllTriger[iFA] == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
+                                Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + (iFA + 1) + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
+                                var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArraySwitch].AlarmNumber);
+                                if (GetAlarm) {
+                                    //================Check State (Device)
+                                    if (strAdapterarray[ArraySwitch].activate) {
+                                        //================Check Schedule Time and Day (Device)
+                                        var DevRetDay = Adapter.getDayWeek(strAdapterarray[ArraySwitch]);
+                                        if (Adapter.inTime(strAdapterarray[ArraySwitch].Schedule_Start, strAdapterarray[ArraySwitch].Schedule_End, DevRetDay)) {
+                                            Adapter.log.info("defined times: " + strAdapterarray[ArraySwitch].Schedule_Start + "-" + strAdapterarray[ArraySwitch].Schedule_End + " Week Days: " + DevRetDay);
+                                            Adapter.trigerSpeak(strAdapterarray, ArraySwitch);
+                                            if (strAdapterarray[ArraySwitch].OnState) {
+                                                var StringToCommandon = strAdapterarray[ArraySwitch].OnObjectString;
+                                                var ObjectToCommandon = strAdapterarray[ArraySwitch].OnObject;
+                                                var StringToCommandoff = strAdapterarray[ArraySwitch].OffObjectString;
+                                                var ObjectToCommandoff = strAdapterarray[ArraySwitch].OffObject;
+                                            } else {
+                                                var StringToCommandon = strAdapterarray[ArraySwitch].OffObjectString;
+                                                var ObjectToCommandon = strAdapterarray[ArraySwitch].OffObject;
+                                                var StringToCommandoff = strAdapterarray[ArraySwitch].OnObjectString;
+                                                var ObjectToCommandoff = strAdapterarray[ArraySwitch].OnObject;
+                                            }
+                                            Adapter.log.info("FoundSwitch: " + ObjectToCommandon + " with: " + StringToCommandon);
+                                            if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) {
+                                                Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
+                                            } else {
+                                                Adapter.setForeignStateAsync(ObjectToCommandon, eval(StringToCommandon));
+                                            }
+                                            Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": Temperature was changed, event is triggered for " + strAdapterarray[strArrayDev].MotionTimeValue + " seconds.");
                                         } else {
-                                            var StringToCommandon = strAdapterarray[ArraySwitch].OffObjectString;
-                                            var ObjectToCommandon = strAdapterarray[ArraySwitch].OffObject;
-                                            var StringToCommandoff = strAdapterarray[ArraySwitch].OnObjectString;
-                                            var ObjectToCommandoff = strAdapterarray[ArraySwitch].OnObject;
+                                            Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": Temperature was changed, defined times returns false!");
                                         }
-                                        Adapter.log.info("FoundSwitch: " + ObjectToCommandon + " with: " + StringToCommandon);
-                                        if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) {
-                                            Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
-                                        } else {
-                                            Adapter.setForeignStateAsync(ObjectToCommandon, eval(StringToCommandon));
-                                        }
-                                        Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": Temperature was changed, event is triggered for " + strAdapterarray[strArrayDev].MotionTimeValue + " seconds.");
-                                    } else {
-                                        Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": Temperature was changed, defined times returns false!");
                                     }
+                                } else {
+                                    Adapter.log.info("Alarm returns incorrect settings! Alarm setting is " + strAdapterarray[ArraySwitch].AlarmNumber + ", the current alarm is " + CommandSPTG.AlarmObject);
                                 }
-                            } else {
-                                Adapter.log.info("Alarm returns incorrect settings! Alarm setting is " + strAdapterarray[ArraySwitch].AlarmNumber + ", the current alarm is " + CommandSPTG.AlarmObject);
                             }
                         }
                     }
