@@ -9,6 +9,9 @@ AlarmControl is a Alarm system adapter with four levels. Create and control thou
 
 ### 0.0.1
 * (spayrosam) initial release
+### 0.1.0
+* (spayrosam) Temperature has been implemented.
+* (spayrosam) 'And' Event fixed.
 
 ## License
 MIT License
