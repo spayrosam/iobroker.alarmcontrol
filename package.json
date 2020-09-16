@@ -1,6 +1,6 @@
 {
   "name": "iobroker.alarmcontrol",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Alarm system with four levels. Create and control thousands of scenes. Integrate voice support to control the created alarm system.",
   "author": {
     "name": "spayrosam",
