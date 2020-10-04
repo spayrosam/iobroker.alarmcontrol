@@ -144,6 +144,11 @@ var OtherTimestamp = [];
 var TimerTimer = [];
 var Timercountdown = [];
 var TimerTimestamp = [];
+//========================Energy
+var EnergyTimer = [];
+var EnergyTimerWh = [];
+var EnergyOutObj = [];
+var EnergyTimerNowWh = [];
 //========================Alarm / level 3
 var startLevelThreeTimer = Date.now();
 var StartCountdownAlarmThree;
@@ -546,6 +551,22 @@ class alarmcontrol extends utils.Adapter {
                             let PresenceState = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.PresenceState');
                             let AbsentSince = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.AbsentSince');
                             let Active = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.Active');
+                            Adapter.setObjectNotExistsAsync(MyFamilyname + "." + MyChannelname + ".RFID", {
+                                type: "state",
+                                common: {
+                                    name: 'RFID',
+                                    desc: 'RFID',
+                                    type: 'boolean',
+                                    role: 'switch',
+                                    write: true
+                                },
+                                native: {}
+                            });
+                            let RFID = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.RFID');
+                            if (!RFID) {
+                                Adapter.setStateAsync(MyFamilyname + "." + MyChannelname + '.RFID', false, true);
+                                let RFID = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.RFID');
+                            }
                             Familyarray[MyChannelname] = {
                                 IDName: IDName.val,
                                 PresenceObject: PresenceObject.val,
@@ -553,6 +574,7 @@ class alarmcontrol extends utils.Adapter {
                                 PresenceStamp: PresenceStamp.val,
                                 PresenceState: PresenceState.val,
                                 AbsentSince: AbsentSince.val,
+                                RFID: RFID.val,
                                 Active: Active.val
                             };
                         }
@@ -569,6 +591,8 @@ class alarmcontrol extends utils.Adapter {
                     LogTextNumberTemperature = 0;
                 let LogTextStringReed = "",
                     LogTextNumberReed = 0;
+                let LogTextStringEnergy = "",
+                    LogTextNumberEnergy = 0;
                 let LogTextStringOther = "",
                     LogTextNumberOther = 0;
                 let LogTextStringTimer = "",
@@ -579,136 +603,99 @@ class alarmcontrol extends utils.Adapter {
                     let MyDevicename = devicenumber[idx].common.name;
                     for (let idxS = 0; idxS < AllMyDevicename.length; idxS++) {
                         let MyChannelname = AllMyDevicename[idxS].common.name;
-                        /*******************************************************Filter All************************************************************************************/
-                        let DeviceIDName = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.DeviceIDName');
-                        let DeviceType = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.DeviceType');
-                        let Schedule_Enabled = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Enabled');
-                        let Schedule_Start = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Start');
-                        let Schedule_End = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_End');
-                        let Schedule_Monday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Monday');
-                        let Schedule_Tuesday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Tuesday');
-                        let Schedule_Wednesday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Wednesday');
-                        let Schedule_Thursday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Thursday');
-                        let Schedule_Friday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Friday');
-                        let Schedule_Saturday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Saturday');
-                        let Schedule_Sunday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Sunday');
-                        let Speach = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Speach');
-                        let Echos = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Echos');
-                        if (Echos == undefined) {
-                            await Adapter.setObjectNotExistsAsync(MyDevicename + "." + MyChannelname + '.Echos', {
-                                type: "state",
-                                common: {
-                                    name: 'Echos',
-                                    desc: 'Echos',
-                                    type: 'string',
-                                    role: 'text',
-                                    write: false
-                                },
-                                native: {}
-                            });
-                            Adapter.setStateAsync(MyDevicename + "." + MyChannelname + '.Echos', "MyEcho", true);
-                        }
-                        let SpeachString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SpeachString');
-                        let AlarmNumber = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.AlarmNumber');
-                        let activate = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.activate');
-                        switch (MyDevicename) {
-                            /*******************************************************Switch************************************************************************************/
-                            case "Switch":
-                                LogTextStringSwitch += MyChannelname + ' | ';
-                                LogTextNumberSwitch += 1;
-                                let OnState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnState');
-                                let OnObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnObject');
-                                let OnObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnObjectString');
-                                let OffState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffState');
-                                let OffObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObject');
-                                let OffObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObjectString');
-                                let trigerswitch = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.trigerswitch');
-                                let SwitchMode = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SwitchMode');
-                                devicearray[MyChannelname] = {
-                                    DeviceIDName: DeviceIDName.val,
-                                    DeviceType: DeviceType.val,
-                                    OnState: OnState.val,
-                                    OnObject: OnObject.val,
-                                    OnObjectString: OnObjectString.val,
-                                    OffState: OffState.val,
-                                    OffObject: OffObject.val,
-                                    OffObjectString: OffObjectString.val,
-                                    Schedule_Enabled: Schedule_Enabled,
-                                    Schedule_Start: Schedule_Start.val,
-                                    Schedule_End: Schedule_End.val,
-                                    Schedule_Monday: Schedule_Monday.val,
-                                    Schedule_Tuesday: Schedule_Tuesday.val,
-                                    Schedule_Wednesday: Schedule_Wednesday.val,
-                                    Schedule_Thursday: Schedule_Thursday.val,
-                                    Schedule_Friday: Schedule_Friday.val,
-                                    Schedule_Saturday: Schedule_Saturday.val,
-                                    Schedule_Sunday: Schedule_Sunday.val,
-                                    Speach: Speach.val,
-                                    Echos: Echos.val,
-                                    SpeachString: SpeachString.val,
-                                    AlarmNumber: AlarmNumber.val,
-                                    SwitchMode: SwitchMode.val,
-                                    trigerswitch: trigerswitch.val,
-                                    activate: activate.val
-                                };
-                                //Adapter.log.info("Switchs: " + JSON.stringify(devicearray));
-                                //Adapter.log.info('Found: ' + LogTextNumberSwitch + ' Switchs: ' + LogTextStringSwitch);
-                                break;
+                        if (MyChannelname !== 'Database') {
+                            /*******************************************************Filter All************************************************************************************/
+                            let DeviceIDName = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.DeviceIDName');
+                            let DeviceType = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.DeviceType');
+                            let Schedule_Enabled = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Enabled');
+                            let Schedule_Start = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Start');
+                            let Schedule_End = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_End');
+                            let Schedule_Monday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Monday');
+                            let Schedule_Tuesday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Tuesday');
+                            let Schedule_Wednesday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Wednesday');
+                            let Schedule_Thursday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Thursday');
+                            let Schedule_Friday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Friday');
+                            let Schedule_Saturday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Saturday');
+                            let Schedule_Sunday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Sunday');
+                            let Speach = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Speach');
+                            let Echos = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Echos');
+                            if (Echos == undefined) {
+                                await Adapter.setObjectNotExistsAsync(MyDevicename + "." + MyChannelname + '.Echos', {
+                                    type: "state",
+                                    common: {
+                                        name: 'Echos',
+                                        desc: 'Echos',
+                                        type: 'string',
+                                        role: 'text',
+                                        write: false
+                                    },
+                                    native: {}
+                                });
+                                Adapter.setStateAsync(MyDevicename + "." + MyChannelname + '.Echos', "MyEcho", true);
+                            }
+                            let SpeachString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SpeachString');
+                            let AlarmNumber = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.AlarmNumber');
+                            let activate = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.activate');
+                            switch (MyDevicename) {
                                 /*******************************************************Switch************************************************************************************/
-                            case "Reed":
-                                LogTextStringReed += MyChannelname + ' | ';
-                                LogTextNumberReed += 1;
-                                let ReedObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedObject');
-                                let ReedObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedObjectString');
-                                let EntranceState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EntranceState');
-                                let ReedTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedTimeValue');
-                                let ReedCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedCountdownValue');
-                                devicearray[MyChannelname] = {
-                                    DeviceIDName: DeviceIDName.val,
-                                    DeviceType: DeviceType.val,
-                                    ReedObject: ReedObject.val,
-                                    ReedObjectString: ReedObjectString.val,
-                                    EntranceState: EntranceState.val,
-                                    ReedTimeValue: ReedTimeValue.val,
-                                    ReedCountdownValue: ReedCountdownValue.val,
-                                    Schedule_Enabled: Schedule_Enabled,
-                                    Schedule_Start: Schedule_Start.val,
-                                    Schedule_End: Schedule_End.val,
-                                    Schedule_Monday: Schedule_Monday.val,
-                                    Schedule_Tuesday: Schedule_Tuesday.val,
-                                    Schedule_Wednesday: Schedule_Wednesday.val,
-                                    Schedule_Thursday: Schedule_Thursday.val,
-                                    Schedule_Friday: Schedule_Friday.val,
-                                    Schedule_Saturday: Schedule_Saturday.val,
-                                    Schedule_Sunday: Schedule_Sunday.val,
-                                    Speach: Speach.val,
-                                    Echos: Echos.val,
-                                    SpeachString: SpeachString.val,
-                                    AlarmNumber: AlarmNumber.val,
-                                    activate: activate.val
-                                };
-                                //Adapter.log.info("Switchs: " + JSON.stringify(devicearray));
-                                //Adapter.log.info('Found: ' + LogTextNumberSwitch + ' Switchs: ' + LogTextStringSwitch);
-                                break;
-                                /*******************************************************MOTIONS************************************************************************************/
-                            case "Motion":
-                                LogTextStringMotion += MyChannelname + ' | ';
-                                LogTextNumberMotion += 1;
-                                let MotionObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionObject');
-                                let MotionObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionObjectString');
-                                let MotionIlluminationActiv = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionIlluminationActiv');
-                                let IlluminationObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.IlluminationObject');
-                                let IlluminationValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.IlluminationValue');
-                                let MotionTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionTimeValue');
-                                devicearray[MyChannelname] = {
+                                case "Switch":
+                                    LogTextStringSwitch += MyChannelname + ' | ';
+                                    LogTextNumberSwitch += 1;
+                                    let OnState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnState');
+                                    let OnObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnObject');
+                                    let OnObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnObjectString');
+                                    let OffState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffState');
+                                    let OffObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObject');
+                                    let OffObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObjectString');
+                                    let trigerswitch = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.trigerswitch');
+                                    let SwitchMode = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SwitchMode');
+                                    devicearray[MyChannelname] = {
                                         DeviceIDName: DeviceIDName.val,
                                         DeviceType: DeviceType.val,
-                                        MotionObject: MotionObject.val,
-                                        MotionObjectString: MotionObjectString.val,
-                                        IlluminationObject: IlluminationObject.val,
-                                        MotionIlluminationActiv: MotionIlluminationActiv.val,
-                                        IlluminationValue: IlluminationValue.val,
-                                        MotionTimeValue: MotionTimeValue.val,
+                                        OnState: OnState.val,
+                                        OnObject: OnObject.val,
+                                        OnObjectString: OnObjectString.val,
+                                        OffState: OffState.val,
+                                        OffObject: OffObject.val,
+                                        OffObjectString: OffObjectString.val,
+                                        Schedule_Enabled: Schedule_Enabled,
+                                        Schedule_Start: Schedule_Start.val,
+                                        Schedule_End: Schedule_End.val,
+                                        Schedule_Monday: Schedule_Monday.val,
+                                        Schedule_Tuesday: Schedule_Tuesday.val,
+                                        Schedule_Wednesday: Schedule_Wednesday.val,
+                                        Schedule_Thursday: Schedule_Thursday.val,
+                                        Schedule_Friday: Schedule_Friday.val,
+                                        Schedule_Saturday: Schedule_Saturday.val,
+                                        Schedule_Sunday: Schedule_Sunday.val,
+                                        Speach: Speach.val,
+                                        Echos: Echos.val,
+                                        SpeachString: SpeachString.val,
+                                        AlarmNumber: AlarmNumber.val,
+                                        SwitchMode: SwitchMode.val,
+                                        trigerswitch: trigerswitch.val,
+                                        activate: activate.val
+                                    };
+                                    //Adapter.log.info("Switchs: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberSwitch + ' Switchs: ' + LogTextStringSwitch);
+                                    break;
+                                    /*******************************************************Reeds************************************************************************************/
+                                case "Reed":
+                                    LogTextStringReed += MyChannelname + ' | ';
+                                    LogTextNumberReed += 1;
+                                    let ReedObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedObject');
+                                    let ReedObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedObjectString');
+                                    let EntranceState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EntranceState');
+                                    let ReedTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedTimeValue');
+                                    let ReedCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedCountdownValue');
+                                    devicearray[MyChannelname] = {
+                                        DeviceIDName: DeviceIDName.val,
+                                        DeviceType: DeviceType.val,
+                                        ReedObject: ReedObject.val,
+                                        ReedObjectString: ReedObjectString.val,
+                                        EntranceState: EntranceState.val,
+                                        ReedTimeValue: ReedTimeValue.val,
+                                        ReedCountdownValue: ReedCountdownValue.val,
                                         Schedule_Enabled: Schedule_Enabled,
                                         Schedule_Start: Schedule_Start.val,
                                         Schedule_End: Schedule_End.val,
@@ -724,22 +711,126 @@ class alarmcontrol extends utils.Adapter {
                                         SpeachString: SpeachString.val,
                                         AlarmNumber: AlarmNumber.val,
                                         activate: activate.val
+                                    };
+                                    //Adapter.log.info("Switchs: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberSwitch + ' Switchs: ' + LogTextStringSwitch);
+                                    break;
+                                    /*******************************************************Motions************************************************************************************/
+                                case "Motion":
+                                    LogTextStringMotion += MyChannelname + ' | ';
+                                    LogTextNumberMotion += 1;
+                                    let MotionObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionObject');
+                                    let MotionObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionObjectString');
+                                    let MotionIlluminationActiv = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionIlluminationActiv');
+                                    let IlluminationObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.IlluminationObject');
+                                    let IlluminationValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.IlluminationValue');
+                                    let MotionTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionTimeValue');
+                                    devicearray[MyChannelname] = {
+                                            DeviceIDName: DeviceIDName.val,
+                                            DeviceType: DeviceType.val,
+                                            MotionObject: MotionObject.val,
+                                            MotionObjectString: MotionObjectString.val,
+                                            IlluminationObject: IlluminationObject.val,
+                                            MotionIlluminationActiv: MotionIlluminationActiv.val,
+                                            IlluminationValue: IlluminationValue.val,
+                                            MotionTimeValue: MotionTimeValue.val,
+                                            Schedule_Enabled: Schedule_Enabled,
+                                            Schedule_Start: Schedule_Start.val,
+                                            Schedule_End: Schedule_End.val,
+                                            Schedule_Monday: Schedule_Monday.val,
+                                            Schedule_Tuesday: Schedule_Tuesday.val,
+                                            Schedule_Wednesday: Schedule_Wednesday.val,
+                                            Schedule_Thursday: Schedule_Thursday.val,
+                                            Schedule_Friday: Schedule_Friday.val,
+                                            Schedule_Saturday: Schedule_Saturday.val,
+                                            Schedule_Sunday: Schedule_Sunday.val,
+                                            Speach: Speach.val,
+                                            Echos: Echos.val,
+                                            SpeachString: SpeachString.val,
+                                            AlarmNumber: AlarmNumber.val,
+                                            activate: activate.val
+                                        }
+                                        //Adapter.log.info("Motions: " + JSON.stringify(devicearray));
+                                        //Adapter.log.info('Found: ' + LogTextNumberMotion + ' Motions: ' + LogTextStringMotion);
+                                    break;
+                                    /*******************************************************Temperature************************************************************************************/
+                                case "Temperature":
+                                    LogTextStringTemperature += MyChannelname + ' | ';
+                                    LogTextNumberTemperature += 1;
+                                    let TemperatureObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TemperatureObject');
+                                    let TemperatureObjectValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TemperatureObjectValue');
+                                    let TimedOutValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimedOutValue');
+                                    devicearray[MyChannelname] = {
+                                            DeviceIDName: DeviceIDName.val,
+                                            DeviceType: DeviceType.val,
+                                            TemperatureObject: TemperatureObject.val,
+                                            TemperatureObjectValue: TemperatureObjectValue.val,
+                                            TimedOutValue: TimedOutValue.val,
+                                            Schedule_Enabled: Schedule_Enabled,
+                                            Schedule_Start: Schedule_Start.val,
+                                            Schedule_End: Schedule_End.val,
+                                            Schedule_Monday: Schedule_Monday.val,
+                                            Schedule_Tuesday: Schedule_Tuesday.val,
+                                            Schedule_Wednesday: Schedule_Wednesday.val,
+                                            Schedule_Thursday: Schedule_Thursday.val,
+                                            Schedule_Friday: Schedule_Friday.val,
+                                            Schedule_Saturday: Schedule_Saturday.val,
+                                            Schedule_Sunday: Schedule_Sunday.val,
+                                            Speach: Speach.val,
+                                            Echos: Echos.val,
+                                            SpeachString: SpeachString.val,
+                                            AlarmNumber: AlarmNumber.val,
+                                            activate: activate.val
+                                        }
+                                        //=======================================Reload History=======================================
+                                    var TemperatureIndex = devicearray[MyChannelname].DeviceType + "-" + devicearray[MyChannelname].DeviceIDName;
+                                    if (TemperatureTOutObj[TemperatureIndex] == undefined) {
+                                        //===========================Get History
+                                        var GetHistory = await Adapter.getStateAsync(devicearray[MyChannelname].DeviceType + "." + devicearray[MyChannelname].DeviceIDName + '.History');
+                                        if (GetHistory && GetHistory.val) {
+                                            TemperatureTOutObj.push(TemperatureIndex);
+                                            var TempGet = eval("(" + GetHistory.val + ")");
+                                            TemperatureTOutObj[TemperatureIndex] = {
+                                                Result: '',
+                                                State: '',
+                                                Time: '',
+                                                Data: TempGet.Data,
+                                                NowVal: '',
+                                                Count: 0,
+                                                Duration: devicearray[MyChannelname].TimedOutValue
+                                            };
+                                        }
                                     }
-                                    //Adapter.log.info("Motions: " + JSON.stringify(devicearray));
-                                    //Adapter.log.info('Found: ' + LogTextNumberMotion + ' Motions: ' + LogTextStringMotion);
-                                break;
-                            case "Temperature":
-                                LogTextStringTemperature += MyChannelname + ' | ';
-                                LogTextNumberTemperature += 1;
-                                let TemperatureObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TemperatureObject');
-                                let TemperatureObjectValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TemperatureObjectValue');
-                                let TimedOutValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimedOutValue');
-                                devicearray[MyChannelname] = {
+                                    //Adapter.log.info("Temperature: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberTemperature + ' Temperature: ' + LogTextStringTemperature);
+                                    break;
+                                    /*******************************************************Energy************************************************************************************/
+                                case "Energy":
+                                    LogTextStringEnergy += MyChannelname + ' | ';
+                                    LogTextNumberEnergy += 1;
+                                    let EnergyObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyObject');
+                                    let EnergyObjectInput = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyObjectInput');
+                                    let EnergyValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyValue');
+                                    let EnergyPrice = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyPrice');
+                                    let EnergySwitchOff = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergySwitchOff');
+                                    let EnergyConsumption = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumption');
+                                    let EnergyConsumptionDay = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionDay');
+                                    let EnergyConsumptionWeek = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionWeek');
+                                    let EnergyConsumptionMonth = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionMonth');
+                                    let EnergyConsumptionYear = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionYear');
+                                    devicearray[MyChannelname] = {
                                         DeviceIDName: DeviceIDName.val,
                                         DeviceType: DeviceType.val,
-                                        TemperatureObject: TemperatureObject.val,
-                                        TemperatureObjectValue: TemperatureObjectValue.val,
-                                        TimedOutValue: TimedOutValue.val,
+                                        EnergyObject: EnergyObject.val,
+                                        EnergyObjectInput: EnergyObjectInput.val,
+                                        EnergyValue: EnergyValue.val,
+                                        EnergyPrice: EnergyPrice.val,
+                                        EnergySwitchOff: EnergySwitchOff.val,
+                                        EnergyConsumption: EnergyConsumption.val,
+                                        EnergyConsumptionDay: EnergyConsumptionDay.val,
+                                        EnergyConsumptionWeek: EnergyConsumptionWeek.val,
+                                        EnergyConsumptionMonth: EnergyConsumptionMonth.val,
+                                        EnergyConsumptionYear: EnergyConsumptionYear.val,
                                         Schedule_Enabled: Schedule_Enabled,
                                         Schedule_Start: Schedule_Start.val,
                                         Schedule_End: Schedule_End.val,
@@ -755,109 +846,116 @@ class alarmcontrol extends utils.Adapter {
                                         SpeachString: SpeachString.val,
                                         AlarmNumber: AlarmNumber.val,
                                         activate: activate.val
-                                    }
-                                    //=======================================Reload History=======================================
-                                var TemperatureIndex = devicearray[MyChannelname].DeviceType + "-" + devicearray[MyChannelname].DeviceIDName;
-                                if (TemperatureTOutObj[TemperatureIndex] == undefined) {
-                                    //===========================Get History
-                                    var GetHistory = await Adapter.getStateAsync(devicearray[MyChannelname].DeviceType + "." + devicearray[MyChannelname].DeviceIDName + '.History');
-                                    if (GetHistory && GetHistory.val) {
-                                        TemperatureTOutObj.push(TemperatureIndex);
-                                        var TempGet = eval("(" + GetHistory.val + ")");
-                                        TemperatureTOutObj[TemperatureIndex] = {
-                                            Result: '',
-                                            Time: '',
-                                            Data: TempGet.Data,
-                                            NowVal: '',
-                                            Count: 0,
-                                            Duration: devicearray[MyChannelname].TimedOutValue
+                                    };
+
+                                    //=======================================Set Object=======================================
+                                    var EnergyIndex = devicearray[MyChannelname].DeviceType + "-" + devicearray[MyChannelname].DeviceIDName;
+                                    if (EnergyOutObj[EnergyIndex] == undefined) {
+                                        EnergyOutObj[EnergyIndex] = {
+                                            PowerState: false,
+                                            Wh: 0,
+                                            LastTime: 0,
+                                            TimeDiff: 0,
+                                            CurrentConsumption: 0,
+                                            Event: 0,
+                                            Timer: 0,
+                                            Costs: 0,
+                                            StartCosts: 0,
+                                            Price: EnergyPrice.val,
+                                            DeviceIsOff: 0,
+                                            Standbymode: EnergyValue.val,
+                                            StartPowerValue: Math.round(Number(EnergyValue.val) + 1),
+                                            Name: EnergyIndex,
+                                            Object: ''
                                         };
                                     }
-                                }
-                                //Adapter.log.info("Temperature: " + JSON.stringify(devicearray));
-                                //Adapter.log.info('Found: ' + LogTextNumberTemperature + ' Temperature: ' + LogTextStringTemperature);
-                                break;
-                            case "Other":
-                                LogTextStringOther += MyChannelname + ' | ';
-                                LogTextNumberOther += 1;
-                                let OtherObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherObject');
-                                let OtherObjectValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherObjectValue');
-                                let OtherTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherTimeValue');
-                                let OtherCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherCountdownValue');
-                                devicearray[MyChannelname] = {
-                                    DeviceIDName: DeviceIDName.val,
-                                    DeviceType: DeviceType.val,
-                                    OtherObject: OtherObject.val,
-                                    OtherObjectValue: OtherObjectValue.val,
-                                    OtherTimeValue: OtherTimeValue.val,
-                                    OtherCountdownValue: OtherCountdownValue.val,
-                                    Schedule_Enabled: Schedule_Enabled,
-                                    Schedule_Start: Schedule_Start.val,
-                                    Schedule_End: Schedule_End.val,
-                                    Schedule_Monday: Schedule_Monday.val,
-                                    Schedule_Tuesday: Schedule_Tuesday.val,
-                                    Schedule_Wednesday: Schedule_Wednesday.val,
-                                    Schedule_Thursday: Schedule_Thursday.val,
-                                    Schedule_Friday: Schedule_Friday.val,
-                                    Schedule_Saturday: Schedule_Saturday.val,
-                                    Schedule_Sunday: Schedule_Sunday.val,
-                                    Speach: Speach.val,
-                                    Echos: Echos.val,
-                                    SpeachString: SpeachString.val,
-                                    AlarmNumber: AlarmNumber.val,
-                                    activate: activate.val
-                                };
-                                //Adapter.log.info("Others: " + JSON.stringify(devicearray));
-                                //Adapter.log.info('Found: ' + LogTextNumberOther + ' Others: ' + LogTextStringOther);
-                                break;
-                            case "Timer":
-                                LogTextStringTimer += MyChannelname + ' | ';
-                                LogTextNumberTimer += 1;
-                                let TimerObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerObject');
-                                let TimerTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerTimeValue');
-                                let TimerCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerCountdownValue');
-                                let SetSunlight = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SetSunlight');
-                                devicearray[MyChannelname] = {
-                                    DeviceIDName: DeviceIDName.val,
-                                    DeviceType: DeviceType.val,
-                                    TimerObject: TimerObject.val,
-                                    TimerTimeValue: TimerTimeValue.val,
-                                    TimerCountdownValue: TimerCountdownValue.val,
-                                    SetSunlight: SetSunlight.val,
-                                    Schedule_Enabled: Schedule_Enabled,
-                                    Schedule_Start: Schedule_Start.val,
-                                    Schedule_End: Schedule_End.val,
-                                    Schedule_Monday: Schedule_Monday.val,
-                                    Schedule_Tuesday: Schedule_Tuesday.val,
-                                    Schedule_Wednesday: Schedule_Wednesday.val,
-                                    Schedule_Thursday: Schedule_Thursday.val,
-                                    Schedule_Friday: Schedule_Friday.val,
-                                    Schedule_Saturday: Schedule_Saturday.val,
-                                    Schedule_Sunday: Schedule_Sunday.val,
-                                    Speach: Speach.val,
-                                    Echos: Echos.val,
-                                    SpeachString: SpeachString.val,
-                                    AlarmNumber: AlarmNumber.val,
-                                    activate: activate.val
-                                };
-                                //Adapter.log.info("Timers: " + JSON.stringify(devicearray));
-                                //Adapter.log.info('Found: ' + LogTextNumberTimer + ' Timers: ' + LogTextStringTimer);
-                                var TimeTimerIndex = [devicearray[MyChannelname].DeviceType + "-" + devicearray[MyChannelname].DeviceIDName];
-                                if (TimerTimer[TimeTimerIndex] === undefined) {
-                                    TimerTimer.push(TimeTimerIndex);
-                                    if (devicearray[MyChannelname].SetSunlight !== "SetNow") {
-                                        for (let iSP in MySunlightPhases) {
-                                            if (devicearray[MyChannelname].SetSunlight == iSP) {
-                                                //~ MySunlightPhases[iSP].Name
-                                                TimerTimer[TimeTimerIndex] = MySunlightPhases[iSP].Data;
-                                                break;
+                                    //Adapter.log.info("Energy: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberEnergy + ' Energy: ' + LogTextStringEnergy);
+                                    break;
+                                    /*******************************************************Other************************************************************************************/
+                                case "Other":
+                                    LogTextStringOther += MyChannelname + ' | ';
+                                    LogTextNumberOther += 1;
+                                    let OtherObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherObject');
+                                    let OtherObjectValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherObjectValue');
+                                    let OtherTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherTimeValue');
+                                    let OtherCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherCountdownValue');
+                                    devicearray[MyChannelname] = {
+                                        DeviceIDName: DeviceIDName.val,
+                                        DeviceType: DeviceType.val,
+                                        OtherObject: OtherObject.val,
+                                        OtherObjectValue: OtherObjectValue.val,
+                                        OtherTimeValue: OtherTimeValue.val,
+                                        OtherCountdownValue: OtherCountdownValue.val,
+                                        Schedule_Enabled: Schedule_Enabled,
+                                        Schedule_Start: Schedule_Start.val,
+                                        Schedule_End: Schedule_End.val,
+                                        Schedule_Monday: Schedule_Monday.val,
+                                        Schedule_Tuesday: Schedule_Tuesday.val,
+                                        Schedule_Wednesday: Schedule_Wednesday.val,
+                                        Schedule_Thursday: Schedule_Thursday.val,
+                                        Schedule_Friday: Schedule_Friday.val,
+                                        Schedule_Saturday: Schedule_Saturday.val,
+                                        Schedule_Sunday: Schedule_Sunday.val,
+                                        Speach: Speach.val,
+                                        Echos: Echos.val,
+                                        SpeachString: SpeachString.val,
+                                        AlarmNumber: AlarmNumber.val,
+                                        activate: activate.val
+                                    };
+                                    //Adapter.log.info("Others: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberOther + ' Others: ' + LogTextStringOther);
+                                    break;
+                                    /*******************************************************Timer************************************************************************************/
+                                case "Timer":
+                                    LogTextStringTimer += MyChannelname + ' | ';
+                                    LogTextNumberTimer += 1;
+                                    let TimerObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerObject');
+                                    let TimerTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerTimeValue');
+                                    let TimerCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerCountdownValue');
+                                    let SetSunlight = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SetSunlight');
+                                    devicearray[MyChannelname] = {
+                                        DeviceIDName: DeviceIDName.val,
+                                        DeviceType: DeviceType.val,
+                                        TimerObject: TimerObject.val,
+                                        TimerTimeValue: TimerTimeValue.val,
+                                        TimerCountdownValue: TimerCountdownValue.val,
+                                        SetSunlight: SetSunlight.val,
+                                        Schedule_Enabled: Schedule_Enabled,
+                                        Schedule_Start: Schedule_Start.val,
+                                        Schedule_End: Schedule_End.val,
+                                        Schedule_Monday: Schedule_Monday.val,
+                                        Schedule_Tuesday: Schedule_Tuesday.val,
+                                        Schedule_Wednesday: Schedule_Wednesday.val,
+                                        Schedule_Thursday: Schedule_Thursday.val,
+                                        Schedule_Friday: Schedule_Friday.val,
+                                        Schedule_Saturday: Schedule_Saturday.val,
+                                        Schedule_Sunday: Schedule_Sunday.val,
+                                        Speach: Speach.val,
+                                        Echos: Echos.val,
+                                        SpeachString: SpeachString.val,
+                                        AlarmNumber: AlarmNumber.val,
+                                        activate: activate.val
+                                    };
+                                    //Adapter.log.info("Timers: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberTimer + ' Timers: ' + LogTextStringTimer);
+                                    var TimeTimerIndex = [devicearray[MyChannelname].DeviceType + "-" + devicearray[MyChannelname].DeviceIDName];
+                                    if (TimerTimer[TimeTimerIndex] === undefined) {
+                                        TimerTimer.push(TimeTimerIndex);
+                                        if (devicearray[MyChannelname].SetSunlight !== "SetNow") {
+                                            for (let iSP in MySunlightPhases) {
+                                                if (devicearray[MyChannelname].SetSunlight == iSP) {
+                                                    //~ MySunlightPhases[iSP].Name
+                                                    TimerTimer[TimeTimerIndex] = MySunlightPhases[iSP].Data;
+                                                    break;
+                                                }
                                             }
+                                        } else {
+                                            TimerTimer[TimeTimerIndex] = devicearray[MyChannelname].TimerObject
                                         }
-                                    } else {
-                                        TimerTimer[TimeTimerIndex] = devicearray[MyChannelname].TimerObject
                                     }
-                                }
-                                break;
+                                    break;
+                            }
                         }
                     }
                 }
@@ -867,6 +965,7 @@ class alarmcontrol extends utils.Adapter {
                 Adapter.log.info('Found: ' + LogTextNumberReed + ' Reeds: ' + LogTextStringReed);
                 Adapter.log.info('Found: ' + LogTextNumberMotion + ' Motions: ' + LogTextStringMotion);
                 Adapter.log.info('Found: ' + LogTextNumberTemperature + ' Temperature sensors: ' + LogTextStringTemperature);
+                Adapter.log.info('Found: ' + LogTextNumberEnergy + ' Energy monitoring: ' + LogTextStringEnergy);
                 Adapter.log.info('Found: ' + LogTextNumberOther + ' Other: ' + LogTextStringOther);
                 Adapter.log.info('Found: ' + LogTextNumberTimer + ' Timer: ' + LogTextStringTimer);
                 //Adapter.log.info("Settings ==> " + JSON.stringify(devicearray));
@@ -889,6 +988,8 @@ class alarmcontrol extends utils.Adapter {
                         Adapter.subscribeForeignStates(i_devicearray[ArrayDev].ReedObject);
                     } else if (i_devicearray[ArrayDev].DeviceType == "Temperature") {
                         Adapter.subscribeForeignStates(i_devicearray[ArrayDev].TemperatureObject);
+                    } else if (i_devicearray[ArrayDev].DeviceType == "Energy") {
+                        Adapter.subscribeForeignStates(i_devicearray[ArrayDev].EnergyObject);
                     } else if (i_devicearray[ArrayDev].DeviceType == "Other") {
                         Adapter.subscribeForeignStates(i_devicearray[ArrayDev].OtherObject);
                     } else if (i_devicearray[ArrayDev].DeviceType == "Timer") {
@@ -1087,6 +1188,9 @@ class alarmcontrol extends utils.Adapter {
                     FamilyTimestamp[CountdownIndex] = ICtime[0] + ':' + ICtime[1] + ':' + ICtime[2];
                     FamilyDatestamp[CountdownIndex] = ICdate;
                 }
+                //~ if (strFamilyArray[strFamilyIndex].RFID){
+                //~ strFamilyChange = !strFamilyChange;
+                //~ }
                 if (strFamilyChange) {
                     Adapter.setStateAsync("Family." + strFamilyArray[strFamilyIndex].IDName + ".PresenceState", strFamilyChange, true);
                     Adapter.setStateAsync("Family." + strFamilyArray[strFamilyIndex].IDName + ".PresenceStamp", FamilyTimestamp[CountdownIndex] + " " + FamilyDatestamp[CountdownIndex], true);
@@ -1237,18 +1341,19 @@ class alarmcontrol extends utils.Adapter {
                     Adapter.CheckAlarmState();
                 }
                 if (CommandSPTG.AlarmVoice) {
-                    Adapter.log.info(strSpeakArray[strSpeakIndex].DeviceIDName + " ==> Speak ==> " + strSpeakArray[strSpeakIndex].Echos);
                     switch (CommandSPTG.AlarmObject.toString()) {
                         case "2":
                         case "3":
                             if (strSpeakArray[strSpeakIndex].Speach) {
                                 Adapter.SplitSpeak(strSpeakArray[strSpeakIndex].Echos, strSpeakArray[strSpeakIndex].SpeachString);
+                                Adapter.log.info(strSpeakArray[strSpeakIndex].DeviceIDName + " ==> Speak ==> " + strSpeakArray[strSpeakIndex].Echos);
                             }
                             break;
                         case "1":
                             if (strSpeakArray[strSpeakIndex].EntranceState) {
                                 if (strSpeakArray[strSpeakIndex].Speach) {
                                     Adapter.SplitSpeak(strSpeakArray[strSpeakIndex].Echos, strSpeakArray[strSpeakIndex].SpeachString);
+                                    Adapter.log.info(strSpeakArray[strSpeakIndex].DeviceIDName + " ==> Speak ==> " + strSpeakArray[strSpeakIndex].Echos);
                                 }
                             }
                             break;
@@ -1484,20 +1589,27 @@ class alarmcontrol extends utils.Adapter {
             return timeArray;
         }
         pad2number(number) {
-            number = (number < 10 ? '0' : '') + number;
-            number = number.substring(0, 2);
-            return number;
-        }
+                number = (number < 10 ? '0' : '') + number;
+                number = number.substring(0, 2);
+                return number;
+            }
+            //**********************************************************************************************************************************************************
+            //*************************************************************************Check Trigger********************************************************************
+            //**********************************************************************************************************************************************************
         checkTrigger(strParentArray, strIndexArray, strSensor, strCleanIt) {
             const Adapter = this;
+            var fullArray = [];
             var strParent = strParentArray[strIndexArray].trigerswitch;
             var strSwitchMode = "No";
+            fullArray[0] = strSwitchMode;
             var SetSensor = false;
             if (!strCleanIt) {
                 strSwitchMode = strParentArray[strIndexArray].SwitchMode;
+                if (strSwitchMode) {
+                    fullArray[0] = strSwitchMode.toString();
+                }
             }
             var strParent = strParent + "";
-            var fullArray = [];
             if (strParent !== undefined) {
                 if (strParent.indexOf(',') == -1) {
                     fullArray.push(strParent);
@@ -1506,9 +1618,10 @@ class alarmcontrol extends utils.Adapter {
                 }
             }
             for (var iFa = 0; iFa < fullArray.length; iFa++) {
-                if (fullArray[iFa].toString() == strSensor) {
+                if (fullArray[iFa].toString() == strSensor.toString()) {
                     SetSensor = true;
                     break;
+
                 }
             }
             if (strSwitchMode && (strSwitchMode.toString() == "And") && SetSensor) {
@@ -1520,13 +1633,18 @@ class alarmcontrol extends utils.Adapter {
                     return false;
                 }
             } else {
+                //~ if(typeof fullArray[0] !== undefined) {
+                //~ return false;
+                //~ } else {
+                //~ Adapter.log.info("'Or' check => Devices: " + strParentArray[strIndexArray].DeviceIDName + " => Trigger: " + fullArray);
                 return fullArray;
+                //~ }
             }
         }
         async CheckAndTriger(fullArray) {
                 const Adapter = this;
                 var TestDevArray = [];
-                var CheckAllObjectsValue = 0
+                var CheckAllObjectsValue = 0;
                 var GetChangeObjectJson = await Adapter.getStateAsync('Change');
                 if (GetChangeObjectJson !== undefined) {
                     TestDevArray.push(JSON.parse(GetChangeObjectJson.val));
@@ -1534,7 +1652,7 @@ class alarmcontrol extends utils.Adapter {
                     for (let RArrD in TestDevArray[0]) {
                         //**************************************Start loop***********************************************
                         if (TestDevArray[0][RArrD].DeviceType !== "Switch") {
-                            for (iFa = 0; iFa < fullArray.length; iFa++) {
+                            for (iFa = 1; iFa < fullArray.length; iFa++) {
                                 //=================Compare Found and Array (TriggerSwitch)
                                 if (fullArray[iFa].toString() == TestDevArray[0][RArrD].DeviceType + "-" + TestDevArray[0][RArrD].DeviceIDName) {
                                     var TestEventObjectString = "No";
@@ -1579,6 +1697,7 @@ class alarmcontrol extends utils.Adapter {
                                             //================Check State (Device)
                                             CheckAllObjectsValue += 1;
                                             Adapter.log.info("'And' check failed! " + TestDevArray[0][RArrD].DeviceIDName + ": " + TestGetEventObject + " <> " + TestEventObjectString + " => defined value returns false!");
+                                            break;
                                         }
                                     } else {
                                         if (/=|<|>/.test(TestEventObjectString)) {
@@ -1602,12 +1721,14 @@ class alarmcontrol extends utils.Adapter {
                                                 //================Check State (Device)
                                                 CheckAllObjectsValue += 1;
                                                 Adapter.log.info("'And' check failed! " + TestDevArray[0][RArrD].DeviceIDName + ": " + TestGetEventObject + " <> " + TestEventObjectString + " => defined value returns false!");
+                                                break;
                                             }
                                         } else {
                                             if (TestGetEventObject + '' !== TestEventObjectString + '') {
                                                 //================Check State (Device)
                                                 CheckAllObjectsValue += 1;
                                                 Adapter.log.info("'And' check failed! " + TestDevArray[0][RArrD].DeviceIDName + ": " + TestGetEventObject + " <> " + TestEventObjectString + " => defined value returns false!");
+                                                break;
                                             }
                                         }
                                     }
@@ -1616,7 +1737,7 @@ class alarmcontrol extends utils.Adapter {
                         }
                     }
                     //============================Get State after Check
-                    return (CheckAllObjectsValue == 0 ? true : false);
+                    return (CheckAllObjectsValue === 0 ? true : false);
                 }
             }
             //**********************************************************************************************************************************************************
@@ -1682,9 +1803,9 @@ class alarmcontrol extends utils.Adapter {
                     var FindAllTriger = Adapter.checkTrigger(strAdapterarray, ArraySwitch, ToSearch, false);
                     if (FindAllTriger !== false) {
                         var iFA;
-                        for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
+                        for (iFA = 1; iFA < FindAllTriger.length; iFA++) {
                             if (FindAllTriger[iFA] == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
-                                Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + (iFA + 1) + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
+                                Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
                                 var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArraySwitch].AlarmNumber);
                                 if (GetAlarm) {
                                     var TimeIndex = [strAdapterarray[ArraySwitch].DeviceType + "-" + strAdapterarray[ArraySwitch].DeviceIDName + "-" +
@@ -1848,11 +1969,12 @@ class alarmcontrol extends utils.Adapter {
                     //================Check Device List
                     var FindAllTriger = Adapter.checkTrigger(strAdapterarray, ArrayReed, ToSearch, false);
                     if (FindAllTriger !== false) {
+
                         var iFA;
                         for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
-                            //if (strAdapterarray[ArrayReed].trigerswitch == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
-                            if (FindAllTriger[iFA].toString() == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
-                                Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + (iFA + 1) + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
+                            if (FindAllTriger[iFA].toString() == ToSearch.toString()) {
+
+                                Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
                                 var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArrayReed].AlarmNumber);
                                 if (GetAlarm) {
                                     var TimeReedIndex = [strAdapterarray[ArrayReed].DeviceType + "-" + strAdapterarray[ArrayReed].DeviceIDName + "-" +
@@ -1920,9 +2042,9 @@ class alarmcontrol extends utils.Adapter {
                     var FindAllTriger = Adapter.checkTrigger(strAdapterarray, ArraySwitch, ToSearch, false);
                     if (FindAllTriger !== false) {
                         var iFA;
-                        for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
+                        for (iFA = 1; iFA < FindAllTriger.length; iFA++) {
                             if (FindAllTriger[iFA] == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
-                                Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + (iFA + 1) + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
+                                Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
                                 var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArraySwitch].AlarmNumber);
                                 if (GetAlarm) {
                                     //================Check State (Device)
@@ -2023,10 +2145,7 @@ class alarmcontrol extends utils.Adapter {
                 var Endresult = (Tempresult / EndCount).toFixed(2);
                 //~ Adapter.log.info("=> " + Tempresult + " / " + EndCount + " = " + Endresult);
                 var RetTemperatureState = false;
-                //============Update
-                TemperatureTOutObj[NowName].Result = Endresult;
-                TemperatureTOutObj[NowName].Count = EndCount;
-                TemperatureTOutObj[NowName].NowVal = NowData;
+                //============Update Object
                 switch (CompareType.toString()) {
                     case ">":
                         RetTemperatureState = (Endresult >= SetValue ? true : false);
@@ -2038,40 +2157,83 @@ class alarmcontrol extends utils.Adapter {
                         RetTemperatureState = (Endresult == SetValue ? true : false);
                         break;
                 }
-                Adapter.log.info(NowName + ": The set temperature of " + SetValue + " was checked " + EndCount + " times and returned " + Endresult + ".");
-                Adapter.setStateAsync(SplitTempName[0] + '.' + SplitTempName[1] + '.TemperatureResult', RetTemperatureState, true);
+                TemperatureTOutObj[NowName].Count = EndCount;
+                TemperatureTOutObj[NowName].NowVal = NowData;
+                if (TemperatureTOutObj[NowName].Result !== Endresult) {
+                    TemperatureTOutObj[NowName].Result = Endresult;
+                    Adapter.log.info(NowName + ": The set temperature of " + SetValue + " was checked " + EndCount + " times for " + TemperatureTOutObj[NowName].Duration + " hours, the result is " + Endresult + ".");
+                }
+                if (TemperatureTOutObj[NowName].State !== RetTemperatureState) {
+                    TemperatureTOutObj[NowName].State = RetTemperatureState;
+                    Adapter.setStateAsync(SplitTempName[0] + '.' + SplitTempName[1] + '.TemperatureResult', RetTemperatureState, true);
+                }
                 return RetTemperatureState;
             }
             //**********************************************************************************************************************************************************
             //***************************************************************************Other**************************************************************************
             //**********************************************************************************************************************************************************
-        trigerOther(strAdapterarray, strArrayDev) {
+        trigerOther(strAdapterarray, strArrayDev, ToCompare) {
             const Adapter = this;
-            var ToSearch = strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName;
-            for (let ArrayOther in strAdapterarray) {
-                //================Check Device List
-                var FindAllTriger = Adapter.checkTrigger(strAdapterarray, ArrayOther, ToSearch, false);
-                if (FindAllTriger !== false) {
-                    var iFA;
-                    for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
-                        if (FindAllTriger[iFA].toString() == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) {
-                            Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + (iFA + 1) + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
-                            var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArrayOther].AlarmNumber);
-                            if (GetAlarm) {
-                                var TimeOtherIndex = [strAdapterarray[ArrayOther].DeviceType + "-" + strAdapterarray[ArrayOther].DeviceIDName + "-" +
-                                    strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName
-                                ];
-                                if (TimerOther[TimeOtherIndex] === undefined) {
-                                    TimerOther.push(TimeOtherIndex);
-                                }
-                                if (TimerOther[TimeOtherIndex]) {
-                                    clearTimeout(TimerOther[TimeOtherIndex]);
-                                    TimerOther[TimeOtherIndex] = null;
-                                }
-                                var ConvertOtherTimeValue = strAdapterarray[strArrayDev].OtherTimeValue;
-                                var ConvertedOtherTimeValue = Adapter.convertTimeToseconds(ConvertOtherTimeValue)
-                                if (ConvertedOtherTimeValue > 0) {
-                                    Adapter.log.info(' Converted Time ' + strAdapterarray[strArrayDev].DeviceIDName + ' ' + ConvertedOtherTimeValue);
+            var SetValue = 0,
+                CompareType = "=";
+            //=======================================check Value (comparison)=======================================
+            var TestEventOther = (strAdapterarray[strArrayDev].OtherObjectValue).toString();
+            if (/=|<|>/.test(TestEventOther)) {
+                var Compareevent = TestEventOther.match(/=|<|>/);
+                var strnumber = TestEventOther.match(/-*[0-9]+/);
+                var iSetnumber = new Number(strnumber).valueOf();
+                switch (Compareevent.toString()) {
+                    case "<":
+                        SetValue = iSetnumber, CompareType = "<";
+                        break;
+                    case ">":
+                        SetValue = iSetnumber, CompareType = ">";
+                        break;
+                    default:
+                        SetValue = iSetnumber, CompareType = "=";
+                }
+            } else {
+                SetValue = TestEventOther, CompareType = "=", ToCompare = ToCompare.toString();
+            }
+            var RetOtherState = false;
+            switch (CompareType.toString()) {
+                case ">":
+                    RetOtherState = (ToCompare >= SetValue ? true : false);
+                    break;
+                case "<":
+                    RetOtherState = (ToCompare <= SetValue ? true : false);
+                    break;
+                default:
+                    RetOtherState = (ToCompare == SetValue ? true : false);
+                    break;
+            }
+            //~ Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " Compare: " + ToCompare + CompareType + SetValue + " return " + RetOtherState);
+            //***********************************************************Other***********************************************
+            if (RetOtherState) {
+                var ToSearch = strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName;
+                for (let ArrayOther in strAdapterarray) {
+                    //================Check Device List
+                    var FindAllTriger = Adapter.checkTrigger(strAdapterarray, ArrayOther, ToSearch, false);
+                    if (FindAllTriger !== false) {
+                        var iFA;
+                        for (iFA = 1; iFA < FindAllTriger.length; iFA++) {
+                            if ((FindAllTriger[iFA] == strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName) && (FindAllTriger[0] == "Or")) {
+                                Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
+                                var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArrayOther].AlarmNumber);
+                                if (GetAlarm) {
+                                    var TimeOtherIndex = [strAdapterarray[ArrayOther].DeviceType + "-" + strAdapterarray[ArrayOther].DeviceIDName + "-" +
+                                        strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName
+                                    ];
+                                    if (TimerOther[TimeOtherIndex] === undefined) {
+                                        TimerOther.push(TimeOtherIndex);
+                                    }
+                                    if (TimerOther[TimeOtherIndex]) {
+                                        clearTimeout(TimerOther[TimeOtherIndex]);
+                                        TimerOther[TimeOtherIndex] = null;
+                                    }
+                                    var ConvertOtherTimeValue = strAdapterarray[strArrayDev].OtherTimeValue;
+                                    var ConvertedOtherTimeValue = Adapter.convertTimeToseconds(ConvertOtherTimeValue);
+                                    //=========================================Timeout============================
                                     TimerOther[TimeOtherIndex] = setTimeout(function() {
                                         TimerOther[TimeOtherIndex] = null;
                                         //================Check State (Device)
@@ -2079,99 +2241,79 @@ class alarmcontrol extends utils.Adapter {
                                             //================Check Schedule Time and Day (Device)
                                             var DevRetDay = Adapter.getDayWeek(strAdapterarray[ArrayOther]);
                                             if (Adapter.inTime(strAdapterarray[ArrayOther].Schedule_Start, strAdapterarray[ArrayOther].Schedule_End, DevRetDay)) {
-                                                //***********************************************************Other Countdown****************************
-                                                var idurationOther = parseInt(Adapter.convertTimeToseconds(strAdapterarray[strArrayDev].OtherCountdownValue))
-                                                if (idurationOther > 0) {
-                                                    Adapter.startOtherTimer(idurationOther, strAdapterarray, strArrayDev, ArrayOther);
-                                                }
-                                                var ObjectToCommandon = strAdapterarray[ArrayOther].OnObject;
-                                                var StringToCommandon = strAdapterarray[ArrayOther].OnObjectString;
-                                                var ExecutorObjct = strAdapterarray[strArrayDev].OtherObjec,
-                                                    ExecutorObjctVal = strAdapterarray[strArrayDev].OtherObjectValue;
-                                                if (((ExecutorObjct !== ObjectToCommandon) && (ExecutorObjctVal !== StringToCommandon)) || ((ExecutorObjct == ObjectToCommandon) && (ExecutorObjctVal !== StringToCommandon))) {
-                                                    Adapter.log.info("Found Switch: " + ObjectToCommandon + " with: " + StringToCommandon);
-                                                    if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) { //Color
-                                                        Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
-                                                    } else if ((/\d+/g.test(StringToCommandon)) || (/true/g.test(StringToCommandon)) || (/false/g.test(StringToCommandon))) { // State
-                                                        Adapter.setForeignStateAsync(ObjectToCommandon, eval(StringToCommandon));
-                                                    } else { // Other
-                                                        Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
-                                                    }
-                                                } else {
-                                                    Adapter.log.error('1: ' + strAdapterarray[strArrayDev].DeviceIDName + ' = ' + ExecutorObjctVal + ' and ' + strAdapterarray[ArrayOther].DeviceIDName + ' = ' + StringToCommandon + ' have the same settings! the infinite loop must be skipped!');
-                                                }
-                                                if (CommandSPTG.AlarmVoice) {
-                                                    if (strAdapterarray[ArrayOther].Speach) {
-                                                        Adapter.SplitSpeak(strAdapterarray[ArrayOther].Echos, strAdapterarray[ArrayOther].SpeachString);
-                                                    }
-                                                }
+                                                //=========================================Countdown============================
+                                                var ConvertOtherCountdown = strAdapterarray[strArrayDev].OtherCountdownValue;
+                                                var ConvertedOtherCountdown = Adapter.convertTimeToseconds(ConvertOtherCountdown);
+                                                Adapter.startOtherCountdown(ConvertedOtherCountdown, strAdapterarray, strArrayDev, ArrayOther);
                                             } else {
-                                                // Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": Other detected, defined times returns false!");
+                                                // Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": motion detected, defined times returns false!");
                                             }
                                         }
                                     }, ConvertedOtherTimeValue * 1000); // Timer setzen auf X Minuten
+                                } else {
+                                    Adapter.log.info("Alarm returns incorrect settings! Alarm setting is " + strAdapterarray[ArrayOther].AlarmNumber + ", the current alarm is " + CommandSPTG.AlarmObject);
                                 }
-                            } else {
-                                Adapter.log.info("Alarm returns incorrect settings! Alarm setting is " + strAdapterarray[ArrayOther].AlarmNumber + ", the current alarm is " + CommandSPTG.AlarmObject);
                             }
                         }
                     }
                 }
             }
         }
-        startOtherTimer(duration, strOtherArray, strOtherIndex, strOtherDevIndex) {
+        async startOtherCountdown(duration, strOtherArray, strOtherIndex, strOtherDevIndex) {
             const Adapter = this;
             var timer = duration,
                 minutes, seconds;
             var CountdownIndex = [strOtherArray[strOtherIndex].DeviceType + "-" + strOtherArray[strOtherIndex].DeviceIDName];
-            //****************************************Create Countdown*************************************************
-            if (Othercountdown[CountdownIndex] === undefined) {
-                Othercountdown.push(CountdownIndex);
-                OtherTimestamp.push(CountdownIndex);
-                const iCdate = new Date();
-                const ICtime = iCdate.toTimeString().split(' ')[0].split(':');
-                OtherTimestamp[CountdownIndex] = ICtime[0] + ':' + ICtime[1] + ':' + ICtime[2];
+            if (strOtherArray[strOtherDevIndex].OnState) {
+                var StringToCommandon = strOtherArray[strOtherDevIndex].OnObjectString;
+                var ObjectToCommandon = strOtherArray[strOtherDevIndex].OnObject;
+            } else {
+                var StringToCommandon = strOtherArray[strOtherDevIndex].OffObjectString;
+                var ObjectToCommandon = strOtherArray[strOtherDevIndex].OffObject;
             }
-            //****************************************Clear Countdown*************************************************
-            if (Othercountdown[CountdownIndex]) {
-                clearTimeout(Othercountdown[CountdownIndex]);
-                Othercountdown[CountdownIndex] = null;
-                const iCdate = new Date();
-                const ICtime = iCdate.toTimeString().split(' ')[0].split(':');
-                OtherTimestamp[CountdownIndex] = ICtime[0] + ':' + ICtime[1] + ':' + ICtime[2];
-            }
-            Othercountdown[CountdownIndex] = setInterval(function() {
-                Adapter.setObjectNotExistsAsync(strOtherArray[strOtherIndex].DeviceType + "." + strOtherArray[strOtherIndex].DeviceIDName + ".countdown", {
-                    type: "state",
-                    common: {
-                        name: 'countdown',
-                        desc: 'countdown',
-                        type: 'string',
-                        role: 'text',
-                        write: false
-                    },
-                    native: {}
-                });
-                var GetDiff = Adapter.gettimediff(OtherTimestamp[CountdownIndex]);
-                Adapter.setStateAsync(strOtherArray[strOtherIndex].DeviceType + "." + strOtherArray[strOtherIndex].DeviceIDName + ".countdown", GetDiff, true);
-                if (--timer < 0) {
-                    var SecConvertString = Adapter.convertsecondsString(GetDiff);
-                    Adapter.log.info(strOtherArray[strOtherIndex].DeviceIDName + " ===>:" + OtherTimestamp[CountdownIndex] + " / " + SecConvertString + " " + strOtherArray[strOtherIndex].SpeachString);
+            var GetEventStateObject = await Adapter.getForeignStateAsync(ObjectToCommandon)
+            if (GetEventStateObject && ((GetEventStateObject.val).toString() == StringToCommandon.toString())) {} else {
+                //****************************************Create Countdown*************************************************
+                if (Othercountdown[CountdownIndex] === undefined) {
+                    Othercountdown.push(CountdownIndex);
+                    OtherTimestamp.push(CountdownIndex);
+                    const iCdate = new Date();
+                    const ICtime = iCdate.toTimeString().split(' ')[0].split(':');
+                    OtherTimestamp[CountdownIndex] = ICtime[0] + ':' + ICtime[1] + ':' + ICtime[2];
+                }
+                //****************************************Clear Countdown*************************************************
+                if (Othercountdown[CountdownIndex]) {
+                    clearTimeout(Othercountdown[CountdownIndex]);
+                    Othercountdown[CountdownIndex] = null;
+                    const iCdate = new Date();
+                    const ICtime = iCdate.toTimeString().split(' ')[0].split(':');
+                    OtherTimestamp[CountdownIndex] = ICtime[0] + ':' + ICtime[1] + ':' + ICtime[2];
+                }
+                Othercountdown[CountdownIndex] = setInterval(function() {
                     if (strOtherArray[strOtherDevIndex].OnState) {
                         var StringToCommandon = strOtherArray[strOtherDevIndex].OnObjectString;
                         var ObjectToCommandon = strOtherArray[strOtherDevIndex].OnObject;
-                        var StringToCommandoff = strOtherArray[strOtherDevIndex].OffObjectString;
-                        var ObjectToCommandoff = strOtherArray[strOtherDevIndex].OffObject;
                     } else {
                         var StringToCommandon = strOtherArray[strOtherDevIndex].OffObjectString;
                         var ObjectToCommandon = strOtherArray[strOtherDevIndex].OffObject;
-                        var StringToCommandoff = strOtherArray[strOtherDevIndex].OnObjectString;
-                        var ObjectToCommandoff = strOtherArray[strOtherDevIndex].OnObject;
                     }
-                    Adapter.log.info("Found Switch: " + ObjectToCommandon + " with: " + StringToCommandon);
-                    var ExecutorObjct = strOtherArray[strOtherIndex].OtherObjec,
-                        ExecutorObjctVal = strOtherArray[strOtherIndex].OtherObjectValue;
-                    if (((ExecutorObjct !== ObjectToCommandon) && (ExecutorObjctVal !== StringToCommandon)) || ((ExecutorObjct == ObjectToCommandon) && (ExecutorObjctVal !== StringToCommandon))) {
+                    Adapter.setObjectNotExistsAsync(strOtherArray[strOtherIndex].DeviceType + "." + strOtherArray[strOtherIndex].DeviceIDName + ".countdown", {
+                        type: "state",
+                        common: {
+                            name: 'countdown',
+                            desc: 'countdown',
+                            type: 'string',
+                            role: 'text',
+                            write: false
+                        },
+                        native: {}
+                    });
+                    var GetDiff = Adapter.gettimediff(OtherTimestamp[CountdownIndex]);
+                    Adapter.setStateAsync(strOtherArray[strOtherIndex].DeviceType + "." + strOtherArray[strOtherIndex].DeviceIDName + ".countdown", GetDiff, true);
+                    if (--timer < 0) {
+                        var SecConvertString = Adapter.convertsecondsString(GetDiff);
+                        Adapter.log.info(strOtherArray[strOtherIndex].DeviceIDName + " ===>:" + OtherTimestamp[CountdownIndex] + " / " + SecConvertString + " " + strOtherArray[strOtherIndex].SpeachString);
+                        Adapter.log.info("Found Switch: " + ObjectToCommandon + " with: " + StringToCommandon);
                         if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) { //Color
                             Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
                         } else if ((/\d+/g.test(StringToCommandon)) || (/true/g.test(StringToCommandon)) || (/false/g.test(StringToCommandon))) { // State
@@ -2179,19 +2321,16 @@ class alarmcontrol extends utils.Adapter {
                         } else { // Other
                             Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
                         }
-                    } else {
-                        Adapter.log.error('2: ' + strOtherArray[strOtherIndex].DeviceIDName + ' = ' + ExecutorObjctVal + ' and ' + strOtherArray[strOtherDevIndex].DeviceIDName + ' = ' + StringToCommandon + ' have the same settings! the infinite loop must be skipped!');
-                    }
-                    if (CommandSPTG.AlarmVoice) {
-                        if (strOtherArray[strOtherDevIndex].Speach) {
-                            Adapter.SplitSpeak(strOtherArray[strOtherDevIndex].Echos, strOtherArray[strOtherDevIndex].SpeachString);
+                        if (CommandSPTG.AlarmVoice) {
+                            if (strOtherArray[strOtherDevIndex].Speach) {
+                                Adapter.SplitSpeak(strOtherArray[strOtherDevIndex].Echos, strOtherArray[strOtherDevIndex].SpeachString);
+                            }
                         }
+                        Adapter.log.warn(strOtherArray[strOtherDevIndex].DeviceIDName + " ===>:" + OtherTimestamp[CountdownIndex] + " / " + SecConvertString + " " + strOtherArray[strOtherIndex].SpeachString);
+                        clearTimeout(Othercountdown[CountdownIndex]);
                     }
-                    Adapter.log.warn(strOtherArray[strOtherDevIndex].DeviceIDName + " ===>:" + OtherTimestamp[CountdownIndex] + " / " + SecConvertString + " " + strOtherArray[strOtherIndex].SpeachString);
-                    //~ Adapter.setForeignStateAsync(strOtherArray[strOtherDevIndex].OffObject, strOtherArray[strOtherDevIndex].OffObjectString);
-                    clearTimeout(Othercountdown[CountdownIndex]);
-                }
-            }, 1000);
+                }, 1000);
+            }
         }
         CheckOtherState(strVal, strObj, strIdname) {
                 strVal.trim()
@@ -2250,6 +2389,24 @@ class alarmcontrol extends utils.Adapter {
                 if (moment().isSame(moment("00:00:02", "hh:mm:ss"), "second")) {
                     Adapter.log.warn("Calculate the position of the sun in the sky for the current location..");
                     Adapter.SetTodayCalcSun();
+                }
+
+                if (moment().isSame(moment("00:00:00", "hh:mm:ss"), "second")) {
+                    //========================Reset Energy Day
+                    EnergyAdapterarray = [];
+                    var GetChangeObjectJson = await Adapter.getStateAsync('Change');
+                    if (GetChangeObjectJson !== undefined) {
+                        EnergyAdapterarray.push(JSON.parse(GetChangeObjectJson.val));
+                        for (let EnergDev in EnergyAdapterarray[0]) {
+                            //**************************************Start loop Reset Energy Day***********************************************
+                            if (EnergyAdapterarray[0][EnergDev].DeviceType == "Energy") {
+                                Adapter.setStateAsync(EnergyAdapterarray[0][EnergDev].DeviceType + "." + EnergyAdapterarray[0][EnergDev].DeviceIDName + '.Database.EnergyDayWh', 0, true);
+                                Adapter.setStateAsync(EnergyAdapterarray[0][EnergDev].DeviceType + "." + EnergyAdapterarray[0][EnergDev].DeviceIDName + '.Database.EnergyDayKwh', 0, true);
+                                Adapter.setStateAsync(EnergyAdapterarray[0][EnergDev].DeviceType + "." + EnergyAdapterarray[0][EnergDev].DeviceIDName + '.Database.EnergyDayTime', 0, true);
+                                Adapter.setStateAsync(EnergyAdapterarray[0][EnergDev].DeviceType + "." + EnergyAdapterarray[0][EnergDev].DeviceIDName + '.Database.EnergyDayMoney', 0, true);
+                            }
+                        }
+                    }
                 }
                 TimerTimer.forEach(async(TimeTimerIndex) => {
                     if (moment().isSame(moment(TimerTimer[TimeTimerIndex], "hh:mm:ss"), "second")) {
@@ -2392,6 +2549,14 @@ class alarmcontrol extends utils.Adapter {
                     this.log.error(error.stack);
                 }
             });
+            Othercountdown.forEach((TimeIndexName) => {
+                try {
+                    var TimeIndexVar = TimeIndexName.toString().split('-')
+                    Adapter.CleareverySwitch(TimeIndexVar[0] + '-' + TimeIndexVar[1]);
+                } catch (error) {
+                    this.log.error(error.stack);
+                }
+            });
             Timercountdown.forEach((TimeIndexName) => {
                 try {
                     var TimeIndexVar = TimeIndexName.toString().split('-')
@@ -2413,7 +2578,7 @@ class alarmcontrol extends utils.Adapter {
                             //================Check Device List
                             var FindAllTriger = Adapter.checkTrigger(Adapterarray[0], ArrayDev, 'Clean', true);
                             var iFA;
-                            for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
+                            for (iFA = 1; iFA < FindAllTriger.length; iFA++) {
                                 if (FindAllTriger[iFA].toString() == ClearSWName) {
                                     //================Check State
                                     if (Adapterarray[0][ArrayDev].activate) {
@@ -2539,7 +2704,7 @@ class alarmcontrol extends utils.Adapter {
                             AlarmIsThree = false;
                             //**************************************Reset loop switch off***********************************************
                             AlarmIsActivThree = false;
-                            //**************************************Unsubscribe all switch**********************************************
+                            //**************************************Unsubscribe all switchs**********************************************
                             for (let ArrayDev in Adapterarray[0]) {
                                 if (Adapterarray[0][ArrayDev].DeviceType == "Switch") {
                                     Adapter.unsubscribeForeignStates(Adapterarray[0][ArrayDev].OnObject);
@@ -2605,32 +2770,33 @@ class alarmcontrol extends utils.Adapter {
                         }
                     }
                     for (let ArrayFaml in GlobalFamArray[0]) {
-                        //~ IDName: IDName.val,
-                        //~ PresenceObject: PresenceObject.val,
-                        //~ PresenceTime: PresenceTime.val,
-                        //~ PresenceStamp: PresenceStamp.val,
-                        //~ PresenceState: PresenceState.val,
-                        //~ AbsentSince: AbsentSince.val,
-                        //~ Active: Active.val
                         if (id == GlobalFamArray[0][ArrayFaml].PresenceObject) {
                             var GetLastEntrance = await Adapter.getStateAsync("Family." + GlobalFamArray[0][ArrayFaml].IDName + ".Entrance");
                             var TimeEntrance = Adapter.gettimebetween(GetLastEntrance.val);
                             Adapter.log.info("The entrance was last opened " + TimeEntrance + " seconds ago. => " + Adapter.convertseconds(TimeEntrance));
                             Adapter.log.info(GlobalFamArray[0][ArrayFaml].IDName + " was changed from state " + !state.val + " to " + state.val);
-                            if (TimeEntrance < (10 * 60)) {
+                            if (GlobalFamArray[0][ArrayFaml].RFID) {
                                 var Famduration = GlobalFamArray[0][ArrayFaml].PresenceTime;
-                                Adapter.CheckFamilyState(parseInt(Famduration), GlobalFamArray[0], ArrayFaml, state.val)
-                            } else {
-                                //*****************************Fix Presence Check => when the device goes offline even though the entrance door was closed.
+                                //~ Adapter.CheckFamilyState(parseInt(Famduration), GlobalFamArray[0], ArrayFaml, !state.val)
                                 var GetLastFamilyState = await Adapter.getStateAsync("Family." + GlobalFamArray[0][ArrayFaml].IDName + ".PresenceState");
-                                if ((!GetLastFamilyState.val) && state.val) {
-                                    Adapter.setStateAsync("Family." + GlobalFamArray[0][ArrayFaml].IDName + ".PresenceState", true, true);
-                                    Adapter.log.info("Correct " + GlobalFamArray[0][ArrayFaml].IDName + "' presence state, the device was set as offline even though the entrance door was closed.");
-                                    setTimeout(function() {
-                                        Adapter.GetFamilyPresentNumber();
-                                    }, 1000);
+                                Adapter.setStateAsync("Family." + GlobalFamArray[0][ArrayFaml].IDName + ".PresenceState", !GetLastFamilyState.val, true);
+                                Adapter.CheckFamilyState(parseInt(Famduration), GlobalFamArray[0], ArrayFaml, !GetLastFamilyState.val)
+                            } else {
+                                if (TimeEntrance < (10 * 60)) {
+                                    var Famduration = GlobalFamArray[0][ArrayFaml].PresenceTime;
+                                    Adapter.CheckFamilyState(parseInt(Famduration), GlobalFamArray[0], ArrayFaml, state.val)
                                 } else {
-                                    Adapter.log.info("The entrance has not been opened in the last 10 minutes. Presence check for " + GlobalFamArray[0][ArrayFaml].IDName + " will be skipped..");
+                                    //*****************************Fix Presence Check => when the device goes offline even though the entrance door was closed.
+                                    var GetLastFamilyState = await Adapter.getStateAsync("Family." + GlobalFamArray[0][ArrayFaml].IDName + ".PresenceState");
+                                    if ((!GetLastFamilyState.val) && state.val) {
+                                        Adapter.setStateAsync("Family." + GlobalFamArray[0][ArrayFaml].IDName + ".PresenceState", true, true);
+                                        Adapter.log.info("Correct " + GlobalFamArray[0][ArrayFaml].IDName + "' presence state, the device was set as offline even though the entrance door was closed.");
+                                        setTimeout(function() {
+                                            Adapter.GetFamilyPresentNumber();
+                                        }, 1000);
+                                    } else {
+                                        Adapter.log.info("The entrance has not been opened in the last 10 minutes. Presence check for " + GlobalFamArray[0][ArrayFaml].IDName + " will be skipped..");
+                                    }
                                 }
                             }
                         }
@@ -2738,6 +2904,7 @@ class alarmcontrol extends utils.Adapter {
                                     TemperatureTOutObj.push(TemperatureIndex);
                                     TemperatureTOutObj[TemperatureIndex] = {
                                         Result: '',
+                                        State: '',
                                         Time: '',
                                         Data: '',
                                         NowVal: '',
@@ -2768,7 +2935,7 @@ class alarmcontrol extends utils.Adapter {
                                                 if (Adapter.inTime(Adapterarray[0][ArrayDev].Schedule_Start, Adapterarray[0][ArrayDev].Schedule_End, RetDay)) {
                                                     Adapter.trigerSpeak(Adapterarray[0], ArrayDev);
                                                     Adapter.triggerTemperature(Adapterarray[0], ArrayDev);
-                                                    Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": Temperature sensor State changed, event is triggered");
+                                                    //~ Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": Temperature sensor State changed, event is triggered");
                                                 }
                                             } else {
                                                 //================No Schdule
@@ -2782,128 +2949,141 @@ class alarmcontrol extends utils.Adapter {
                                     }
                                 }
                             }
+                            //=====================================================Energy===========================================
+                        } else if (Adapterarray[0][ArrayDev].DeviceType == "Energy") {
+                            if (id == Adapterarray[0][ArrayDev].EnergyObject) {
+                                var EnergyIndex = Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName
+                                if (state.val) {
+                                    if (!EnergyOutObj[EnergyIndex].PowerState) {
+                                        //~ PowerState: false,
+                                        //~ Wh: = 0,
+                                        //~ LastTime: 0,
+                                        //~ TimeDiff: 0,
+                                        //~ CurrentConsumption: 0,
+                                        //~ Event: 0,
+                                        //~ Timer: 0,
+                                        //~ Costs: 0,
+                                        //~ StartCosts: 0,
+                                        //~ Price: 0,
+                                        //~ DeviceIsOff: 0,
+                                        //~ Standbymode: EnergyValue,
+                                        //~ StartPowerValue: EnergyValue + 1,
+                                        //~ Name: EnergyIndex,
+                                        //~ Object:
+                                        EnergyOutObj[EnergyIndex].Object = Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDaynterval';
+
+                                        var SetDayWh = 0;
+                                        var GetDayWh = await Adapter.getStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayWh');
+                                        if (GetDayWh && GetDayWh.val) {
+                                            SetDayWh = GetDayWh.val
+                                        }
+
+                                        var SetDayKwh = 0;
+                                        var GetDayKwh = await Adapter.getStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayKwh');
+                                        if (GetDayKwh && GetDayKwh.val) {
+                                            SetDayKwh = GetDayKwh.val
+                                        }
+
+                                        var SetDayCost = 0;
+                                        var GetDayCost = await Adapter.getStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayMoney');
+                                        if (GetDayCost && GetDayCost.val) {
+                                            SetDayCost = GetDayCost.val
+                                        }
+
+                                        var WriteInterval = 0;
+                                        EnergyOutObj[EnergyIndex].PowerState = true;
+                                        EnergyOutObj[EnergyIndex].Wh = 0;
+                                        EnergyOutObj[EnergyIndex].Event = 0;
+                                        EnergyOutObj[EnergyIndex].Costs = 0;
+                                        EnergyOutObj[EnergyIndex].Timer = 0;
+                                        EnergyOutObj[EnergyIndex].DeviceIsOff = 0;
+                                        EnergyOutObj[EnergyIndex].Name = EnergyIndex;
+                                        EnergyOutObj[EnergyIndex].LastTime = new Date().getTime();
+                                        Adapter.subscribeForeignStates(Adapterarray[0][ArrayDev].EnergyObjectInput);
+
+                                        if (EnergyTimer[EnergyIndex] === undefined) {
+                                            EnergyTimer.push(EnergyIndex);
+                                        }
+
+                                        EnergyTimer[EnergyIndex] = setInterval(async function() {
+                                            EnergyOutObj[EnergyIndex].TimeDiff = (new Date().getTime()) - EnergyOutObj[EnergyIndex].LastTime;
+                                            EnergyOutObj[EnergyIndex].LastTime = new Date().getTime();
+                                            var Temp = await Adapter.getForeignStateAsync(Adapterarray[0][ArrayDev].EnergyObjectInput);
+                                            EnergyOutObj[EnergyIndex].CurrentConsumption = Temp.val;
+                                            var CalcSubWh = EnergyOutObj[EnergyIndex].CurrentConsumption * EnergyOutObj[EnergyIndex].TimeDiff;
+                                            var CalcMainWh = (CalcSubWh / 3600000);
+                                            EnergyOutObj[EnergyIndex].Wh = Math.round((EnergyOutObj[EnergyIndex].Wh + CalcMainWh) * 100) / 100;
+                                            if (WriteInterval == 5) {
+                                                Adapter.setStateAsync(EnergyOutObj[EnergyIndex].Object, EnergyOutObj[EnergyIndex].Wh, true);
+                                                Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayWh',
+                                                    SetDayWh + EnergyOutObj[EnergyIndex].Wh, true);
+                                                Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayKwh',
+                                                    Math.round(SetDayKwh + (EnergyOutObj[EnergyIndex].Wh / 1000)), true);
+                                                Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayMoney',
+                                                    Math.round(SetDayCost + (Math.ceil(EnergyOutObj[EnergyIndex].Costs * 100) / 100)), true);
+                                                Adapter.log.info(EnergyIndex + ' ==> Calc Wh: ' + EnergyOutObj[EnergyIndex].Wh +
+                                                    ' | Calc Kwh: ' + Math.round(EnergyOutObj[EnergyIndex].Wh / 1000) +
+                                                    ' | Calc Costs: ' + EnergyOutObj[EnergyIndex].Costs);
+                                                WriteInterval = 0;
+                                            }
+                                            WriteInterval += 1;
+                                        }, 5000);
+                                    }
+                                    //~ await Adapter.trigerEnergy(Adapterarray[0], ArrayDev);
+                                } else {
+                                    clearInterval(EnergyTimer[EnergyIndex]);
+                                    clearInterval(EnergyTimerWh[EnergyIndex]);
+                                    EnergyTimerWh[EnergyIndex] = null;
+                                    EnergyOutObj[EnergyIndex].PowerState = false;
+                                    EnergyOutObj[EnergyIndex].Event = 0;
+                                    EnergyOutObj[EnergyIndex].Costs = 0;
+                                    EnergyOutObj[EnergyIndex].Timer = 0;
+                                    Adapter.unsubscribeForeignStates(Adapterarray[0][ArrayDev].EnergyObjectInput);
+                                }
+                            }
+
+                            if (id == Adapterarray[0][ArrayDev].EnergyObjectInput) {
+                                var EnergyIndex = Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName
+                                if (EnergyTimerWh[EnergyIndex] === undefined) {
+                                    EnergyTimerWh.push(EnergyIndex);
+                                    //~ Adapter.log.warn(Adapterarray[0][ArrayDev].EnergyObjectInput + '==' + state.val + " / Max " + EnergyOutObj[EnergyIndex].StartPowerValue + " / Min " + EnergyOutObj[EnergyIndex].Standbymode);
+                                    EnergyTimerWh[EnergyIndex] = setInterval(function() {
+                                        if (EnergyOutObj[EnergyIndex].Event == 1) {
+                                            if (EnergyTimerNowWh[EnergyIndex] === undefined) {
+                                                EnergyTimerNowWh.push(EnergyIndex);
+                                            }
+                                            EnergyTimerNowWh[EnergyIndex] = setInterval(function() { // Start Costs
+                                                var TempCosts = (EnergyOutObj[EnergyIndex].Price / 3600000) * (((new Date().getTime()) - EnergyOutObj[EnergyIndex].StartCosts) / 1000) * state.val;
+                                                EnergyOutObj[EnergyIndex].Costs = EnergyOutObj[EnergyIndex].Costs + TempCosts;
+                                                EnergyOutObj[EnergyIndex].StartCosts = new Date().getTime();
+                                            }, 1500);
+                                        }
+                                        if (state.val > EnergyOutObj[EnergyIndex].StartPowerValue) {
+                                            if (EnergyOutObj[EnergyIndex].Timer != 1) {
+                                                EnergyOutObj[EnergyIndex].StartCosts = new Date().getTime();
+                                                EnergyOutObj[EnergyIndex].Event = 1;
+                                            }
+                                            EnergyOutObj[EnergyIndex].Timer = 1;
+                                        } else if ((state.val < EnergyOutObj[EnergyIndex].Standbymode) && (EnergyOutObj[EnergyIndex].Timer == 1)) {
+                                            EnergyOutObj[EnergyIndex].Timer = 0;
+                                            var CostNow = Math.ceil(EnergyOutObj[EnergyIndex].Costs * 100) / 100;
+                                            var CostEnd = Math.ceil((1000 / EnergyOutObj[EnergyIndex].Price) * (EnergyOutObj[EnergyIndex].Costs / 1000) * 100) / 100;
+                                            Adapter.log.warn(Adapterarray[0][ArrayDev].DeviceIDName + ': The costs amount to a total of' +
+                                                CostNow + ' . The device used ' + CostEnd + ' kilowatt hours');
+                                        } else if (state.val <= EnergyOutObj[EnergyIndex].DeviceIsOff) {
+                                            EnergyOutObj[EnergyIndex].Event = 0;
+                                            EnergyOutObj[EnergyIndex].Costs = 0;
+                                            EnergyOutObj[EnergyIndex].Timer = 0;
+                                            clearInterval(EnergyTimerNowWh[EnergyIndex]); // Clear Costs
+                                        }
+                                    }, 20000);
+                                }
+
+                            }
                             //=====================================================Other===========================================
                         } else if (Adapterarray[0][ArrayDev].DeviceType == "Other") {
                             if (id == Adapterarray[0][ArrayDev].OtherObject) {
-                                //=======================================check Value (comparison)=======================================
-                                if (/=|<|>/.test(Adapterarray[0][ArrayDev].OtherObjectValue)) {
-                                    var getOtherStateVal = Adapter.CheckOtherState(Adapterarray[0][ArrayDev].OtherObjectValue, Adapterarray[0][ArrayDev].OtherObject, Adapterarray[0][ArrayDev].DeviceIDName);
-                                    getOtherStateVal.then((val) => {
-                                        if (val) {
-                                            var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
-                                            if (GetAlarm) {
-                                                //================Check State
-                                                if (Adapterarray[0][ArrayDev].activate) {
-                                                    //================Get Day by day
-                                                    var RetDay = Adapter.getDayWeek(Adapterarray[0][ArrayDev]);
-                                                    //================Check Schedule State
-                                                    if (Adapterarray[0][ArrayDev].Schedule_Enabled) {
-                                                        //================Check Schedule Time and Day
-                                                        if (Adapter.inTime(Adapterarray[0][ArrayDev].Schedule_Start, Adapterarray[0][ArrayDev].Schedule_End, RetDay)) {
-                                                            Adapter.trigerSpeak(Adapterarray[0], ArrayDev);
-                                                            Adapter.trigerOther(Adapterarray[0], ArrayDev);
-                                                            Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": Other State changed, event is triggered");
-                                                        }
-                                                    } else {
-                                                        //================No Schdule
-                                                        Adapter.trigerSpeak(Adapterarray[0], ArrayDev);
-                                                        Adapter.trigerOther(Adapterarray[0], ArrayDev);
-                                                        Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": (No Schedule) Other State changed, event is triggered");
-                                                    }
-                                                }
-                                            } else {
-                                                Adapter.log.info("Alarm returns incorrect settings! Alarm setting is " + Adapterarray[0][ArrayDev].AlarmNumber + ", the current alarm is " + CommandSPTG.AlarmObject);
-                                            }
-                                        } else {
-                                            //****************************************Clear Countdown*************************************************
-                                            var CountdownIndex = [Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName];
-                                            if (Othercountdown[CountdownIndex] !== undefined) {
-                                                clearTimeout(Othercountdown[CountdownIndex]);
-                                            }
-                                            //***********************************************************Other False***********************************************
-                                            var ToSearch = Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName;
-                                            for (let ArrayOther in Adapterarray[0]) {
-                                                //================Check Device List
-                                                var FindAllTriger = Adapter.checkTrigger(Adapterarray[0], ArrayOther, ToSearch, false);
-                                                if (FindAllTriger !== false) {
-                                                    var iFA;
-                                                    for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
-                                                        if (FindAllTriger[iFA].toString() == Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName) {
-                                                            Adapter.log.info("==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName);
-                                                            var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayOther].AlarmNumber);
-                                                            if (GetAlarm) {
-                                                                //================Check State (Device)
-                                                                if (Adapterarray[0][ArrayOther].activate) {
-                                                                    //================Check Schedule Time and Day (Device)
-                                                                    var DevRetDay = Adapter.getDayWeek(Adapterarray[0][ArrayOther]);
-                                                                    if (Adapter.inTime(Adapterarray[0][ArrayOther].Schedule_Start, Adapterarray[0][ArrayOther].Schedule_End, DevRetDay)) {
-                                                                        if (Adapterarray[0][ArrayOther].OnState) {
-                                                                            var StringToCommandon = Adapterarray[0][ArrayOther].OnObjectString;
-                                                                            var ObjectToCommandon = Adapterarray[0][ArrayOther].OnObject;
-                                                                            var StringToCommandoff = Adapterarray[0][ArrayOther].OffObjectString;
-                                                                            var ObjectToCommandoff = Adapterarray[0][ArrayOther].OffObject;
-                                                                        } else {
-                                                                            var StringToCommandon = Adapterarray[0][ArrayOther].OffObjectString;
-                                                                            var ObjectToCommandon = Adapterarray[0][ArrayOther].OffObject;
-                                                                            var StringToCommandoff = Adapterarray[0][ArrayOther].OnObjectString;
-                                                                            var ObjectToCommandoff = Adapterarray[0][ArrayOther].OnObject;
-                                                                        }
-                                                                        Adapter.log.info("Found Switch: " + ObjectToCommandoff + " with: " + StringToCommandoff);
-                                                                        if (/^#[0-9A-F]{6}$/i.test(StringToCommandoff)) { //Color
-                                                                            Adapter.setForeignStateAsync(ObjectToCommandoff, StringToCommandoff);
-                                                                        } else if ((/\d+/g.test(StringToCommandoff)) || (/true/g.test(StringToCommandoff)) || (/false/g.test(StringToCommandoff))) { // State
-                                                                            Adapter.setForeignStateAsync(ObjectToCommandoff, eval(StringToCommandoff));
-                                                                        } else { // Other
-                                                                            Adapter.setForeignStateAsync(ObjectToCommandoff, StringToCommandoff);
-                                                                        }
-                                                                    } else {
-                                                                        // Adapter.log.info(Adapterarray[0][strArrayDev].DeviceIDName + ": motion detected, defined times returns false!");
-                                                                    }
-                                                                }
-                                                            } else {
-                                                                Adapter.log.info("Alarm returns incorrect settings! Alarm setting is " + Adapterarray[0][ArrayOther].AlarmNumber + ", the current alarm is " + CommandSPTG.AlarmObject);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    });
-                                } else {
-                                    //=======================================Check String=============================================
-                                    if (state.val.toString() == Adapterarray[0][ArrayDev].OtherObjectValue) {
-                                        var GetAlarm = Adapter.CheckAlarmState(Adapterarray[0][ArrayDev].AlarmNumber);
-                                        if (GetAlarm) {
-                                            //================Check State
-                                            if (Adapterarray[0][ArrayDev].activate) {
-                                                //================Get Day by day
-                                                var RetDay = Adapter.getDayWeek(Adapterarray[0][ArrayDev]);
-                                                //================Check Schedule State
-                                                if (Adapterarray[0][ArrayDev].Schedule_Enabled) {
-                                                    //================Check Schedule Time and Day
-                                                    if (Adapter.inTime(Adapterarray[0][ArrayDev].Schedule_Start, Adapterarray[0][ArrayDev].Schedule_End, RetDay)) {
-                                                        Adapter.trigerSpeak(Adapterarray[0], ArrayDev);
-                                                        Adapter.trigerOther(Adapterarray[0], ArrayDev);
-                                                        Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": Other State changed, event is triggered");
-                                                    }
-                                                } else {
-                                                    //================No Schdule
-                                                    Adapter.trigerSpeak(Adapterarray[0], ArrayDev);
-                                                    Adapter.trigerOther(Adapterarray[0], ArrayDev);
-                                                    Adapter.log.info(Adapterarray[0][ArrayDev].DeviceIDName + ": (No Schedule) Other State changed, event is triggered");
-                                                }
-                                            }
-                                        } else {
-                                            Adapter.log.info("Alarm returns incorrect settings! Alarm setting is " + Adapterarray[0][ArrayDev].AlarmNumber + ", the current alarm is " + CommandSPTG.AlarmObject);
-                                        }
-                                    } else {
-                                        //****************************************Clear Countdown*************************************************
-                                        var CountdownIndex = [Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName];
-                                        if (Othercountdown[CountdownIndex] !== undefined) {
-                                            clearTimeout(Othercountdown[CountdownIndex]);
-                                        }
-                                    }
-                                }
+                                Adapter.trigerOther(Adapterarray[0], ArrayDev, state.val);
                             }
                         }
                     }
@@ -3259,6 +3439,345 @@ class alarmcontrol extends utils.Adapter {
                         });
                         Adapter.setStateAsync(ToCreateChannel + '.History', '', true);
                         break;
+                    case "Energy":
+                        Adapter.createChannelAsync(ToCreateChannel, 'Database');
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database', {
+                            type: "channel",
+                            common: {
+                                name: 'Database',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyObject', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyObject',
+                                desc: 'EnergyObject',
+                                type: 'string',
+                                role: 'text',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyObject', recivemsg.message.EnergyObject, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyObjectInput', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyObjectInput',
+                                desc: 'EnergyObjectInput',
+                                type: 'string',
+                                role: 'text',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyObjectInput', recivemsg.message.EnergyObjectInput, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyValue', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyValue',
+                                desc: 'EnergyValue',
+                                type: 'string',
+                                role: 'text',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyValue', recivemsg.message.EnergyValue, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyPrice', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyPrice',
+                                desc: 'EnergyPrice',
+                                type: 'string',
+                                role: 'text',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyPrice', recivemsg.message.EnergyPrice, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergySwitchOff', {
+                            type: "state",
+                            common: {
+                                name: 'EnergySwitchOff',
+                                desc: 'EnergySwitchOff',
+                                type: 'boolean',
+                                role: 'switch',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergySwitchOff', recivemsg.message.EnergySwitchOff, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyConsumption', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyConsumption',
+                                desc: 'EnergyConsumption',
+                                type: 'boolean',
+                                role: 'switch',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyConsumption', recivemsg.message.EnergyConsumption, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyConsumptionDay', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyConsumptionDay',
+                                desc: 'EnergyConsumptionDay',
+                                type: 'boolean',
+                                role: 'switch',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyConsumptionDay', recivemsg.message.EnergyConsumptionDay, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyConsumptionWeek', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyConsumptionWeek',
+                                desc: 'EnergyConsumptionWeek',
+                                type: 'boolean',
+                                role: 'switch',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyConsumptionWeek', recivemsg.message.EnergyConsumptionWeek, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyConsumptionMonth', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyConsumptionMonth',
+                                desc: 'EnergyConsumptionMonth',
+                                type: 'boolean',
+                                role: 'switch',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyConsumptionMonth', recivemsg.message.EnergyConsumptionMonth, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyConsumptionYear', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyConsumptionYear',
+                                desc: 'EnergyConsumptionYear',
+                                type: 'boolean',
+                                role: 'switch',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyConsumptionYear', recivemsg.message.EnergyConsumptionYear, true);
+                        //============================Day========================================
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyDayKwh', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyDayKwh',
+                                desc: 'EnergyDayKwh',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyDayKwh', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyDayWh', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyDayWh',
+                                desc: 'EnergyDayWh',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyDayWh', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyDayMoney', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyDayMoney',
+                                desc: 'EnergyDayMoney',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyDayMoney', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyDayTime', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyDayTime',
+                                desc: 'EnergyDayTime',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyDayTime', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyDaynterval', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyDaynterval',
+                                desc: 'EnergyDaynterval',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyDaynterval', '0', true);
+                        //============================Week========================================
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyWeekKwh', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyWeekKwh',
+                                desc: 'EnergyWeekKwh',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyWeekKwh', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyWeekWh', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyWeekWh',
+                                desc: 'EnergyWeekWh',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyWeekWh', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyWeekMoney', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyWeekMoney',
+                                desc: 'EnergyWeekMoney',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyWeekMoney', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyWeekTime', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyWeekTime',
+                                desc: 'EnergyWeekTime',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyWeekTime', '0', true);
+                        //============================Month========================================
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyMonthKwh', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyMonthKwh',
+                                desc: 'EnergyMonthKwh',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyMonthKwh', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyMonthWh', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyMonthWh',
+                                desc: 'EnergyMonthWh',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyMonthWh', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyMonthMoney', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyMonthMoney',
+                                desc: 'EnergyMonthMoney',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyMonthMoney', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyMonthTime', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyMonthTime',
+                                desc: 'EnergyMonthTime',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyMonthTime', '0', true);
+                        //============================Year========================================
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyYearKwh', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyYearKwh',
+                                desc: 'EnergyYearKwh',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyYearKwh', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyYearWh', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyYearWh',
+                                desc: 'EnergyYearWh',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyYearWh', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyYearMoney', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyYearMoney',
+                                desc: 'EnergyYearMoney',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyYearMoney', '0', true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyYearTime', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyYearTime',
+                                desc: 'EnergyYearTime',
+                                type: 'string',
+                                role: 'text',
+                                write: true
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.Database.EnergyYearTime', '0', true);
+                        break;
                     case "Other":
                         await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.OtherObject', {
                             type: "state",
@@ -3556,6 +4075,8 @@ class alarmcontrol extends utils.Adapter {
                     LogTextNumberReed = 0;
                 let LogTextStringOther = "",
                     LogTextNumberOther = 0;
+                let LogTextStringEnergy = "",
+                    LogTextNumberEnergy = 0;
                 let LogTextStringTimer = "",
                     LogTextNumberTimer = 0;
                 let devicenumber = await Adapter.getDevicesAsync('');
@@ -3564,128 +4085,89 @@ class alarmcontrol extends utils.Adapter {
                     let MyDevicename = devicenumber[idx].common.name;
                     for (let idxS = 0; idxS < AllMyDevicename.length; idxS++) {
                         let MyChannelname = AllMyDevicename[idxS].common.name;
-                        // switch (MyDevicename) {
-                        //	if ((MyDevicename == "Switch") || (MyDevicename == "Motion") || (MyDevicename == "Reed") || (MyDevicename == "Heater")){
-                        /*******************************************************Filter All************************************************************************************/
-                        //case "Switch": case "Motion": case "Reed": case "Heater":
-                        //Adapter.log.info("Split: " + MyChannelname);
-                        let DeviceIDName = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.DeviceIDName');
-                        let DeviceType = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.DeviceType');
-                        let Schedule_Enabled = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Enabled');
-                        let Schedule_Start = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Start');
-                        let Schedule_End = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_End');
-                        let Schedule_Monday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Monday');
-                        let Schedule_Tuesday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Tuesday');
-                        let Schedule_Wednesday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Wednesday');
-                        let Schedule_Thursday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Thursday');
-                        let Schedule_Friday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Friday');
-                        let Schedule_Saturday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Saturday');
-                        let Schedule_Sunday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Sunday');
-                        let Speach = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Speach');
-                        let Echos = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Echos');
-                        let SpeachString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SpeachString');
-                        let AlarmNumber = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.AlarmNumber');
-                        let activate = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.activate');
-                        // break;
-                        //}
-                        switch (MyDevicename) {
-                            /*******************************************************Switch************************************************************************************/
-                            case "Switch":
-                                LogTextStringSwitch += MyChannelname + ' | ';
-                                LogTextNumberSwitch += 1;
-                                let OnState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnState');
-                                let OnObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnObject');
-                                let OnObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnObjectString');
-                                let OffState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffState');
-                                let OffObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObject');
-                                let OffObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObjectString');
-                                let trigerswitch = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.trigerswitch');
-                                let SwitchMode = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SwitchMode');
-                                devicearray[MyChannelname] = {
-                                    DeviceIDName: DeviceIDName.val,
-                                    DeviceType: DeviceType.val,
-                                    OnState: OnState.val,
-                                    OnObject: OnObject.val,
-                                    OnObjectString: OnObjectString.val,
-                                    OffState: OffState.val,
-                                    OffObject: OffObject.val,
-                                    OffObjectString: OffObjectString.val,
-                                    Schedule_Enabled: Schedule_Enabled,
-                                    Schedule_Start: Schedule_Start.val,
-                                    Schedule_End: Schedule_End.val,
-                                    Schedule_Monday: Schedule_Monday.val,
-                                    Schedule_Tuesday: Schedule_Tuesday.val,
-                                    Schedule_Wednesday: Schedule_Wednesday.val,
-                                    Schedule_Thursday: Schedule_Thursday.val,
-                                    Schedule_Friday: Schedule_Friday.val,
-                                    Schedule_Saturday: Schedule_Saturday.val,
-                                    Schedule_Sunday: Schedule_Sunday.val,
-                                    Speach: Speach.val,
-                                    Echos: Echos.val,
-                                    SpeachString: SpeachString.val,
-                                    AlarmNumber: AlarmNumber.val,
-                                    SwitchMode: SwitchMode.val,
-                                    trigerswitch: trigerswitch.val,
-                                    activate: activate.val
-                                };
-                                //Adapter.log.info("Switchs: " + JSON.stringify(devicearray));
-                                //Adapter.log.info('Found: ' + LogTextNumberSwitch + ' Switchs: ' + LogTextStringSwitch);
-                                break;
-                                /*******************************************************Reed************************************************************************************/
-                            case "Reed":
-                                LogTextStringReed += MyChannelname + ' | ';
-                                LogTextNumberReed += 1;
-                                let ReedObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedObject');
-                                let ReedObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedObjectString');
-                                let EntranceState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EntranceState');
-                                let ReedTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedTimeValue');
-                                let ReedCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedCountdownValue');
-                                devicearray[MyChannelname] = {
-                                    DeviceIDName: DeviceIDName.val,
-                                    DeviceType: DeviceType.val,
-                                    ReedObject: ReedObject.val,
-                                    ReedObjectString: ReedObjectString.val,
-                                    EntranceState: EntranceState.val,
-                                    ReedTimeValue: ReedTimeValue.val,
-                                    ReedCountdownValue: ReedCountdownValue.val,
-                                    Schedule_Enabled: Schedule_Enabled,
-                                    Schedule_Start: Schedule_Start.val,
-                                    Schedule_End: Schedule_End.val,
-                                    Schedule_Monday: Schedule_Monday.val,
-                                    Schedule_Tuesday: Schedule_Tuesday.val,
-                                    Schedule_Wednesday: Schedule_Wednesday.val,
-                                    Schedule_Thursday: Schedule_Thursday.val,
-                                    Schedule_Friday: Schedule_Friday.val,
-                                    Schedule_Saturday: Schedule_Saturday.val,
-                                    Schedule_Sunday: Schedule_Sunday.val,
-                                    Speach: Speach.val,
-                                    Echos: Echos.val,
-                                    SpeachString: SpeachString.val,
-                                    AlarmNumber: AlarmNumber.val,
-                                    activate: activate.val
-                                };
-                                //Adapter.log.info("Reeds: " + JSON.stringify(devicearray));
-                                //Adapter.log.info('Found: ' + LogTextNumberReed + ' Reeds: ' + LogTextStringReed);
-                                break;
-                                /*******************************************************MOTIONS************************************************************************************/
-                            case "Motion":
-                                LogTextStringMotion += MyChannelname + ' | ';
-                                LogTextNumberMotion += 1;
-                                let MotionObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionObject');
-                                let MotionObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionObjectString');
-                                let MotionIlluminationActiv = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionIlluminationActiv');
-                                let IlluminationObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.IlluminationObject');
-                                let IlluminationValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.IlluminationValue');
-                                let MotionTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionTimeValue');
-                                devicearray[MyChannelname] = {
+                        if (MyChannelname !== 'Database') {
+                            /*******************************************************Filter All************************************************************************************/
+                            //case "Switch": case "Motion": case "Reed": case "Heater":
+                            //Adapter.log.info("Split: " + MyChannelname);
+                            let DeviceIDName = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.DeviceIDName');
+                            let DeviceType = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.DeviceType');
+                            let Schedule_Enabled = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Enabled');
+                            let Schedule_Start = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Start');
+                            let Schedule_End = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_End');
+                            let Schedule_Monday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Monday');
+                            let Schedule_Tuesday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Tuesday');
+                            let Schedule_Wednesday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Wednesday');
+                            let Schedule_Thursday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Thursday');
+                            let Schedule_Friday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Friday');
+                            let Schedule_Saturday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Saturday');
+                            let Schedule_Sunday = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Schedule_Sunday');
+                            let Speach = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Speach');
+                            let Echos = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.Echos');
+                            let SpeachString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SpeachString');
+                            let AlarmNumber = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.AlarmNumber');
+                            let activate = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.activate');
+                            // break;
+                            //}
+                            switch (MyDevicename) {
+                                /*******************************************************Switch************************************************************************************/
+                                case "Switch":
+                                    LogTextStringSwitch += MyChannelname + ' | ';
+                                    LogTextNumberSwitch += 1;
+                                    let OnState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnState');
+                                    let OnObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnObject');
+                                    let OnObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OnObjectString');
+                                    let OffState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffState');
+                                    let OffObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObject');
+                                    let OffObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OffObjectString');
+                                    let trigerswitch = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.trigerswitch');
+                                    let SwitchMode = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SwitchMode');
+                                    devicearray[MyChannelname] = {
                                         DeviceIDName: DeviceIDName.val,
                                         DeviceType: DeviceType.val,
-                                        MotionObject: MotionObject.val,
-                                        MotionObjectString: MotionObjectString.val,
-                                        MotionIlluminationActiv: MotionIlluminationActiv.val,
-                                        IlluminationObject: IlluminationObject.val,
-                                        IlluminationValue: IlluminationValue.val,
-                                        MotionTimeValue: MotionTimeValue.val,
+                                        OnState: OnState.val,
+                                        OnObject: OnObject.val,
+                                        OnObjectString: OnObjectString.val,
+                                        OffState: OffState.val,
+                                        OffObject: OffObject.val,
+                                        OffObjectString: OffObjectString.val,
+                                        Schedule_Enabled: Schedule_Enabled,
+                                        Schedule_Start: Schedule_Start.val,
+                                        Schedule_End: Schedule_End.val,
+                                        Schedule_Monday: Schedule_Monday.val,
+                                        Schedule_Tuesday: Schedule_Tuesday.val,
+                                        Schedule_Wednesday: Schedule_Wednesday.val,
+                                        Schedule_Thursday: Schedule_Thursday.val,
+                                        Schedule_Friday: Schedule_Friday.val,
+                                        Schedule_Saturday: Schedule_Saturday.val,
+                                        Schedule_Sunday: Schedule_Sunday.val,
+                                        Speach: Speach.val,
+                                        Echos: Echos.val,
+                                        SpeachString: SpeachString.val,
+                                        AlarmNumber: AlarmNumber.val,
+                                        SwitchMode: SwitchMode.val,
+                                        trigerswitch: trigerswitch.val,
+                                        activate: activate.val
+                                    };
+                                    //Adapter.log.info("Switchs: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberSwitch + ' Switchs: ' + LogTextStringSwitch);
+                                    break;
+                                    /*******************************************************Reed************************************************************************************/
+                                case "Reed":
+                                    LogTextStringReed += MyChannelname + ' | ';
+                                    LogTextNumberReed += 1;
+                                    let ReedObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedObject');
+                                    let ReedObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedObjectString');
+                                    let EntranceState = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EntranceState');
+                                    let ReedTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedTimeValue');
+                                    let ReedCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.ReedCountdownValue');
+                                    devicearray[MyChannelname] = {
+                                        DeviceIDName: DeviceIDName.val,
+                                        DeviceType: DeviceType.val,
+                                        ReedObject: ReedObject.val,
+                                        ReedObjectString: ReedObjectString.val,
+                                        EntranceState: EntranceState.val,
+                                        ReedTimeValue: ReedTimeValue.val,
+                                        ReedCountdownValue: ReedCountdownValue.val,
                                         Schedule_Enabled: Schedule_Enabled,
                                         Schedule_Start: Schedule_Start.val,
                                         Schedule_End: Schedule_End.val,
@@ -3701,23 +4183,107 @@ class alarmcontrol extends utils.Adapter {
                                         SpeachString: SpeachString.val,
                                         AlarmNumber: AlarmNumber.val,
                                         activate: activate.val
-                                    }
-                                    //Adapter.log.info("Motions: " + JSON.stringify(devicearray));
-                                    //Adapter.log.info('Found: ' + LogTextNumberMotion + ' Motions: ' + LogTextStringMotion);
-                                break;
-                                /*******************************************************Temperature***********************************************************************************/
-                            case "Temperature":
-                                LogTextStringTemperature += MyChannelname + ' | ';
-                                LogTextNumberTemperature += 1;
-                                let TemperatureObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TemperatureObject');
-                                let TemperatureObjectValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TemperatureObjectValue');
-                                let TimedOutValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimedOutValue');
-                                devicearray[MyChannelname] = {
+                                    };
+                                    //Adapter.log.info("Reeds: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberReed + ' Reeds: ' + LogTextStringReed);
+                                    break;
+                                    /*******************************************************Motions************************************************************************************/
+                                case "Motion":
+                                    LogTextStringMotion += MyChannelname + ' | ';
+                                    LogTextNumberMotion += 1;
+                                    let MotionObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionObject');
+                                    let MotionObjectString = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionObjectString');
+                                    let MotionIlluminationActiv = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionIlluminationActiv');
+                                    let IlluminationObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.IlluminationObject');
+                                    let IlluminationValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.IlluminationValue');
+                                    let MotionTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.MotionTimeValue');
+                                    devicearray[MyChannelname] = {
+                                            DeviceIDName: DeviceIDName.val,
+                                            DeviceType: DeviceType.val,
+                                            MotionObject: MotionObject.val,
+                                            MotionObjectString: MotionObjectString.val,
+                                            MotionIlluminationActiv: MotionIlluminationActiv.val,
+                                            IlluminationObject: IlluminationObject.val,
+                                            IlluminationValue: IlluminationValue.val,
+                                            MotionTimeValue: MotionTimeValue.val,
+                                            Schedule_Enabled: Schedule_Enabled,
+                                            Schedule_Start: Schedule_Start.val,
+                                            Schedule_End: Schedule_End.val,
+                                            Schedule_Monday: Schedule_Monday.val,
+                                            Schedule_Tuesday: Schedule_Tuesday.val,
+                                            Schedule_Wednesday: Schedule_Wednesday.val,
+                                            Schedule_Thursday: Schedule_Thursday.val,
+                                            Schedule_Friday: Schedule_Friday.val,
+                                            Schedule_Saturday: Schedule_Saturday.val,
+                                            Schedule_Sunday: Schedule_Sunday.val,
+                                            Speach: Speach.val,
+                                            Echos: Echos.val,
+                                            SpeachString: SpeachString.val,
+                                            AlarmNumber: AlarmNumber.val,
+                                            activate: activate.val
+                                        }
+                                        //Adapter.log.info("Motions: " + JSON.stringify(devicearray));
+                                        //Adapter.log.info('Found: ' + LogTextNumberMotion + ' Motions: ' + LogTextStringMotion);
+                                    break;
+                                    /*******************************************************Temperature***********************************************************************************/
+                                case "Temperature":
+                                    LogTextStringTemperature += MyChannelname + ' | ';
+                                    LogTextNumberTemperature += 1;
+                                    let TemperatureObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TemperatureObject');
+                                    let TemperatureObjectValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TemperatureObjectValue');
+                                    let TimedOutValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimedOutValue');
+                                    devicearray[MyChannelname] = {
+                                            DeviceIDName: DeviceIDName.val,
+                                            DeviceType: DeviceType.val,
+                                            TemperatureObject: TemperatureObject.val,
+                                            TemperatureObjectValue: TemperatureObjectValue.val,
+                                            TimedOutValue: TimedOutValue.val,
+                                            Schedule_Enabled: Schedule_Enabled,
+                                            Schedule_Start: Schedule_Start.val,
+                                            Schedule_End: Schedule_End.val,
+                                            Schedule_Monday: Schedule_Monday.val,
+                                            Schedule_Tuesday: Schedule_Tuesday.val,
+                                            Schedule_Wednesday: Schedule_Wednesday.val,
+                                            Schedule_Thursday: Schedule_Thursday.val,
+                                            Schedule_Friday: Schedule_Friday.val,
+                                            Schedule_Saturday: Schedule_Saturday.val,
+                                            Schedule_Sunday: Schedule_Sunday.val,
+                                            Speach: Speach.val,
+                                            Echos: Echos.val,
+                                            SpeachString: SpeachString.val,
+                                            AlarmNumber: AlarmNumber.val,
+                                            activate: activate.val
+                                        }
+                                        //Adapter.log.info("Temperature: " + JSON.stringify(devicearray));
+                                        //Adapter.log.info('Found: ' + LogTextNumberTemperature + ' Temperature: ' + LogTextStringTemperature);
+                                    break;
+                                    /*******************************************************Energy***********************************************************************************/
+                                case "Energy":
+                                    LogTextStringEnergy += MyChannelname + ' | ';
+                                    LogTextNumberEnergy += 1;
+                                    let EnergyObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyObject');
+                                    let EnergyObjectInput = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyObjectInput');
+                                    let EnergyValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyValue');
+                                    let EnergyPrice = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyPrice');
+                                    let EnergySwitchOff = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergySwitchOff');
+                                    let EnergyConsumption = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumption');
+                                    let EnergyConsumptionDay = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionDay');
+                                    let EnergyConsumptionWeek = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionWeek');
+                                    let EnergyConsumptionMonth = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionMonth');
+                                    let EnergyConsumptionYear = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionYear');
+                                    devicearray[MyChannelname] = {
                                         DeviceIDName: DeviceIDName.val,
                                         DeviceType: DeviceType.val,
-                                        TemperatureObject: TemperatureObject.val,
-                                        TemperatureObjectValue: TemperatureObjectValue.val,
-                                        TimedOutValue: TimedOutValue.val,
+                                        EnergyObject: EnergyObject.val,
+                                        EnergyObjectInput: EnergyObjectInput.val,
+                                        EnergyValue: EnergyValue.val,
+                                        EnergyPrice: EnergyPrice.val,
+                                        EnergySwitchOff: EnergySwitchOff.val,
+                                        EnergyConsumption: EnergyConsumption.val,
+                                        EnergyConsumptionDay: EnergyConsumptionDay.val,
+                                        EnergyConsumptionWeek: EnergyConsumptionWeek.val,
+                                        EnergyConsumptionMonth: EnergyConsumptionMonth.val,
+                                        EnergyConsumptionYear: EnergyConsumptionYear.val,
                                         Schedule_Enabled: Schedule_Enabled,
                                         Schedule_Start: Schedule_Start.val,
                                         Schedule_End: Schedule_End.val,
@@ -3733,78 +4299,79 @@ class alarmcontrol extends utils.Adapter {
                                         SpeachString: SpeachString.val,
                                         AlarmNumber: AlarmNumber.val,
                                         activate: activate.val
-                                    }
-                                    //Adapter.log.info("Temperature: " + JSON.stringify(devicearray));
-                                    //Adapter.log.info('Found: ' + LogTextNumberTemperature + ' Temperature: ' + LogTextStringTemperature);
-                                break;
-                                /*******************************************************Other***********************************************************************************/
-                            case "Other":
-                                LogTextStringOther += MyChannelname + ' | ';
-                                LogTextNumberOther += 1;
-                                let OtherObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherObject');
-                                let OtherObjectValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherObjectValue');
-                                let OtherTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherTimeValue');
-                                let OtherCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherCountdownValue');
-                                devicearray[MyChannelname] = {
-                                    DeviceIDName: DeviceIDName.val,
-                                    DeviceType: DeviceType.val,
-                                    OtherObject: OtherObject.val,
-                                    OtherObjectValue: OtherObjectValue.val,
-                                    OtherTimeValue: OtherTimeValue.val,
-                                    OtherCountdownValue: OtherCountdownValue.val,
-                                    Schedule_Enabled: Schedule_Enabled,
-                                    Schedule_Start: Schedule_Start.val,
-                                    Schedule_End: Schedule_End.val,
-                                    Schedule_Monday: Schedule_Monday.val,
-                                    Schedule_Tuesday: Schedule_Tuesday.val,
-                                    Schedule_Wednesday: Schedule_Wednesday.val,
-                                    Schedule_Thursday: Schedule_Thursday.val,
-                                    Schedule_Friday: Schedule_Friday.val,
-                                    Schedule_Saturday: Schedule_Saturday.val,
-                                    Schedule_Sunday: Schedule_Sunday.val,
-                                    Speach: Speach.val,
-                                    Echos: Echos.val,
-                                    SpeachString: SpeachString.val,
-                                    AlarmNumber: AlarmNumber.val,
-                                    activate: activate.val
-                                };
-                                //Adapter.log.info("Others: " + JSON.stringify(devicearray));
-                                //Adapter.log.info('Found: ' + LogTextNumberOther + ' Others: ' + LogTextStringOther);
-                                break;
-                                /*******************************************************Timer***********************************************************************************/
-                            case "Timer":
-                                LogTextStringTimer += MyChannelname + ' | ';
-                                LogTextNumberTimer += 1;
-                                let TimerObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerObject');
-                                let TimerTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerTimeValue');
-                                let TimerCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerCountdownValue');
-                                let SetSunlight = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SetSunlight');
-                                devicearray[MyChannelname] = {
-                                    DeviceIDName: DeviceIDName.val,
-                                    DeviceType: DeviceType.val,
-                                    SetSunlight: SetSunlight.val,
-                                    TimerObject: TimerObject.val,
-                                    TimerTimeValue: TimerTimeValue.val,
-                                    TimerCountdownValue: TimerCountdownValue.val,
-                                    Schedule_Enabled: Schedule_Enabled,
-                                    Schedule_Start: Schedule_Start.val,
-                                    Schedule_End: Schedule_End.val,
-                                    Schedule_Monday: Schedule_Monday.val,
-                                    Schedule_Tuesday: Schedule_Tuesday.val,
-                                    Schedule_Wednesday: Schedule_Wednesday.val,
-                                    Schedule_Thursday: Schedule_Thursday.val,
-                                    Schedule_Friday: Schedule_Friday.val,
-                                    Schedule_Saturday: Schedule_Saturday.val,
-                                    Schedule_Sunday: Schedule_Sunday.val,
-                                    Speach: Speach.val,
-                                    Echos: Echos.val,
-                                    SpeachString: SpeachString.val,
-                                    AlarmNumber: AlarmNumber.val,
-                                    activate: activate.val
-                                };
-                                //Adapter.log.info("Timers: " + JSON.stringify(devicearray));
-                                //Adapter.log.info('Found: ' + LogTextNumberTimer + ' Timers: ' + LogTextStringTimer);
-                                break;
+                                    };
+                                    //Adapter.log.info("Energy: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberEnergy + ' Energy: ' + LogTextStringEnergy);
+                                    break;
+                                    /*******************************************************Other***********************************************************************************/
+                                case "Other":
+                                    LogTextStringOther += MyChannelname + ' | ';
+                                    LogTextNumberOther += 1;
+                                    let OtherObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherObject');
+                                    let OtherObjectValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherObjectValue');
+                                    let OtherTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherTimeValue');
+                                    let OtherCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.OtherCountdownValue');
+                                    devicearray[MyChannelname] = {
+                                        DeviceIDName: DeviceIDName.val,
+                                        DeviceType: DeviceType.val,
+                                        OtherObject: OtherObject.val,
+                                        OtherObjectValue: OtherObjectValue.val,
+                                        OtherTimeValue: OtherTimeValue.val,
+                                        OtherCountdownValue: OtherCountdownValue.val,
+                                        Schedule_Enabled: Schedule_Enabled,
+                                        Schedule_Start: Schedule_Start.val,
+                                        Schedule_End: Schedule_End.val,
+                                        Schedule_Monday: Schedule_Monday.val,
+                                        Schedule_Tuesday: Schedule_Tuesday.val,
+                                        Schedule_Wednesday: Schedule_Wednesday.val,
+                                        Schedule_Thursday: Schedule_Thursday.val,
+                                        Schedule_Friday: Schedule_Friday.val,
+                                        Schedule_Saturday: Schedule_Saturday.val,
+                                        Schedule_Sunday: Schedule_Sunday.val,
+                                        Speach: Speach.val,
+                                        Echos: Echos.val,
+                                        SpeachString: SpeachString.val,
+                                        AlarmNumber: AlarmNumber.val,
+                                        activate: activate.val
+                                    };
+                                    //Adapter.log.info("Others: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberOther + ' Others: ' + LogTextStringOther);
+                                    break;
+                                    /*******************************************************Timer***********************************************************************************/
+                                case "Timer":
+                                    LogTextStringTimer += MyChannelname + ' | ';
+                                    LogTextNumberTimer += 1;
+                                    let TimerObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerObject');
+                                    let TimerTimeValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerTimeValue');
+                                    let TimerCountdownValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.TimerCountdownValue');
+                                    let SetSunlight = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.SetSunlight');
+                                    devicearray[MyChannelname] = {
+                                        DeviceIDName: DeviceIDName.val,
+                                        DeviceType: DeviceType.val,
+                                        SetSunlight: SetSunlight.val,
+                                        TimerObject: TimerObject.val,
+                                        TimerTimeValue: TimerTimeValue.val,
+                                        TimerCountdownValue: TimerCountdownValue.val,
+                                        Schedule_Enabled: Schedule_Enabled,
+                                        Schedule_Start: Schedule_Start.val,
+                                        Schedule_End: Schedule_End.val,
+                                        Schedule_Monday: Schedule_Monday.val,
+                                        Schedule_Tuesday: Schedule_Tuesday.val,
+                                        Schedule_Wednesday: Schedule_Wednesday.val,
+                                        Schedule_Thursday: Schedule_Thursday.val,
+                                        Schedule_Friday: Schedule_Friday.val,
+                                        Schedule_Saturday: Schedule_Saturday.val,
+                                        Schedule_Sunday: Schedule_Sunday.val,
+                                        Speach: Speach.val,
+                                        Echos: Echos.val,
+                                        SpeachString: SpeachString.val,
+                                        AlarmNumber: AlarmNumber.val,
+                                        activate: activate.val
+                                    };
+                                    //Adapter.log.info("Timers: " + JSON.stringify(devicearray));
+                                    //Adapter.log.info('Found: ' + LogTextNumberTimer + ' Timers: ' + LogTextStringTimer);
+                                    break;
+                            }
                         }
                     }
                 }
@@ -3812,9 +4379,10 @@ class alarmcontrol extends utils.Adapter {
                 Adapter.log.info('Found: ' + LogTextNumberReed + ' Reeds: ' + LogTextStringReed);
                 Adapter.log.info('Found: ' + LogTextNumberMotion + ' Motions: ' + LogTextStringMotion);
                 Adapter.log.info('Found: ' + LogTextNumberTemperature + ' Temperature sensors: ' + LogTextStringTemperature);
+                Adapter.log.info('Found: ' + LogTextNumberEnergy + ' Energy monitoring: ' + LogTextStringEnergy);
                 Adapter.log.info('Found: ' + LogTextNumberOther + ' Other: ' + LogTextStringOther);
                 Adapter.log.info('Found: ' + LogTextNumberTimer + ' Timer: ' + LogTextStringTimer);
-                Adapter.log.info("==> " + JSON.stringify(devicearray));
+                //~ Adapter.log.info("==> " + JSON.stringify(devicearray));
                 Adapter.sendTo(recivemsg.from, recivemsg.command, {
                     devicearray: devicearray
                 }, recivemsg.callback);
@@ -4012,6 +4580,7 @@ class alarmcontrol extends utils.Adapter {
                             let PresenceStamp = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.PresenceStamp');
                             let PresenceState = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.PresenceState');
                             let AbsentSince = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.AbsentSince');
+                            let RFID = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.RFID');
                             let Active = await Adapter.getStateAsync(MyFamilyname + "." + MyChannelname + '.Active');
                             Familyarray[MyChannelname] = {
                                 IDName: IDName.val,
@@ -4020,6 +4589,7 @@ class alarmcontrol extends utils.Adapter {
                                 PresenceStamp: PresenceStamp.val,
                                 PresenceState: PresenceState.val,
                                 AbsentSince: AbsentSince.val,
+                                RFID: RFID.val,
                                 Active: Active.val
                             };
                         }
@@ -4123,6 +4693,18 @@ class alarmcontrol extends utils.Adapter {
                     native: {}
                 });
                 Adapter.setStateAsync(ToCreateChannel + '.PresenceState', false, true);
+                await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.RFID', {
+                    type: "state",
+                    common: {
+                        name: 'RFID',
+                        desc: 'RFID',
+                        type: 'boolean',
+                        role: 'switch',
+                        write: true
+                    },
+                    native: {}
+                });
+                Adapter.setStateAsync(ToCreateChannel + '.RFID', recivemsg.message.RFID, true);
                 await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Active', {
                     type: "state",
                     common: {
