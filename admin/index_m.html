@@ -45,6 +45,7 @@
             HideTemperature();
             HideOther();
             HideTimer();
+            HideEnergy();
             var collap = document.getElementsByClassName("collapsible");
             var iColla;
             for (iColla = 0; iColla < collap.length; iColla++) {
@@ -87,7 +88,8 @@
                 $("#ReedDevices").html("");
                 $("#OtherDevices").html("");
                 $("#TimerDevices").html("");
-				$("#TemperatureDevices").html("");
+                $("#EnergyDevices").html("");
+                $("#TemperatureDevices").html("");
                 for (let ArrayDev in response.devicearray) {
                     ShowDevices(response.devicearray[ArrayDev]);
                     console.log(response);
@@ -106,13 +108,14 @@
                 var GetFamilyIndex = x + 1 - 1;
                 var FamilyIndex = GetFamilyIndex.toString();
                 // alert(FamilyIndex);
-                chboxFamily = ''; //checked';
+                let chboxFamily = ''; //checked';
                 let text = '<tr> ';
                 text += '<td><label><input type="checkbox" id="Family-' + FamilyIndex + '"  ' + chboxFamily + ' disabled/><span></span></label></td>';
                 text += '<td><input type="text" id="FamilyName' + FamilyIndex + '" " class="value" onchange="EventChBoxFamily(' + FamilyIndex + ')"/></td> ';
                 text += '<td> <a class="BTNFamily-' + FamilyIndex + ' values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></td>';
                 text += '<td><input type="text" id="FamilyPresenceObject' + FamilyIndex + '" " class="value" onchange="EventChBoxFamily(' + FamilyIndex + ')"/></td> ';
                 text += '<td><input type="text" id="FamilyPresenceTime' + FamilyIndex + '" " class="value" onchange="EventChBoxFamily(' + FamilyIndex + ')"/></td> ';
+                text += '<td><label><input type="checkbox" id="FamilyRFID-' + FamilyIndex + '"  ' + chboxFamily + '/><span></span></label></td>';
                 text += '<td> <a class="deleteFamily-' + FamilyIndex + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a>';
                 text += '</td></tr>';
                 $('#Family').append(text);
@@ -145,6 +148,7 @@
                             IDName: $('#FamilyName' + FamilyIndex).val(),
                             PresenceObject: $('#FamilyPresenceObject' + FamilyIndex).val(),
                             PresenceTime: $('#FamilyPresenceTime' + FamilyIndex).val(),
+                            RFID: $('#FamilyRFID-' + FamilyIndex).val(),
                             Active: true
                         }, response => {
                             sendTo(null, 'getFamily', {}, response => {
@@ -157,7 +161,7 @@
                             });
                             onChange(true);
                         });
-                        //socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + $('#FamilyName' + FamilyIndex).val() + `.activate`, true);
+                        socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + $('#FamilyName' + FamilyIndex).val() + `.Active`, true);
                     } else {
                         socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + $('#FamilyName' + FamilyIndex).val() + `.Active`, false);
                     }
@@ -270,6 +274,30 @@
                     });
                 });
             });
+            $('#BTNEnergyObject').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#EnergyObject').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#EnergyObject').val()) {
+                            $('#EnergyObject').val(newId);
+                            onChange();
+                        }
+                    });
+                });
+            });
+            $('#BTNEnergyObjectInput').click(function() {
+                initSelectId(function(sid) {
+                    //alert(JSON.stringify(sid));
+                    sid.selectId('show', $('#EnergyObjectInput').val(), function(newId) {
+                        //alert(newId);
+                        if (newId != $('#EnergyObjectInput').val()) {
+                            $('#EnergyObjectInput').val(newId);
+                            onChange();
+                        }
+                    });
+                });
+            });
             $('#BTNOtherObject').click(function() {
                 initSelectId(function(sid) {
                     //alert(JSON.stringify(sid));
@@ -371,7 +399,8 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
-								$("#TemperatureDevices").html("");
+                                $("#EnergyDevices").html("");
+                                $("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -416,7 +445,8 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
-								$("#TemperatureDevices").html("");
+                                $("#EnergyDevices").html("");
+                                $("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -461,7 +491,8 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
-								$("#TemperatureDevices").html("");
+                                $("#EnergyDevices").html("");
+                                $("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -475,8 +506,8 @@
                             $('#MotionTimeValue').val('');
                         });
                         break;
-					 case "Temperature":
-					 sendTo(null, 'adddevice', {
+                    case "Temperature":
+                        sendTo(null, 'adddevice', {
                             DeviceIDName: $('#DeviceIDName').val(),
                             DeviceType: $('#DeviceType').val(),
                             TemperatureObject: $('#TemperatureObject').val(),
@@ -504,7 +535,8 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
-								$("#TemperatureDevices").html("");
+                                $("#EnergyDevices").html("");
+                                $("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -512,10 +544,91 @@
                                 onChange(true);
                             });
                             $('#TemperatureObject').val('');
-                            $('##TemperatureObjectValue').val('');
-                            $('##TimedOutValue').val('00:00:00');
+                            $('#TemperatureObjectValue').val('');
+                            $('#TimedOutValue').val('00:00:00');
                         });
-					  break;
+                        break;
+                    case "Energy":
+                        let chboxEnergySwitchOffWrite = false;
+                        if ($('#EnergySwitchOff').is(":checked")) {
+                            chboxEnergySwitchOffWrite = true;
+                        }
+                        let chboxEnergyConsumptionWrite = false;
+                        if ($('#EnergyConsumption').is(":checked")) {
+                            chboxEnergyConsumptionWrite = true;
+                        }
+                        let chboxEnergyConsumptionDayWrite = false;
+                        if ($('#EnergyConsumptionDay').is(":checked")) {
+                            chboxEnergyConsumptionDayWrite = true;
+                        }
+                        let chboxEnergyConsumptionWeekWrite = false;
+                        if ($('#EnergyConsumptionWeek').is(":checked")) {
+                            chboxEnergyConsumptionWeekWrite = true;
+                        }
+                        let chboxEnergyConsumptionMonthWrite = false;
+                        if ($('#EnergyConsumptionMonth').is(":checked")) {
+                            chboxEnergyConsumptionMonthWrite = true;
+                        }
+                        let chboxEnergyConsumptionYearWrite = false;
+                        if ($('#EnergyConsumptionYear').is(":checked")) {
+                            chboxEnergyConsumptionYearWrite = true;
+                        }
+                        sendTo(null, 'adddevice', {
+                            DeviceIDName: $('#DeviceIDName').val(),
+                            DeviceType: $('#DeviceType').val(),
+                            EnergyObject: $('#EnergyObject').val(),
+                            EnergyObjectInput: $('#EnergyObjectInput').val(),
+                            EnergyValue: $('#EnergyValue').val(),
+                            EnergyPrice: $('#EnergyPrice').val(),
+                            EnergySwitchOff: chboxEnergySwitchOffWrite,
+                            EnergyConsumption: chboxEnergyConsumptionWrite,
+                            EnergyConsumptionDay: chboxEnergyConsumptionDayWrite,
+                            EnergyConsumptionWeek: chboxEnergyConsumptionWeekWrite,
+                            EnergyConsumptionMonth: chboxEnergyConsumptionMonthWrite,
+                            EnergyConsumptionYear: chboxEnergyConsumptionYearWrite,
+                            Schedule_Enabled: chboxScheduleWrite,
+                            Schedule_Monday: chboxScheduleMondayWrite,
+                            Schedule_Tuesday: chboxScheduleTuesdayWrite,
+                            Schedule_Wednesday: chboxScheduleWednesdayWrite,
+                            Schedule_Thursday: chboxScheduleThursdayWrite,
+                            Schedule_Friday: chboxScheduleFridayWrite,
+                            Schedule_Saturday: chboxScheduleSaturdayWrite,
+                            Schedule_Sunday: chboxScheduleSundayWrite,
+                            Schedule_Start: $('#Schedule_Start').val(),
+                            Schedule_End: $('#Schedule_End').val(),
+                            Speach: chboxSpeachWrite,
+                            Echos: $('#Echos').val(),
+                            SpeachString: $('#SpeachString').val(),
+                            AlarmNumber: $('#AlarmNumber').val(),
+                            trigerswitch: $('#trigerswitch').val(),
+                            activate: chboxActivateWrite
+                        }, response => {
+                            sendTo(null, 'getdevice', {}, response => {
+                                $("#SwitchDevices").html("");
+                                $("#MotionDevices").html("");
+                                $("#ReedDevices").html("");
+                                $("#OtherDevices").html("");
+                                $("#TimerDevices").html("");
+                                $("#EnergyDevices").html("");
+                                $("#TemperatureDevices").html("");
+                                for (let ArrayDev in response.devicearray) {
+                                    ShowDevices(response.devicearray[ArrayDev]);
+                                    console.log(response);
+                                }
+                                onChange(true);
+                            });
+                            $('#EnergyObject').val('');
+                            $('#EnergyObjectInput').val('');
+                            $('#EnergyValue').val('');
+                            $('#EnergyPrice').val('');
+                            $('#EnergySwitchOff').prop('checked', false);
+                            $('#EnergyConsumption').prop('checked', true);
+                            $('#EnergyConsumptionDay').prop('checked', true);
+                            $('#EnergyConsumptionWeek').prop('checked', false);
+                            $('#EnergyConsumptionMonth').prop('checked', false);
+                            $('#EnergyConsumptionYear').prop('checked', false);
+                        });
+                        break;
                     case "Other":
                         sendTo(null, 'adddevice', {
                             DeviceIDName: $('#DeviceIDName').val(),
@@ -547,7 +660,8 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
-								$("#TemperatureDevices").html("");
+                                $("#EnergyDevices").html("");
+                                $("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -591,7 +705,8 @@
                                 $("#ReedDevices").html("");
                                 $("#OtherDevices").html("");
                                 $("#TimerDevices").html("");
-								$("#TemperatureDevices").html("");
+                                $("#EnergyDevices").html("");
+                                $("#TemperatureDevices").html("");
                                 for (let ArrayDev in response.devicearray) {
                                     ShowDevices(response.devicearray[ArrayDev]);
                                     console.log(response);
@@ -635,6 +750,7 @@
                 HideTemperature();
                 HideOther();
                 HideTimer();
+                HideEnergy();
                 ShowSwitch();
                 UpdateSelect();
             });
@@ -651,6 +767,7 @@
                         HideTemperature();
                         HideOther();
                         HideTimer();
+                        HideEnergy();
                         ShowMotion();
                         break;
                     case "Reed":
@@ -659,6 +776,7 @@
                         HideTemperature();
                         HideOther();
                         HideTimer();
+                        HideEnergy();
                         ShowReed();
                         break;
                     case "Temperature":
@@ -667,6 +785,7 @@
                         HideReed();
                         HideOther();
                         HideTimer();
+                        HideEnergy();
                         ShowTemperature();
                         break;
                     case "Switch":
@@ -675,6 +794,7 @@
                         HideTemperature();
                         HideOther();
                         HideTimer();
+                        HideEnergy();
                         ShowSwitch();
                         break;
                     case "Other":
@@ -683,6 +803,7 @@
                         HideTemperature();
                         HideSwitch();
                         HideTimer();
+                        HideEnergy();
                         ShowOther();
                         break;
                     case "Timer":
@@ -691,7 +812,17 @@
                         HideTemperature();
                         HideSwitch();
                         HideOther();
+                        HideEnergy();
                         ShowTimer();
+                        break;
+                    case "Energy":
+                        HideMotion();
+                        HideReed();
+                        HideTemperature();
+                        HideSwitch();
+                        HideOther();
+                        HideTimer();
+                        ShowEnergy();
                         break;
                 }
             });
@@ -832,6 +963,46 @@
             HideCtrl("TimedOutValueLbl");
         }
 
+        function ShowEnergy() {
+            ShowCtrl("BTNEnergyObject");
+            ShowCtrl("EnergyObject");
+            ShowCtrl("EnergyObjectLbl");
+            ShowCtrl("BTNEnergyObjectInput");
+            ShowCtrl("EnergyObjectInput");
+            ShowCtrl("EnergyObjectInputLbl");
+            ShowCtrl("EnergyValue");
+            ShowCtrl("EnergyValueLbl");
+            ShowCtrl("EnergySwitchOff");
+            ShowCtrl("EnergyPriceLbl");
+            ShowCtrl("EnergyPrice");
+            $(".Energyform").show();
+            //~             ShowCtrl("EnergyConsumption");
+            //~             ShowCtrl("EnergyConsumptionDay");
+            //~             ShowCtrl("EnergyConsumptionWeek");
+            //~             ShowCtrl("EnergyConsumptionMonth");
+            //~             ShowCtrl("EnergyConsumptionYear");
+        }
+
+        function HideEnergy() {
+            HideCtrl("BTNEnergyObject");
+            HideCtrl("EnergyObject");
+            HideCtrl("EnergyObjectLbl");
+            HideCtrl("BTNEnergyObjectInput");
+            HideCtrl("EnergyObjectInput");
+            HideCtrl("EnergyObjectInputLbl");
+            HideCtrl("EnergyValue");
+            HideCtrl("EnergyValueLbl");
+            HideCtrl("EnergySwitchOff");
+            HideCtrl("EnergyPrice");
+            HideCtrl("EnergyPriceLbl");
+            $(".Energyform").hide();
+            //~             HideCtrl("EnergyConsumption");
+            //~             HideCtrl("EnergyConsumptionDay");
+            //~             HideCtrl("EnergyConsumptionWeek");
+            //~             HideCtrl("EnergyConsumptionMonth");
+            //~             HideCtrl("EnergyConsumptionYear");
+        }
+
         function ShowOther() {
             ShowCtrl("OtherObject");
             ShowCtrl("BTNOtherObject");
@@ -927,16 +1098,21 @@
             var x = document.getElementById("Family").rows.length;
             var GetFamilyIndex = x + 1 - 1;
             var FamilyIndex = GetFamilyIndex.toString();
-            chboxFamily = ''; //checked';
+            let chboxFamily = ''; //checked';
+            let chboxFamilyRFID = ''
             if (ArrayFamily.Active) {
                 chboxFamily = 'checked';
             }
+            if (ArrayFamily.RFID) {
+                chboxFamilyRFID = 'checked';
+            }
             let text = '<tr> ';
-            text += '<td><label><input type="checkbox" id="Family-' + FamilyIndex + '"  ' + chboxFamily + ' disabled/><span></span></label></td>';
+            text += '<td><label><input type="checkbox" id="Family-' + FamilyIndex + '"  ' + chboxFamily + ' /><span></span></label></td>';
             text += '<td>' + ArrayFamily.IDName + '</td> ';
             text += '<td></td> ';
             text += '<td>' + ArrayFamily.PresenceObject + '</td> ';
             text += '<td>' + ArrayFamily.PresenceTime + '</td> ';
+            text += '<td><label><input type="checkbox" id="FamilyRFID-' + FamilyIndex + '"  ' + chboxFamilyRFID + ' /><span></span></label></td>';
             text += '<td> <a class="deleteFamily-' + FamilyIndex + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a>';
             text += '</td></tr>';
             $('#Family').append(text);
@@ -956,6 +1132,14 @@
                     socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + ArrayFamily.IDName + `.activate`, true);
                 } else {
                     socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + ArrayFamily.IDName + `.Active`, false);
+                }
+            });
+            //===========================================RFID Object===================================================
+            $('#FamilyRFID-' + FamilyIndex).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + ArrayFamily.IDName + `.RFID`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + "Family" + `.` + ArrayFamily.IDName + `.RFID`, false);
                 }
             });
         }
@@ -1168,7 +1352,7 @@
                     }
                     break;
                     //*******************************************************Temperature************************************************************************************/
-				case "Temperature":
+                case "Temperature":
                     let TagTemperature = '<tr> ';
                     TagTemperature += '<td><label><input type="checkbox" id="TemperatureCheckBActive-' + IDEditDelete + '" ' + chbox + '/><span></span></label></td>';
                     TagTemperature += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
@@ -1211,6 +1395,89 @@
                     TagTemperature += '<a class="deleteTemperature-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a></td>';
                     TagTemperature += '</tr>';
                     $('#TemperatureDevices').append(TagTemperature);
+                    optText = DeviceGetArray.DeviceIDName;
+                    optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                    optValue.trim();
+                    if ($('#trigerswitch').find("option[value='" + optValue + "']").length) {
+                        $('#trigerswitch').val(optValue).trigger('change');
+                    } else {
+                        //Create Option and pre-select
+                        var newOption = new Option(optText, optValue, true, false);
+                        // Append
+                        $('#trigerswitch').append(newOption).trigger('change');
+                        //Update Select
+                        let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                        instance.destroy();
+                        instances = M.FormSelect.init($('#trigerswitch'));
+                    }
+                    break;
+                    //*******************************************************Energy************************************************************************************/
+                case "Energy":
+                    let TagEnergy = '<tr> ';
+                    let chboxEnergySwitchOff = '';
+                    if (DeviceGetArray.EnergySwitchOff) {
+                        chboxEnergySwitchOff = 'checked';
+                    }
+                    let CollectConsumption = '';
+                    if (DeviceGetArray.EnergyConsumption) {
+                        if (DeviceGetArray.EnergyConsumptionDay) {
+                            CollectConsumption += $('#EnergyConsumptionDay').text() + ', ';
+                        }
+                        if (DeviceGetArray.EnergyConsumptionWeek) {
+                            CollectConsumption += $('#EnergyConsumptionWeek').text() + ', ';
+
+                        }
+                        if (DeviceGetArray.EnergyConsumptionMonth) {
+                            CollectConsumption += $('#EnergyConsumptionMonth').text() + ', ';
+                        }
+                        if (DeviceGetArray.EnergyConsumptionYear) {
+                            CollectConsumption += $('#EnergyConsumptionYear').text() + ', ';
+                        }
+                        CollectConsumption = CollectConsumption.replace(/,([^,]*)$/, '')
+                    }
+                    TagEnergy += '<td><label><input type="checkbox" id="EnergyCheckBActive-' + IDEditDelete + '"  ' + chbox + '/><span></span></label></td>';
+                    TagEnergy += '<td>' + DeviceGetArray.AlarmNumber + '</td> ';
+                    TagEnergy += '<td>' + DeviceGetArray.DeviceIDName + '</td> ';
+                    TagEnergy += '<td>' + DeviceGetArray.EnergyObject + '</td> ';
+                    TagEnergy += '<td>' + DeviceGetArray.EnergyObjectInput + '</td> ';
+                    TagEnergy += '<td>' + DeviceGetArray.EnergyValue + '</td>';
+                    TagEnergy += '<td><label><input type="checkbox" id="EnergyCheckBToggle-' + IDEditDelete + '"  ' + chboxEnergySwitchOff + '/><span></span></label></td>';
+                    TagEnergy += '<td>' + CollectConsumption + '</td>';
+                    let CollectdaysEnergy = '';
+                    if (DeviceGetArray.Schedule_Enabled) {
+                        CollectdaysEnergy += DeviceGetArray.Schedule_Start + '-';
+                        CollectdaysEnergy += DeviceGetArray.Schedule_End + ' ';
+                        if (DeviceGetArray.Schedule_Monday) {
+                            CollectdaysEnergy += 'Mo '
+                        }
+                        if (DeviceGetArray.Schedule_Tuesday) {
+                            CollectdaysEnergy += 'Tu '
+                        }
+                        if (DeviceGetArray.Schedule_Wednesday) {
+                            CollectdaysEnergy += 'We '
+                        }
+                        if (DeviceGetArray.Schedule_Thursday) {
+                            CollectdaysEnergy += 'Th '
+                        }
+                        if (DeviceGetArray.Schedule_Friday) {
+                            CollectdaysEnergy += 'Fr '
+                        }
+                        if (DeviceGetArray.Schedule_Saturday) {
+                            CollectdaysEnergy += 'Sa '
+                        }
+                        if (DeviceGetArray.Schedule_Sunday) {
+                            CollectdaysEnergy += 'Su '
+                        }
+                        TagEnergy += '<td>' + CollectdaysEnergy + '</td> ';
+                    } else {
+                        TagEnergy += '<td>' + CollectdaysEnergy + '</td> ';
+                    }
+                    TagEnergy += '<td><label><input type="checkbox" id="EnergyCheckBSpeach-' + IDEditDelete + '" ' + chboxSpeach + '/><span></span></label></td>';
+                    TagEnergy += '<td>' + DeviceGetArray.SpeachString + '</td>';
+                    TagEnergy += '<td><a class="EditEnergy-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit" class="translate">edit</i></a>';
+                    TagEnergy += '<a class="deleteEnergy-' + IDEditDelete + ' values-buttons btn-floating btn-small waves-effect waves-Illumination red"><i class="material-icons" title="Delete">delete</i></a></td>';
+                    TagEnergy += '</tr>';
+                    $('#EnergyDevices').append(TagEnergy);
                     optText = DeviceGetArray.DeviceIDName;
                     optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
                     optValue.trim();
@@ -1711,7 +1978,7 @@
                 });
                 UpdateSelect();
             });
-			 //===========================================DELETE Temperature===================================================
+            //===========================================DELETE Temperature===================================================
             $('.deleteTemperature-' + IDEditDelete).on('click', function() {
                 sendTo(null, 'deletedevice', {
                     DeviceIDName: DeviceGetArray.DeviceIDName,
@@ -1758,6 +2025,133 @@
                 });
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.TimedOutValue`, (error, state) => {
                     $('#TimedOutValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Enabled`, (error, state) => {
+                    $('#Schedule_Enabled').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Start`, (error, state) => {
+                    $('#Schedule_Start').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_End`, (error, state) => {
+                    $('#Schedule_End').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Monday`, (error, state) => {
+                    $('#Schedule_Monday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Tuesday`, (error, state) => {
+                    $('#Schedule_Tuesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Wednesday`, (error, state) => {
+                    $('#Schedule_Wednesday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Thursday`, (error, state) => {
+                    $('#Schedule_Thursday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Friday`, (error, state) => {
+                    $('#Schedule_Friday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Saturday`, (error, state) => {
+                    $('#Schedule_Saturday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Sunday`, (error, state) => {
+                    $('#Schedule_Sunday').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, (error, state) => {
+                    $('#Speach').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Echos`, (error, state) => {
+                    $('#Echos').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.SpeachString`, (error, state) => {
+                    $('#SpeachString').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.AlarmNumber`, (error, state) => {
+                    $('#AlarmNumber').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, (error, state) => {
+                    $('#activate').prop('checked', state.val);
+                });
+                UpdateSelect();
+            });
+            //===========================================DELETE Energy===================================================
+            $('.deleteEnergy-' + IDEditDelete).on('click', function() {
+                sendTo(null, 'deletedevice', {
+                    DeviceIDName: DeviceGetArray.DeviceIDName,
+                    DeviceType: DeviceGetArray.DeviceType
+                }, response => {
+                    console.log(response);
+                });
+                $(this).parents('tr').remove();
+                optValue = DeviceGetArray.DeviceType + '-' + DeviceGetArray.DeviceIDName;
+                $("#trigerswitch option[value='" + optValue + "']").remove();
+                let instance = M.FormSelect.getInstance($('#trigerswitch'));
+                instance.destroy();
+                instances = M.FormSelect.init($('#trigerswitch'));
+            });
+            //===========================================Toggle Energy===================================================
+            $('#EnergyCheckBActive-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.activate`, false);
+                }
+            });
+            //===========================================Toggle Energy Switch off=============================================
+            $('#EnergyCheckBToggle-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergySwitchOff`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergySwitchOff`, false);
+                }
+            });
+            //===========================================Toggle Energy Speach=============================================
+            $('#EnergyCheckBSpeach-' + IDEditDelete).click(function() {
+                if ($(this).is(':checked')) {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, true);
+                } else {
+                    socket.emit('setState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Speach`, false);
+                }
+            });
+            //===========================================EDIT Energy===================================================
+            $('.EditEnergy-' + IDEditDelete).on('click', function() {
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceIDName`, (error, state) => {
+                    $('#DeviceIDName').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.DeviceType`, (error, state) => {
+                    $('#DeviceType').val(state.val).trigger('change');
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergyObject`, (error, state) => {
+                    $('#EnergyObject').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergyObjectInput`, (error, state) => {
+                    $('#EnergyObjectInput').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergyValue`, (error, state) => {
+                    $('#EnergyValue').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergyPrice`, (error, state) => {
+                    $('#EnergyPrice').val(state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergySwitchOff`, (error, state) => {
+                    $('#EnergySwitchOff').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergyConsumption`, (error, state) => {
+                    $('#EnergyConsumption').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergyConsumptionDay`, (error, state) => {
+                    $('#EnergyConsumptionDay').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergyConsumptionWeek`, (error, state) => {
+                    $('#EnergyConsumptionWeek').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergyConsumptionMonth`, (error, state) => {
+                    $('#EnergyConsumptionMonth').prop('checked', state.val);
+                });
+                socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.EnergyConsumptionYear`, (error, state) => {
+                    $('#EnergyConsumptionYear').prop('checked', state.val);
                 });
                 socket.emit('getState', `${adapter}.${instance}.` + DeviceGetArray.DeviceType + `.` + DeviceGetArray.DeviceIDName + `.Schedule_Enabled`, (error, state) => {
                     $('#Schedule_Enabled').prop('checked', state.val);
@@ -2072,7 +2466,6 @@
                     }
                 }
             }
-            //~             $("#PopUpDropdown").hide();
         }
         // This will be called by the admin adapter when the user presses the save button
         function save(callback) {
@@ -2158,7 +2551,7 @@
             <div class="row">
                 <!--Alarm section-->
                 <div class="col s12">
-				<button class="collapsible"><i class="material-icons left">build</i><span class="translate SetFontUppercase">Notification settings</span> </button>
+                    <button class="collapsible"><i class="material-icons left">build</i><span class="translate SetFontUppercase">Notification settings</span></button>
 
                     <div class="collapContent">
                         <div class="row">
@@ -2226,6 +2619,7 @@
                                     <th class="header translate" data-name="FamilyObjectEditTable"></th>
                                     <th class="header translate" data-name="FamilyObjectTable">Presence Object</th>
                                     <th class="header translate" data-name="FamilyAbsentTable">Time until absent</th>
+                                    <th class="header translate" data-name="FamilyRFIDTable">RFID</th>
                                     <th class="header translate" data-buttons="FamilyDelete">Delete</th>
                                 </tr>
                             </thead>
@@ -2245,6 +2639,7 @@
 							<option value="Motion" selected class="translate">Motion sensor</option>
 							<option value="Reed" class="translate">Door and Window sensor</option>
 							<option value="Temperature" class="translate">Temperature sensor</option>
+							<option value="Energy" class="translate">Energy monitoring</option>
 							<option value="Other" class="translate">Other sensor</option>
 							<option value="Timer" class="translate">Timer</option>
                             <option value="Switch" class="translate">Device</option>
@@ -2326,28 +2721,57 @@
                 <div class="col s2"><input type="time" id="TimedOutValue" value="00:00:00" step="1" />
                     <div id="elementBottom"><label id="TimedOutValueLbl" class="translate">Timed out</label></div>
                 </div>
-                <!--Other section-->
-                <div class="col s6">
-                    <div id="elementLeft"><a id="BTNOtherObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
-                    <div id="elementRight"><input type="text" id="OtherObject" class="value" placeholder="object ***Sensor" /></div>
-                    <div id="elementBottom"><label id="OtherObjectLbl" class="translate">Sensor object</label></div>
-                </div>
-                <div class="col s2"><input type="text" id="OtherObjectValue" class="value" placeholder="100/true" />
-                    <div id="elementBottom"><label id="OtherObjectValueLbl" class="translate">Sensor value</label></div>
-                </div>
-                <div class="col s2"><input type="time" id="OtherTimeValue" value="00:00:00" step="1" />
-                    <div id="elementBottom"><label id="OtherTimeValueLbl" class="translate">Trigger time</label></div>
-                </div>
-                <div class="col s2"><input type="time" id="OtherCountdownValue" value="00:00:00" step="1" />
-                    <div id="elementBottom"><label id="OtherCountdownValueLbl" class="translate">Countdown</label></div>
-                </div>
-                <!--Timer section -->
+                <!--Energy section-->
                 <div class="col s4">
-                    <div id="elementLeft">
-                        <a class="Astrobutton" id="AstroBtn"><i class="material-icons left">wb_sunny</i></a>
+                    <div id="elementLeft"><a id="BTNEnergyObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                    <div id="elementRight"><input type="text" id="EnergyObject" class="value" placeholder="object ***switch" /></div>
+                    <div id="elementBottom"><label id="EnergyObjectLbl" class="translate">Energy monitoring switching object</label></div>
+                </div>
+                <div class="col s4">
+                    <div id="elementLeft"><a id="BTNEnergyObjectInput" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                    <div id="elementRight"><input type="text" id="EnergyObjectInput" class="value" placeholder="object ***current" /></div>
+                    <div id="elementBottom"><label id="EnergyObjectInputLbl" class="translate">Current consumption (mA)</label></div>
+                </div>
+                <div class="col s2"><input type="text" id="EnergyValue" class="value" placeholder="2 (mA)" />
+                    <div id="elementBottom"><label id="EnergyValueLbl" class="translate">Standby consumption</label></div>
+                </div>
+                <div class="col s2">
+                    <div id="elementRight"><input type="text" id="EnergyPrice" class="value" placeholder="0.29" /></div>
+                    <div id="elementBottom"><label id="EnergyPriceLbl" class="translate">Price per KWh</label></div>
+                </div>
+                <div>
+                    <div class="col s12 Energyform">
+                        <br><br>
+                        <div class="col s4"><input type="checkbox" id="EnergySwitchOff" class="value" /> <label for="EnergySwitchOff" class="translate">Switching Off Standby Mode</label> </div>
+                        <div class="col s4"><input type="checkbox" id="EnergyConsumption" class="value" /> <label for="EnergyConsumption" class="translate">Power consumption report</label> </div>
+                        <div class="col s1"><input type="checkbox" id="EnergyConsumptionDay" class="value" /> <label for="EnergyConsumptionDay" class="translate">Today</label></div>
+                        <div class="col s1"><input type="checkbox" id="EnergyConsumptionWeek" class="value" /> <label for="EnergyConsumptionWeek" class="translate">Week</label></div>
+                        <div class="col s1"><input type="checkbox" id="EnergyConsumptionMonth" class="value" /> <label for="EnergyConsumptionMonth" class="translate">Month</label></div>
+                        <div class="col s1"><input type="checkbox" id="EnergyConsumptionYear" class="value" /> <label for="EnergyConsumptionYear" class="translate">Year</label></div>
+                        <br><br>
                     </div>
-                    <div id="PopUpDropdown">
-                        <select id="SunlightPhases" onchange="UpdateSunTimes()">
+                    <!--Other section-->
+                    <div class="col s6">
+                        <div id="elementLeft"><a id="BTNOtherObject" class=" values-buttons btn-floating btn-small waves-effect waves-Illumination blue"><i class="material-icons" title="Edit">edit</i></a></div>
+                        <div id="elementRight"><input type="text" id="OtherObject" class="value" placeholder="object ***Sensor" /></div>
+                        <div id="elementBottom"><label id="OtherObjectLbl" class="translate">Sensor object</label></div>
+                    </div>
+                    <div class="col s2"><input type="text" id="OtherObjectValue" class="value" placeholder="100/true" />
+                        <div id="elementBottom"><label id="OtherObjectValueLbl" class="translate">Sensor value</label></div>
+                    </div>
+                    <div class="col s2"><input type="time" id="OtherTimeValue" value="00:00:00" step="1" />
+                        <div id="elementBottom"><label id="OtherTimeValueLbl" class="translate">Trigger time</label></div>
+                    </div>
+                    <div class="col s2"><input type="time" id="OtherCountdownValue" value="00:00:00" step="1" />
+                        <div id="elementBottom"><label id="OtherCountdownValueLbl" class="translate">Countdown</label></div>
+                    </div>
+                    <!--Timer section -->
+                    <div class="col s4">
+                        <div id="elementLeft">
+                            <a class="Astrobutton" id="AstroBtn"><i class="material-icons left">wb_sunny</i></a>
+                        </div>
+                        <div id="PopUpDropdown">
+                            <select id="SunlightPhases" onchange="UpdateSunTimes()">
 				            <option value="SetNow" selected class="translate">Now</option>
 							<option value="sunrise" selected class="translate">Sunrise</option>
 							<option value="sunriseEnd" class="translate">Sunrise end</option>
@@ -2364,196 +2788,226 @@
 							<option value="nauticalDawn" class="translate">Nautical dawn</option>
 							<option value="dawn" class="translate">Dawn</option>
 							</select>
+                        </div>
+
                     </div>
 
+                    <div class="col s2"><input type="time" id="TimerObject" value="00:00:00" step="1" />
+                        <div id="elementBottom"><label id="TimerObjectLbl" class="translate">Timer</label></div>
+                    </div>
+                    <div class="col s2"><input type="time" id="TimerTimeValue" value="00:00:00" step="1" />
+                        <div id="elementBottom"><label id="TimerTimeValueLbl" class="translate">Trigger time</label></div>
+                    </div>
+                    <div class="col s2"><input type="time" id="TimerCountdownValue" value="00:00:00" step="1" />
+                        <div id="elementBottom"><label id="TimerCountdownValueLbl" class="translate">Countdown</label></div>
+                    </div>
                 </div>
+                <div>
 
-                <div class="col s2"><input type="time" id="TimerObject" value="00:00:00" step="1" />
-                    <div id="elementBottom"><label id="TimerObjectLbl" class="translate">Timer</label></div>
+                    <div class="col s12">
+                        <br><br>
+                        <div class="col s2"><input type="checkbox" id="Schedule_Enabled" class="value" /> <label for="Schedule_Enabled" class="translate">Activate schedule</label> </div>
+                        <div class="col s2"><input type="time" id="Schedule_Start" value="00:00:00" step="60" /> <label for="Schedule_Start" class="translate">Start</label> </div>
+                        <div class="col s2"><input type="time" id="Schedule_End" value="23:59:00" step="60" /> <label for="Schedule_End" class="translate">End</label> </div>
+                        <div class="col s6"><input type="checkbox" id="Schedule_Monday" class="value" /> <label for="Schedule_Monday" class="translate">Monday</label><input type="checkbox" id="Schedule_Tuesday" class="value" /> <label for="Schedule_Tuesday" class="translate">Tuesday</label><input type="checkbox" id="Schedule_Wednesday" class="value" /> <label for="Schedule_Wednesday" class="translate">Wednesday</label><input type="checkbox" id="Schedule_Thursday" class="value" /> <label for="Schedule_Thursday" class="translate">Thursday</label><input type="checkbox" id="Schedule_Friday" class="value" /> <label for="Schedule_Friday" class="translate">Friday</label><input type="checkbox" id="Schedule_Saturday" class="value" /> <label for="Schedule_Saturday" class="translate">Saturday</label><input type="checkbox" id="Schedule_Sunday" class="value" /> <label for="Schedule_Sunday" class="translate">Sunday</label> </div>
+                    </div>
                 </div>
-                <div class="col s2"><input type="time" id="TimerTimeValue" value="00:00:00" step="1" />
-                    <div id="elementBottom"><label id="TimerTimeValueLbl" class="translate">Trigger time</label></div>
-                </div>
-                <div class="col s2"><input type="time" id="TimerCountdownValue" value="00:00:00" step="1" />
-                    <div id="elementBottom"><label id="TimerCountdownValueLbl" class="translate">Countdown</label></div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s2"><input type="checkbox" id="Schedule_Enabled" class="value" /> <label for="Schedule_Enabled" class="translate">Activate schedule</label> </div>
-                <div class="col s2"><input type="time" id="Schedule_Start" value="00:00:00" step="60" /> <label for="Schedule_Start" class="translate">Start</label> </div>
-                <div class="col s2"><input type="time" id="Schedule_End" value="23:59:00" step="60" /> <label for="Schedule_End" class="translate">End</label> </div>
-                <div class="col s6"><input type="checkbox" id="Schedule_Monday" class="value" /> <label for="Schedule_Monday" class="translate">Monday</label><input type="checkbox" id="Schedule_Tuesday" class="value" /> <label for="Schedule_Tuesday" class="translate">Tuesday</label><input type="checkbox" id="Schedule_Wednesday" class="value" /> <label for="Schedule_Wednesday" class="translate">Wednesday</label><input type="checkbox" id="Schedule_Thursday" class="value" /> <label for="Schedule_Thursday" class="translate">Thursday</label><input type="checkbox" id="Schedule_Friday" class="value" /> <label for="Schedule_Friday" class="translate">Friday</label><input type="checkbox" id="Schedule_Saturday" class="value" /> <label for="Schedule_Saturday" class="translate">Saturday</label><input type="checkbox" id="Schedule_Sunday" class="value" /> <label for="Schedule_Sunday" class="translate">Sunday</label> </div>
-            </div>
-            <div class="row">
-                <div class="col s2"><input type="checkbox" class="value" id="Speach" /> <label id="SpeachLbl" class="translate">Speach</label> </div>
-                <div class="col s3"> <select id="Echos" multiple>
-							</select> </div>
-                <div class="col s7"><input type="text" id="SpeachString" class="value" placeholder="window was opened" />
-                    <div id="elementBottom"><label for="SpeachString" class="translate">Spoken sentence</label></div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s12"><input type="checkbox" class="value" id="activate" /> <label for="activate" class="translate">Activate Device</label> </div>
-                <br><br><br><br>
                 <div class="col s12">
-                    <a class="waves-effect waves-Illumination btn" id="addDevicestable"> <span class="translate" data-position="bottom" data-delay="50" data-lang="Add Device">Add Device</span> </a>
+                    <div class="col s2"><input type="checkbox" class="value" id="Speach" /> <label id="SpeachLbl" class="translate">Speach</label> </div>
+                    <div class="col s3"> <select id="Echos" multiple>
+							</select> </div>
+                    <div class="col s7"><input type="text" id="SpeachString" class="value" placeholder="window was opened" />
+                        <div id="elementBottom"><label for="SpeachString" class="translate">Spoken sentence</label></div>
+                    </div>
+                </div>
+                <div class="col s12">
+                    <div class="col s12"><input type="checkbox" class="value" id="activate" /> <label for="activate" class="translate">Activate Device</label> </div>
+                    <br><br>
+                    <div class="col s12">
+                        <a class="waves-effect waves-Illumination btn" id="addDevicestable"> <span class="translate" data-position="bottom" data-delay="50" data-lang="Add Device">Add Device</span> </a>
+                    </div>
+                    <br><br><br><br>
+                    <hr><br><br>
+                </div>
+
+                <div class="col s12">
+                    <div class="col s12 translate" style="font-size: 1.5rem;">Motion sensors</div>
+                    <div class="mytableoutterscroll wrapper">
+                        <table id="mytable">
+                            <thead>
+                                <tr>
+                                    <th class="header translate" data-name="MotionActivTable" data-type="checkbox">Active</th>
+                                    <th class="header" data-name="MotionAlarmTable"><i class="material-icons left">security</i></th>
+                                    <th class="header translate" data-name="MotionDeviceIDTable">Name</th>
+                                    <th class="header translate" data-name="MotionObjectTable">Motion object</th>
+                                    <th class="header translate" data-name="MotionStringTable">Value</th>
+                                    <th class="header" data-name="MotionIlluminationActivTable" data-type="checkbox"><i class="material-icons left">brightness_medium</i></th>
+                                    <th class="header translate" data-name="MotionIlluminationObjectTable">Illumination object</th>
+                                    <th class="header translate" data-name="MotionIlluminationStringTable">Value</th>
+                                    <th class="header" data-name="MotionIlluminationTimeTable"><i class="material-icons left">snooze</i></th>
+                                    <th class="header translate" data-name="MotionScheduleTable">Schedule</th>
+                                    <th class="header" data-name="MotionSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
+                                    <th class="header translate" data-name="MotionSpeachStringTable">Sentence</th>
+                                    <th class="header translate" data-buttons="Motion edit delete">Edit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="MotionDevices"></tbody>
+                        </table>
+                    </div> <br><br>
+                    <hr>
+                    <div class="col s12 translate" style="font-size: 1.5rem;">Door and Window sensors</div>
+                    <div class="mytableoutterscroll wrapper">
+                        <table id="mytable">
+                            <thead>
+                                <tr>
+                                    <th class="header translate" data-name="ReedActivTable" data-type="checkbox">Active</th>
+                                    <th class="header" data-name="ReedAlarmTable"><i class="material-icons left">security</i></th>
+                                    <th class="header translate" data-name="ReedDeviceIDTable">Name</th>
+                                    <th class="header translate" data-name="ReedObjectTable">Sensor object</th>
+                                    <th class="header translate" data-name="ReedStringTable">Value</th>
+                                    <th class="header translate" data-name="EntranceStateTable" data-type="checkbox" style="color:lime">Entrance</th>
+                                    <th class="header" data-name="ReedTimeTable"><i class="material-icons left">hourglass_empty</i></th>
+                                    <th class="header" data-name="ReedCountdownTable"><i class="material-icons left">timer</i></th>
+                                    <th class="header translate" data-name="ReedScheduleTable">Schedule</th>
+                                    <th class="header" data-name="ReedSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
+                                    <th class="header translate" data-name="ReedSpeachStringTable">Sentence</th>
+                                    <th class="header translate" data-buttons="Reed edit delete">Edit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ReedDevices"></tbody>
+                        </table>
+                    </div> <br><br>
+                    <hr>
+                    <div class="col s12 translate" style="font-size: 1.5rem;">Temperature sensors</div>
+                    <div class="mytableoutterscroll wrapper">
+                        <table id="mytable">
+                            <thead>
+                                <tr>
+                                    <th class="header translate" data-name="TemperatureActivTable" data-type="checkbox">Active</th>
+                                    <th class="header" data-name="TemperatureAlarmTable"><i class="material-icons left">security</i></th>
+                                    <th class="header translate" data-name="TemperatureDeviceIDTable">Name</th>
+                                    <th class="header translate" data-name="TemperatureObjectTable">Temperature object</th>
+                                    <th class="header translate" data-name="TemperatureValueTable">Value</th>
+                                    <th class="header" data-name="TemperatureTimeTable"><i class="material-icons left">hourglass_empty</i></th>
+                                    <th class="header translate" data-name="TemperatureScheduleTable">Schedule</th>
+                                    <th class="header" data-name="TemperatureSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
+                                    <th class="header translate" data-name="TemperatureSpeachStringTable">Sentence</th>
+                                    <th class="header translate" data-buttons="Temperature edit delete">Edit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="TemperatureDevices"></tbody>
+                        </table>
+                    </div><br><br>
+
+                    <hr>
+                    <div class="col s12 translate" style="font-size: 1.5rem;">Energy monitoring</div>
+                    <div class="mytableoutterscroll wrapper">
+                        <table id="mytable">
+                            <thead>
+                                <tr>
+                                    <th class="header translate" data-name="EnergyActivTable" data-type="checkbox">Active</th>
+                                    <th class="header" data-name="EnergyAlarmTable"><i class="material-icons left">security</i></th>
+                                    <th class="header translate" data-name="EnergyDeviceIDTable">Name</th>
+                                    <th class="header translate" data-name="EnergyObjectTable"><i class="material-icons left">power</i></th>
+                                    <th class="header" data-name="EnergyObjectInputTable"><i class="material-icons left">power_input</i></th>
+                                    <th class="header translate" data-name="EnergyValueTable">Value</th>
+                                    <th class="header" data-name="EnergySwitchOffTable" data-type="checkbox"><i class="material-icons left">power_settings_new</i></th>
+                                    <th class="header translate" data-name="EnergyConsumptionTable">Report</th>
+                                    <th class="header translate" data-name="EnergyScheduleTable">Schedule</th>
+                                    <th class="header" data-name="EnergySpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
+                                    <th class="header translate" data-name="EnergySpeachStringTable">Sentence</th>
+                                    <th class="header translate" data-buttons="Energy edit delete">Edit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="EnergyDevices"></tbody>
+                        </table>
+                    </div><br><br>
+                    <hr>
+                    <div class="col s12 translate" style="font-size: 1.5rem;">Other sensors</div>
+                    <div class="mytableoutterscroll wrapper">
+                        <table id="mytable">
+                            <thead>
+                                <tr>
+                                    <th class="header translate" data-name="OtherActivTable" data-type="checkbox">Active</th>
+                                    <th class="header" data-name="OtherAlarmTable"><i class="material-icons left">security</i></th>
+                                    <th class="header translate" data-name="OtherDeviceIDTable">Name</th>
+                                    <th class="header translate" data-name="OtherObjectTable">Sensor object</th>
+                                    <th class="header translate" data-name="OtherValueTable">Value</th>
+                                    <th class="header" data-name="OtherTimeTable"><i class="material-icons left">hourglass_empty</i></th>
+                                    <th class="header" data-name="OtherCountdownTable"><i class="material-icons left">timer</i></th>
+                                    <th class="header translate" data-name="OtherScheduleTable">Schedule</th>
+                                    <th class="header" data-name="OtherSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
+                                    <th class="header translate" data-name="OtherSpeachStringTable">Sentence</th>
+                                    <th class="header translate" data-buttons="Other edit delete">Edit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="OtherDevices"></tbody>
+                        </table>
+                    </div><br><br>
+                    <hr>
+                    <div class="col s12 translate" style="font-size: 1.5rem;">Timer</div>
+                    <div class="mytableoutterscroll wrapper">
+                        <table id="mytable">
+                            <thead>
+                                <tr>
+                                    <th class="header translate" data-name="TimerActivTable" data-type="checkbox">Active</th>
+                                    <th class="header" data-name="TimerAlarmTable"><i class="material-icons left">security</i></th>
+                                    <th class="header translate" data-name="TimerDeviceIDTable">Name</th>
+                                    <th class="header" data-name="TimerObjectTable"><i class="material-icons left">wb_sunny</i></th>
+                                    <th class="header translate" data-name="TimerObjectTable">Timer</th>
+                                    <th class="header" data-name="TimerTimeTable"><i class="material-icons left">hourglass_empty</i></th>
+                                    <th class="header" data-name="TimerCountdownTable"><i class="material-icons left">timer</i></th>
+                                    <th class="header translate" data-name="TimerScheduleTable">Schedule</th>
+                                    <th class="header" data-name="TimerSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
+                                    <th class="header translate" data-name="TimerSpeachStringTable">Sentence</th>
+                                    <th class="header translate" data-buttons="Timer edit delete">Edit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="TimerDevices"></tbody>
+                        </table>
+                    </div><br><br>
+                    <hr>
+                    <div class="col s12 translate" style="font-size: 1.5rem;">Devices</div>
+                    <div class="mytableoutterscroll wrapper">
+                        <table id="mytable">
+                            <!-- id="SwitchDevices">-->
+                            <thead>
+                                <tr>
+                                    <th class="header translate" data-name="SwitchActivTable" data-type="checkbox">Active</th>
+                                    <th class="header" data-name="SwitchAlarmTable"><i class="material-icons left">security</i></th>
+                                    <th class="header translate" data-name="SwitchDeviceIDTable">Name</th>
+                                    <th class="header" data-name="SwitchOnActiveTable" data-type="checkbox"><i class="material-icons left green">power_settings_new</i></th>
+                                    <!-- <th class="header translate" data-name="SwitchOnObjectTable">On object</th>-->
+                                    <th class="header translate" data-name="SwitchOnStringTable">Value</th>
+                                    <th class="header" data-name="SwitchOffActiveTable" data-type="checkbox"><i class="material-icons left red">power_settings_new</i></th>
+                                    <!-- <th class="header translate" data-name="SwitchOnffbjectTable">Off object</th>-->
+                                    <th class="header translate" data-name="SwitchOffStringTable">Value</th>
+                                    <th class="header translate" data-name="SwitchExecuteTable">Trigger</th>
+                                    <th class="header translate" data-name="SwitchScheduleTable">Schedule</th>
+                                    <th class="header" data-name="SwitchSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
+                                    <th class="header translate" data-name="SwitchSpeachStringTable">Sentence</th>
+                                    <th class="header translate" data-buttons="Switch edit delete">Edit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="SwitchDevices"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <hr>
-            <div>
-                <div class="col s12 translate" style="font-size: 1.5rem;">Motion sensors</div>
-                <div class="mytableoutterscroll wrapper">
-                    <table id="mytable">
-                        <thead>
-                            <tr>
-                                <th class="header translate" data-name="MotionActivTable" data-type="checkbox">Active</th>
-                                <th class="header" data-name="MotionAlarmTable"><i class="material-icons left">security</i></th>
-                                <th class="header translate" data-name="MotionDeviceIDTable">Name</th>
-                                <th class="header translate" data-name="MotionObjectTable">Motion object</th>
-                                <th class="header translate" data-name="MotionStringTable">Value</th>
-                                <th class="header" data-name="MotionIlluminationActivTable" data-type="checkbox"><i class="material-icons left">brightness_medium</i></th>
-                                <th class="header translate" data-name="MotionIlluminationObjectTable">Illumination object</th>
-                                <th class="header translate" data-name="MotionIlluminationStringTable">Value</th>
-                                <th class="header" data-name="MotionIlluminationTimeTable"><i class="material-icons left">snooze</i></th>
-                                <th class="header translate" data-name="MotionScheduleTable">Schedule</th>
-                                <th class="header" data-name="MotionSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
-                                <th class="header translate" data-name="MotionSpeachStringTable">Sentence</th>
-                                <th class="header translate" data-buttons="Motion edit delete">Edit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="MotionDevices"></tbody>
-                    </table>
-                </div> <br><br>
-                <hr>
-                <div class="col s12 translate" style="font-size: 1.5rem;">Door and Window sensors</div>
-                <div class="mytableoutterscroll wrapper">
-                    <table id="mytable">
-                        <thead>
-                            <tr>
-                                <th class="header translate" data-name="ReedActivTable" data-type="checkbox">Active</th>
-                                <th class="header" data-name="ReedAlarmTable"><i class="material-icons left">security</i></th>
-                                <th class="header translate" data-name="ReedDeviceIDTable">Name</th>
-                                <th class="header translate" data-name="ReedObjectTable">Sensor object</th>
-                                <th class="header translate" data-name="ReedStringTable">Value</th>
-                                <th class="header translate" data-name="EntranceStateTable" data-type="checkbox">Entrance</th>
-                                <th class="header" data-name="ReedTimeTable"><i class="material-icons left">hourglass_empty</i></th>
-                                <th class="header" data-name="ReedCountdownTable"><i class="material-icons left">timer</i></th>
-                                <th class="header translate" data-name="ReedScheduleTable">Schedule</th>
-                                <th class="header" data-name="ReedSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
-                                <th class="header translate" data-name="ReedSpeachStringTable">Sentence</th>
-                                <th class="header translate" data-buttons="Reed edit delete">Edit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ReedDevices"></tbody>
-                    </table>
-                </div> <br><br>
-                <hr>
-                <div class="col s12 translate" style="font-size: 1.5rem;">Temperature sensors</div>
-                <div class="mytableoutterscroll wrapper">
-                    <table id="mytable">
-                        <thead>
-                            <tr>
-                                <th class="header translate" data-name="TemperatureActivTable" data-type="checkbox">Active</th>
-                                <th class="header" data-name="TemperatureAlarmTable"><i class="material-icons left">security</i></th>
-                                <th class="header translate" data-name="TemperatureDeviceIDTable">Name</th>
-                                <th class="header translate" data-name="TemperatureObjectTable">Temperature object</th>
-                                <th class="header translate" data-name="TemperatureValueTable">Value</th>
-                                <th class="header" data-name="TemperatureTimeTable"><i class="material-icons left">hourglass_empty</i></th>
-                                <th class="header translate" data-name="TemperatureScheduleTable">Schedule</th>
-                                <th class="header" data-name="TemperatureSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
-                                <th class="header translate" data-name="TemperatureSpeachStringTable">Sentence</th>
-                                <th class="header translate" data-buttons="Temperature edit delete">Edit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="TemperatureDevices"></tbody>
-                    </table>
-                </div><br><br>
-                <hr>
-                <div class="col s12 translate" style="font-size: 1.5rem;">Other sensors</div>
-                <div class="mytableoutterscroll wrapper">
-                    <table id="mytable">
-                        <thead>
-                            <tr>
-                                <th class="header translate" data-name="OtherActivTable" data-type="checkbox">Active</th>
-                                <th class="header" data-name="OtherAlarmTable"><i class="material-icons left">security</i></th>
-                                <th class="header translate" data-name="OtherDeviceIDTable">Name</th>
-                                <th class="header translate" data-name="OtherObjectTable">Sensor object</th>
-                                <th class="header translate" data-name="OtherValueTable">Value</th>
-                                <th class="header" data-name="OtherTimeTable"><i class="material-icons left">hourglass_empty</i></th>
-                                <th class="header" data-name="OtherCountdownTable"><i class="material-icons left">timer</i></th>
-                                <th class="header translate" data-name="OtherScheduleTable">Schedule</th>
-                                <th class="header" data-name="OtherSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
-                                <th class="header translate" data-name="OtherSpeachStringTable">Sentence</th>
-                                <th class="header translate" data-buttons="Other edit delete">Edit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="OtherDevices"></tbody>
-                    </table>
-                </div><br><br>
-                <hr>
-                <div class="col s12 translate" style="font-size: 1.5rem;">Timer</div>
-                <div class="mytableoutterscroll wrapper">
-                    <table id="mytable">
-                        <thead>
-                            <tr>
-                                <th class="header translate" data-name="TimerActivTable" data-type="checkbox">Active</th>
-                                <th class="header" data-name="TimerAlarmTable"><i class="material-icons left">security</i></th>
-                                <th class="header translate" data-name="TimerDeviceIDTable">Name</th>
-                                <th class="header" data-name="TimerObjectTable"><i class="material-icons left">wb_sunny</i></th>
-                                <th class="header translate" data-name="TimerObjectTable">Timer</th>
-                                <th class="header" data-name="TimerTimeTable"><i class="material-icons left">hourglass_empty</i></th>
-                                <th class="header" data-name="TimerCountdownTable"><i class="material-icons left">timer</i></th>
-                                <th class="header translate" data-name="TimerScheduleTable">Schedule</th>
-                                <th class="header" data-name="TimerSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
-                                <th class="header translate" data-name="TimerSpeachStringTable">Sentence</th>
-                                <th class="header translate" data-buttons="Timer edit delete">Edit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="TimerDevices"></tbody>
-                    </table>
-                </div><br><br>
-                <hr>
-                <div class="col s12 translate" style="font-size: 1.5rem;">Devices</div>
-                <div class="mytableoutterscroll wrapper">
-                    <table id="mytable">
-                        <!-- id="SwitchDevices">-->
-                        <thead>
-                            <tr>
-                                <th class="header translate" data-name="SwitchActivTable" data-type="checkbox">Active</th>
-                                <th class="header" data-name="SwitchAlarmTable"><i class="material-icons left">security</i></th>
-                                <th class="header translate" data-name="SwitchDeviceIDTable">Name</th>
-                                <th class="header" data-name="SwitchOnActiveTable" data-type="checkbox"><i class="material-icons left green">power_settings_new</i></th>
-                                <!-- <th class="header translate" data-name="SwitchOnObjectTable">On object</th>-->
-                                <th class="header translate" data-name="SwitchOnStringTable">Value</th>
-                                <th class="header" data-name="SwitchOffActiveTable" data-type="checkbox"><i class="material-icons left red">power_settings_new</i></th>
-                                <!-- <th class="header translate" data-name="SwitchOnffbjectTable">Off object</th>-->
-                                <th class="header translate" data-name="SwitchOffStringTable">Value</th>
-                                <th class="header translate" data-name="SwitchExecuteTable">Trigger</th>
-                                <th class="header translate" data-name="SwitchScheduleTable">Schedule</th>
-                                <th class="header" data-name="SwitchSpeachTable" data-type="checkbox"><i class="material-icons left">volume_up</i></th>
-                                <th class="header translate" data-name="SwitchSpeachStringTable">Sentence</th>
-                                <th class="header translate" data-buttons="Switch edit delete">Edit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="SwitchDevices"></tbody>
-                    </table>
+            <div class="m material-dialogs">
+                <div id="dialog-select-member" class="modal modal-fixed-footer">
+                    <div class="modal-content">
+                        <div class="row">
+                            <div class="col s12 title"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col s12 dialog-content"> </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer"> <a class="modal-action modal-close waves-effect waves-green btn btn-set"><i class="large material-icons left">check</i><span class="translate">Select</span></a> <a class="modal-action modal-close waves-effect waves-green btn btn-close"><i class="large material-icons left ">close</i><span class="translate">Cancel</span></a> </div>
                 </div>
             </div>
         </div>
-        <div class="m material-dialogs">
-            <div id="dialog-select-member" class="modal modal-fixed-footer">
-                <div class="modal-content">
-                    <div class="row">
-                        <div class="col s12 title"></div>
-                    </div>
-                    <div class="row">
-                        <div class="col s12 dialog-content"> </div>
-                    </div>
-                </div>
-                <div class="modal-footer"> <a class="modal-action modal-close waves-effect waves-green btn btn-set"><i class="large material-icons left">check</i><span class="translate">Select</span></a> <a class="modal-action modal-close waves-effect waves-green btn btn-close"><i class="large material-icons left ">close</i><span class="translate">Cancel</span></a> </div>
-            </div>
-        </div>
-    </div>
 </body>
 
 </html>
