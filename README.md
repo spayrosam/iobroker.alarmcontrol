@@ -7,11 +7,21 @@ AlarmControl is a Alarm system adapter with four levels. Create and control thou
 
 ## Changelog
 
-### 0.0.1
-* (spayrosam) initial release
+
+### 0.2.0
+* (spayrosam) Energy monitoring has been implemented.
+* (spayrosam) RFID has been implemented.
+* (spayrosam) Fixed:
+                    - Other sensor-
+                    - Temperature sensor
+                    - 'And' Event.
+    
 ### 0.1.0
 * (spayrosam) Temperature has been implemented.
 * (spayrosam) 'And' Event fixed.
+
+### 0.0.1
+* (spayrosam) initial release
 
 ## License
 MIT License
