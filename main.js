@@ -149,6 +149,11 @@ var EnergyTimer = [];
 var EnergyTimerWh = [];
 var EnergyOutObj = [];
 var EnergyTimerNowWh = [];
+var EnergyAdapterarray = [];
+var WriteInterval = 0;
+var SetDayWh = 0,
+    SetDayKwh = 0,
+    SetDayCost = 0;
 //========================Alarm / level 3
 var startLevelThreeTimer = Date.now();
 var StartCountdownAlarmThree;
@@ -810,7 +815,8 @@ class alarmcontrol extends utils.Adapter {
                                     LogTextNumberEnergy += 1;
                                     let EnergyObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyObject');
                                     let EnergyObjectInput = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyObjectInput');
-                                    let EnergyValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyValue');
+                                    let EnergyStandbyValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyStandbyValue');
+                                    let EnergyPowerValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyPowerValue');
                                     let EnergyPrice = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyPrice');
                                     let EnergySwitchOff = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergySwitchOff');
                                     let EnergyConsumption = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumption');
@@ -818,12 +824,14 @@ class alarmcontrol extends utils.Adapter {
                                     let EnergyConsumptionWeek = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionWeek');
                                     let EnergyConsumptionMonth = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionMonth');
                                     let EnergyConsumptionYear = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionYear');
+                                    let EnergyPushover = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyPushover');
                                     devicearray[MyChannelname] = {
                                         DeviceIDName: DeviceIDName.val,
                                         DeviceType: DeviceType.val,
                                         EnergyObject: EnergyObject.val,
                                         EnergyObjectInput: EnergyObjectInput.val,
-                                        EnergyValue: EnergyValue.val,
+                                        EnergyStandbyValue: EnergyStandbyValue.val,
+                                        EnergyPowerValue: EnergyPowerValue.val,
                                         EnergyPrice: EnergyPrice.val,
                                         EnergySwitchOff: EnergySwitchOff.val,
                                         EnergyConsumption: EnergyConsumption.val,
@@ -831,6 +839,7 @@ class alarmcontrol extends utils.Adapter {
                                         EnergyConsumptionWeek: EnergyConsumptionWeek.val,
                                         EnergyConsumptionMonth: EnergyConsumptionMonth.val,
                                         EnergyConsumptionYear: EnergyConsumptionYear.val,
+                                        EnergyPushover: EnergyPushover.val,
                                         Schedule_Enabled: Schedule_Enabled,
                                         Schedule_Start: Schedule_Start.val,
                                         Schedule_End: Schedule_End.val,
@@ -847,7 +856,6 @@ class alarmcontrol extends utils.Adapter {
                                         AlarmNumber: AlarmNumber.val,
                                         activate: activate.val
                                     };
-
                                     //=======================================Set Object=======================================
                                     var EnergyIndex = devicearray[MyChannelname].DeviceType + "-" + devicearray[MyChannelname].DeviceIDName;
                                     if (EnergyOutObj[EnergyIndex] == undefined) {
@@ -857,14 +865,16 @@ class alarmcontrol extends utils.Adapter {
                                             LastTime: 0,
                                             TimeDiff: 0,
                                             CurrentConsumption: 0,
-                                            Event: 0,
                                             Timer: 0,
+                                            StartTimer: 0,
+                                            Event: 0,
+                                            StandbyControl: 0,
                                             Costs: 0,
-                                            StartCosts: 0,
                                             Price: EnergyPrice.val,
-                                            DeviceIsOff: 0,
-                                            Standbymode: EnergyValue.val,
-                                            StartPowerValue: Math.round(Number(EnergyValue.val) + 1),
+                                            Pushover: EnergyPushover.val,
+                                            DeviceSetOff: EnergySwitchOff.val,
+                                            Standbymode: EnergyStandbyValue.val,
+                                            StartPowerValue: EnergyPowerValue.val,
                                             Name: EnergyIndex,
                                             Object: ''
                                         };
@@ -1273,13 +1283,12 @@ class alarmcontrol extends utils.Adapter {
                     var Tempid = id.substring(0, id.lastIndexOf('.'));
                     Tempid = Tempid.substring(0, Tempid.lastIndexOf('.'));
                     let RetMyEchoName = new Promise((resolve, reject) => {
-                        Adapter.getForeignObject(Tempid,
-                            function(err, obj) {
-                                if (err) {
-                                    reject(err)
-                                }
-                                resolve(obj)
-                            })
+                        Adapter.getForeignObject(Tempid, function(err, obj) {
+                            if (err) {
+                                reject(err)
+                            }
+                            resolve(obj)
+                        })
                     }).then((obj) => {
                         var TempId = obj._id;
                         var TempEchoId = TempId.substring(TempId.lastIndexOf('.'));
@@ -1621,7 +1630,6 @@ class alarmcontrol extends utils.Adapter {
                 if (fullArray[iFa].toString() == strSensor.toString()) {
                     SetSensor = true;
                     break;
-
                 }
             }
             if (strSwitchMode && (strSwitchMode.toString() == "And") && SetSensor) {
@@ -1808,9 +1816,7 @@ class alarmcontrol extends utils.Adapter {
                                 Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
                                 var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArraySwitch].AlarmNumber);
                                 if (GetAlarm) {
-                                    var TimeIndex = [strAdapterarray[ArraySwitch].DeviceType + "-" + strAdapterarray[ArraySwitch].DeviceIDName + "-" +
-                                        strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName
-                                    ];
+                                    var TimeIndex = [strAdapterarray[ArraySwitch].DeviceType + "-" + strAdapterarray[ArraySwitch].DeviceIDName + "-" + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName];
                                     if (TimerMotion[TimeIndex] === undefined) {
                                         TimerMotion.push(TimeIndex);
                                     }
@@ -1837,18 +1843,22 @@ class alarmcontrol extends utils.Adapter {
                                                 var ObjectToCommandoff = strAdapterarray[ArraySwitch].OnObject;
                                             }
                                             Adapter.log.info("FoundSwitch: " + ObjectToCommandon + " with: " + StringToCommandon);
-                                            if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) {
+                                            if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) { //Color
                                                 Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
-                                            } else {
+                                            } else if ((/\d+/g.test(StringToCommandon)) || (/true/g.test(StringToCommandon)) || (/false/g.test(StringToCommandon))) { // State
                                                 Adapter.setForeignStateAsync(ObjectToCommandon, eval(StringToCommandon));
+                                            } else { // Other
+                                                Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
                                             }
                                             TimerMotion[TimeIndex] = setTimeout(function() {
                                                 TimerMotion[TimeIndex] = null;
                                                 Adapter.log.info("FoundSwitch: " + ObjectToCommandoff + " with: " + StringToCommandoff);
-                                                if (/^#[0-9A-F]{6}$/i.test(StringToCommandoff)) {
-                                                    Adapter.setForeignStateAsync(ObjectToCommandoff, StringToCommandoff); // Licht/Gerät aus nach Ablauf Timer
-                                                } else {
-                                                    Adapter.setForeignStateAsync(ObjectToCommandoff, eval(StringToCommandoff)); // Licht/Gerät aus nach Ablauf Timer
+                                                if (/^#[0-9A-F]{6}$/i.test(StringToCommandoff)) { //Color
+                                                    Adapter.setForeignStateAsync(ObjectToCommandoff, StringToCommandoff);
+                                                } else if ((/\d+/g.test(StringToCommandoff)) || (/true/g.test(StringToCommandoff)) || (/false/g.test(StringToCommandoff))) { // State
+                                                    Adapter.setForeignStateAsync(ObjectToCommandoff, eval(StringToCommandoff));
+                                                } else { // Other
+                                                    Adapter.setForeignStateAsync(ObjectToCommandoff, StringToCommandoff);
                                                 }
                                             }, strAdapterarray[strArrayDev].MotionTimeValue * 1000); // Timer setzen auf X Minuten
                                             Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": motion detected, event is triggered for " + strAdapterarray[strArrayDev].MotionTimeValue + " seconds.");
@@ -1969,17 +1979,13 @@ class alarmcontrol extends utils.Adapter {
                     //================Check Device List
                     var FindAllTriger = Adapter.checkTrigger(strAdapterarray, ArrayReed, ToSearch, false);
                     if (FindAllTriger !== false) {
-
                         var iFA;
                         for (iFA = 0; iFA < FindAllTriger.length; iFA++) {
                             if (FindAllTriger[iFA].toString() == ToSearch.toString()) {
-
                                 Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
                                 var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArrayReed].AlarmNumber);
                                 if (GetAlarm) {
-                                    var TimeReedIndex = [strAdapterarray[ArrayReed].DeviceType + "-" + strAdapterarray[ArrayReed].DeviceIDName + "-" +
-                                        strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName
-                                    ];
+                                    var TimeReedIndex = [strAdapterarray[ArrayReed].DeviceType + "-" + strAdapterarray[ArrayReed].DeviceIDName + "-" + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName];
                                     if (TimerReed[TimeReedIndex] === undefined) {
                                         TimerReed.push(TimeReedIndex);
                                     }
@@ -2066,10 +2072,12 @@ class alarmcontrol extends utils.Adapter {
                                                 var ObjectToCommandoff = strAdapterarray[ArraySwitch].OnObject;
                                             }
                                             Adapter.log.info("FoundSwitch: " + ObjectToCommandon + " with: " + StringToCommandon);
-                                            if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) {
+                                            if (/^#[0-9A-F]{6}$/i.test(StringToCommandon)) { //Color
                                                 Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
-                                            } else {
+                                            } else if ((/\d+/g.test(StringToCommandon)) || (/true/g.test(StringToCommandon)) || (/false/g.test(StringToCommandon))) { // State
                                                 Adapter.setForeignStateAsync(ObjectToCommandon, eval(StringToCommandon));
+                                            } else { // Other
+                                                Adapter.setForeignStateAsync(ObjectToCommandon, StringToCommandon);
                                             }
                                             Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + ": Temperature was changed, event is triggered for " + strAdapterarray[strArrayDev].MotionTimeValue + " seconds.");
                                         } else {
@@ -2221,9 +2229,7 @@ class alarmcontrol extends utils.Adapter {
                                 Adapter.log.info(strAdapterarray[strArrayDev].DeviceIDName + " ==> " + iFA + "/" + FindAllTriger.length + " / " + FindAllTriger[iFA] + " = " + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName);
                                 var GetAlarm = Adapter.CheckAlarmState(strAdapterarray[ArrayOther].AlarmNumber);
                                 if (GetAlarm) {
-                                    var TimeOtherIndex = [strAdapterarray[ArrayOther].DeviceType + "-" + strAdapterarray[ArrayOther].DeviceIDName + "-" +
-                                        strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName
-                                    ];
+                                    var TimeOtherIndex = [strAdapterarray[ArrayOther].DeviceType + "-" + strAdapterarray[ArrayOther].DeviceIDName + "-" + strAdapterarray[strArrayDev].DeviceType + "-" + strAdapterarray[strArrayDev].DeviceIDName];
                                     if (TimerOther[TimeOtherIndex] === undefined) {
                                         TimerOther.push(TimeOtherIndex);
                                     }
@@ -2390,20 +2396,134 @@ class alarmcontrol extends utils.Adapter {
                     Adapter.log.warn("Calculate the position of the sun in the sky for the current location..");
                     Adapter.SetTodayCalcSun();
                 }
-
-                if (moment().isSame(moment("00:00:00", "hh:mm:ss"), "second")) {
+                if (moment().isSame(moment("00:00:01", "hh:mm:ss"), "second")) {
+                    Adapter.log.warn("Transferring data..");
                     //========================Reset Energy Day
                     EnergyAdapterarray = [];
                     var GetChangeObjectJson = await Adapter.getStateAsync('Change');
                     if (GetChangeObjectJson !== undefined) {
+                        const ResetDate = new Date();
+                        var Rday = ResetDate.getDate();
+                        var RWeekday = ResetDate.getDay();
+                        var Rmonth = ResetDate.getMonth() + 1;
+                        var Ryear = ResetDate.getFullYear();
+                        var weekday = new Array(7);
+                        weekday[0] = 7; //"Sunday";
+                        weekday[1] = 1; //"Monday";
+                        weekday[2] = 2; //"Tuesday";
+                        weekday[3] = 3; //"Wednesday";
+                        weekday[4] = 4; //"Thursday";
+                        weekday[5] = 5; //"Friday";
+                        weekday[6] = 6; //"Saturday";
+                        var RWeek = weekday[RWeekday];
                         EnergyAdapterarray.push(JSON.parse(GetChangeObjectJson.val));
                         for (let EnergDev in EnergyAdapterarray[0]) {
                             //**************************************Start loop Reset Energy Day***********************************************
                             if (EnergyAdapterarray[0][EnergDev].DeviceType == "Energy") {
-                                Adapter.setStateAsync(EnergyAdapterarray[0][EnergDev].DeviceType + "." + EnergyAdapterarray[0][EnergDev].DeviceIDName + '.Database.EnergyDayWh', 0, true);
-                                Adapter.setStateAsync(EnergyAdapterarray[0][EnergDev].DeviceType + "." + EnergyAdapterarray[0][EnergDev].DeviceIDName + '.Database.EnergyDayKwh', 0, true);
-                                Adapter.setStateAsync(EnergyAdapterarray[0][EnergDev].DeviceType + "." + EnergyAdapterarray[0][EnergDev].DeviceIDName + '.Database.EnergyDayTime', 0, true);
-                                Adapter.setStateAsync(EnergyAdapterarray[0][EnergDev].DeviceType + "." + EnergyAdapterarray[0][EnergDev].DeviceIDName + '.Database.EnergyDayMoney', 0, true);
+                                var ResetObject = EnergyAdapterarray[0][EnergDev].DeviceType + "." + EnergyAdapterarray[0][EnergDev].DeviceIDName;
+                                var EnergyIndex = EnergyAdapterarray[0][EnergDev].DeviceType + "-" + EnergyAdapterarray[0][EnergDev].DeviceIDName;
+                                //===================Read Day
+                                var SetDayWh = 0;
+                                var GetDayWh = await Adapter.getStateAsync(ResetObject + '.Database.EnergyDayWh');
+                                if (GetDayWh && GetDayWh.val) {
+                                    SetDayWh = Number(GetDayWh.val);
+                                }
+                                //===================Read Week
+                                var SetWeekWh = 0;
+                                var GetWeekWh = await Adapter.getStateAsync(ResetObject + '.Database.EnergyWeekWh');
+                                if (GetWeekWh && GetWeekWh.val) {
+                                    SetWeekWh = Number(GetWeekWh.val);
+                                }
+                                //===================Read Month
+                                var SetMonthWh = 0;
+                                var GetMonthWh = await Adapter.getStateAsync(ResetObject + '.Database.EnergyMonthWh');
+                                if (GetMonthWh && GetMonthWh.val) {
+                                    SetMonthWh = Number(GetMonthWh.val);
+                                }
+                                //===================Read Day Time
+                                var SetDayEngTime = 0;
+                                var GetDayEngTime = await Adapter.getStateAsync(ResetObject + '.Database.EnergyDayTime');
+                                if (GetDayEngTime && GetDayEngTime.val) {
+                                    var DTimerEng = Adapter.convertTimeToseconds(GetDayEngTime.val);
+                                    SetDayEngTime = Number(DTimerEng);
+                                }
+                                //===================Read Week Time
+                                var SetWeekEngTime = 0;
+                                var GetWeekEngTime = await Adapter.getStateAsync(ResetObject + '.Database.EnergyWeekTime');
+                                if (GetWeekEngTime && GetWeekEngTime.val) {
+                                    var WTimerEng = Adapter.convertTimeToseconds(GetWeekEngTime.val);
+                                    SetWeekEngTime = Number(WTimerEng);
+                                }
+                                //===================Read Month Time
+                                var SetMonthEngTime = 0;
+                                var GetMonthEngTime = await Adapter.getStateAsync(ResetObject + '.Database.EnergyMonthTime');
+                                if (GetMonthEngTime && GetMonthEngTime.val) {
+                                    var MTimerEng = Adapter.convertTimeToseconds(GetMonthEngTime.val);
+                                    SetMonthEngTime = Number(MTimerEng);
+                                }
+                                //==================Get Now WH / price
+                                var SetNowWh = Number(EnergyOutObj[EnergyIndex].Wh);
+                                var SetNowPrice = Number(EnergyOutObj[EnergyIndex].Price);
+                                Adapter.log.info("Transferring data: " + EnergyAdapterarray[0][EnergDev].DeviceIDName + ' ' + SetDayWh + ' ' + SetWeekWh + ' ' + SetMonthWh);
+                                //============================Set day
+                                if (RWeek == 1) {
+                                    //===Get Week / Write to Month
+                                    var WhTransfer = (SetMonthWh + SetWeekWh + SetDayWh + SetNowWh).toFixed(2);
+                                    Adapter.log.info("Transferring data: " + EnergyAdapterarray[0][EnergDev].DeviceIDName + ' Write to Month ' + WhTransfer);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyMonthWh', WhTransfer, true);
+                                    var KWhTransfer = (WhTransfer / 1000).toFixed(2);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyMonthKwh', KWhTransfer, true);
+                                    var TWhTransfer = Adapter.convertseconds(SetDayEngTime + SetWeekEngTime + SetMonthEngTime);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyMonthTime', TWhTransfer, true);
+                                    var PKWhTransfer = (KWhTransfer * SetNowPrice).toFixed(2);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyMonthMoney', PKWhTransfer, true);
+                                    //===Reset last Week
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekWh', 0, true);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekKwh', 0, true);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekTime', 0, true);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekMoney', 0, true);
+                                } else if (RWeek > 1) {
+                                    //===Get Day and Week / Write to Week
+                                    var WhTransfer = (SetWeekWh + SetDayWh + SetNowWh).toFixed(2);
+                                    Adapter.log.info("Transferring data: " + EnergyAdapterarray[0][EnergDev].DeviceIDName + ' Write to Week ' + WhTransfer);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekWh', WhTransfer, true);
+                                    var KWhTransfer = (WhTransfer / 1000).toFixed(2);;
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekKwh', KWhTransfer, true);
+                                    var TWhTransfer = Adapter.convertseconds(SetDayEngTime + SetWeekEngTime);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekTime', TWhTransfer, true);
+                                    var PKWhTransfer = (KWhTransfer * SetNowPrice).toFixed(2);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekMoney', PKWhTransfer, true);
+                                }
+                                if (Rday == 1) {
+                                    //===Get Month / Write to Year
+                                    var WhTransfer = (SetMonthWh + SetWeekWh + SetDayWh + SetNowWh).toFixed(2);
+                                    Adapter.log.info("Transferring data: " + EnergyAdapterarray[0][EnergDev].DeviceIDName + ' Write to Year ' + WhTransfer);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyYearWh', WhTransfer, true);
+                                    var KWhTransfer = (WhTransfer / 1000).toFixed(2);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyYearKwh', KWhTransfer, true);
+                                    var TWhTransfer = Adapter.convertseconds(SetDayEngTime + SetWeekEngTime + SetMonthEngTime);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyYearTime', TWhTransfer, true);
+                                    var PKWhTransfer = (KWhTransfer * SetNowPrice).toFixed(2);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyYearMoney', PKWhTransfer, true);
+                                    //===Reset Month
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyMonthWh', 0, true);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyMonthKwh', 0, true);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyMonthTime', 0, true);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyMonthMoney', 0, true);
+                                    //===Reset last Week
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekWh', 0, true);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekKwh', 0, true);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekTime', 0, true);
+                                    Adapter.setStateAsync(ResetObject + '.Database.EnergyWeekMoney', 0, true);
+                                }
+                                //==================Reset Day
+                                Adapter.setStateAsync(ResetObject + '.Database.EnergyDayWh', 0, true);
+                                Adapter.setStateAsync(ResetObject + '.Database.EnergyDayKwh', 0, true);
+                                Adapter.setStateAsync(ResetObject + '.Database.EnergyDayTime', 0, true);
+                                Adapter.setStateAsync(ResetObject + '.Database.EnergyDayMoney', 0, true);
+                                //===================Rest Value
+                                EnergyOutObj[EnergyIndex].Wh = 0;
+                                EnergyOutObj[EnergyIndex].Costs = 0;
                             }
                         }
                     }
@@ -2567,6 +2687,7 @@ class alarmcontrol extends utils.Adapter {
             });
         }
         async CleareverySwitch(ClearSWName) {
+                return;
                 const Adapter = this;
                 Adapterarray = [];
                 var GetChangeObjectJson = await Adapter.getStateAsync('Change');
@@ -2692,10 +2813,10 @@ class alarmcontrol extends utils.Adapter {
                         }
                         Adapter.log.warn(Alarmwaschangedfromlevel[Mylanguage] + CommandSPTG.OldAlarmObject + to[Mylanguage] + CommandSPTG.AlarmObject);
                         if (CommandSPTG.SendAlarmChanges) {
-                            Adapter.setForeignStateAsync(CommandSPTG.TelegramObject, SymbolAlarmSt + Alarmwaschangedfromlevel[Mylanguage] + CommandSPTG.OldAlarmObject + to[Mylanguage] + SymbolAlarmEn); //✔ ✖✅🚪🔓🔒🔔⛊
+                            await Adapter.setForeignStateAsync(CommandSPTG.TelegramObject, SymbolAlarmSt + Alarmwaschangedfromlevel[Mylanguage] + CommandSPTG.OldAlarmObject + to[Mylanguage] + SymbolAlarmEn); //✔ ✖✅🚪🔓🔒🔔⛊
                         }
                         if (CommandSPTG.AlarmVoice) {
-                            Adapter.setForeignStateAsync(CommandSPTG.SpeakObject, Alarmwaschangedfromlevel[Mylanguage] + CommandSPTG.OldAlarmObject + to[Mylanguage] + SpeakLevel);
+                            await Adapter.setForeignStateAsync(CommandSPTG.SpeakObject, Alarmwaschangedfromlevel[Mylanguage] + CommandSPTG.OldAlarmObject + to[Mylanguage] + SpeakLevel);
                         }
                         if ((SpeakLevel == '3') && !AlarmIsThree) {
                             AlarmIsThree = true;
@@ -2744,27 +2865,29 @@ class alarmcontrol extends utils.Adapter {
                         var WarnToSendString = '🚨 ' + Thealarmsystemissettolevel[Mylanguage] + '\n',
                             retWarnToSendString = '\n';
                         if (AlarmIsActivThree) {
-                            if (Math.floor((Date.now() - SubsLevelThreeTimer) / 1000) > 5) {
-                                for (let ArrayDev in Adapterarray[0]) {
-                                    if (Adapterarray[0][ArrayDev].OnObject == id) {
-                                        var WarnToSendState = '';
-                                        if (state.val) {
-                                            WarnToSendState = switchedon[Mylanguage];
-                                        } else {
-                                            WarnToSendState = switchedoff[Mylanguage];
+                            if (state !== null && !state.ack) {
+                                if (Math.floor((Date.now() - SubsLevelThreeTimer) / 1000) > 10) {
+                                    for (let ArrayDev in Adapterarray[0]) {
+                                        if (Adapterarray[0][ArrayDev].OnObject == id) {
+                                            var WarnToSendState = '';
+                                            if (state.val) {
+                                                WarnToSendState = switchedon[Mylanguage];
+                                            } else {
+                                                WarnToSendState = switchedoff[Mylanguage];
+                                            }
+                                            WarnToSendString += '◉ ' + Adapterarray[0][ArrayDev].DeviceIDName + ' ➢ ' + statechanged[Mylanguage] + ' ➢ ' + WarnToSendState + '\n';
+                                            Adapter.log.warn("The alarm system is set to 3 : 🚨 state " + Adapterarray[0][ArrayDev].DeviceIDName + " changed: " + state.val);
+                                            AlarmIsActivThree = false;
+                                            var retWarnToSendString = await Adapter.StartLevelThree(false);
                                         }
-                                        WarnToSendString += '◉ ' + Adapterarray[0][ArrayDev].DeviceIDName + ' ➢ ' + statechanged[Mylanguage] + ' ➢ ' + WarnToSendState + '\n';
-                                        Adapter.log.warn("The alarm system is set to 3 : 🚨 state " + Adapterarray[0][ArrayDev].DeviceIDName + " changed: " + state.val);
-                                        AlarmIsActivThree = false;
-                                        var retWarnToSendString = await Adapter.StartLevelThree(false);
                                     }
+                                    WarnToSendString += retWarnToSendString;
+                                    if (CommandSPTG.SendAlarmChanges) {
+                                        Adapter.setForeignStateAsync(CommandSPTG.TelegramObject, WarnToSendString);
+                                    }
+                                } else {
+                                    SubsLevelThreeTimer = Date.now();
                                 }
-                                WarnToSendString += retWarnToSendString;
-                                if (CommandSPTG.SendAlarmChanges) {
-                                    Adapter.setForeignStateAsync(CommandSPTG.TelegramObject, WarnToSendString);
-                                }
-                            } else {
-                                SubsLevelThreeTimer = Date.now();
                             }
                             //~ this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
                         }
@@ -2955,56 +3078,52 @@ class alarmcontrol extends utils.Adapter {
                                 var EnergyIndex = Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName
                                 if (state.val) {
                                     if (!EnergyOutObj[EnergyIndex].PowerState) {
-                                        //~ PowerState: false,
-                                        //~ Wh: = 0,
-                                        //~ LastTime: 0,
-                                        //~ TimeDiff: 0,
-                                        //~ CurrentConsumption: 0,
-                                        //~ Event: 0,
-                                        //~ Timer: 0,
-                                        //~ Costs: 0,
-                                        //~ StartCosts: 0,
-                                        //~ Price: 0,
-                                        //~ DeviceIsOff: 0,
-                                        //~ Standbymode: EnergyValue,
-                                        //~ StartPowerValue: EnergyValue + 1,
-                                        //~ Name: EnergyIndex,
-                                        //~ Object:
                                         EnergyOutObj[EnergyIndex].Object = Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDaynterval';
-
-                                        var SetDayWh = 0;
+                                        SetDayWh = 0;
                                         var GetDayWh = await Adapter.getStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayWh');
                                         if (GetDayWh && GetDayWh.val) {
                                             SetDayWh = GetDayWh.val
                                         }
-
-                                        var SetDayKwh = 0;
+                                        SetDayKwh = 0;
                                         var GetDayKwh = await Adapter.getStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayKwh');
                                         if (GetDayKwh && GetDayKwh.val) {
                                             SetDayKwh = GetDayKwh.val
                                         }
-
-                                        var SetDayCost = 0;
+                                        SetDayCost = 0;
                                         var GetDayCost = await Adapter.getStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayMoney');
                                         if (GetDayCost && GetDayCost.val) {
                                             SetDayCost = GetDayCost.val
                                         }
-
-                                        var WriteInterval = 0;
+                                        WriteInterval = 0;
                                         EnergyOutObj[EnergyIndex].PowerState = true;
                                         EnergyOutObj[EnergyIndex].Wh = 0;
-                                        EnergyOutObj[EnergyIndex].Event = 0;
                                         EnergyOutObj[EnergyIndex].Costs = 0;
+                                        EnergyOutObj[EnergyIndex].StartTimer = 0;
                                         EnergyOutObj[EnergyIndex].Timer = 0;
-                                        EnergyOutObj[EnergyIndex].DeviceIsOff = 0;
+                                        EnergyOutObj[EnergyIndex].Event = 0;
+                                        EnergyOutObj[EnergyIndex].StandbyControl = 0;
                                         EnergyOutObj[EnergyIndex].Name = EnergyIndex;
                                         EnergyOutObj[EnergyIndex].LastTime = new Date().getTime();
                                         Adapter.subscribeForeignStates(Adapterarray[0][ArrayDev].EnergyObjectInput);
-
                                         if (EnergyTimer[EnergyIndex] === undefined) {
                                             EnergyTimer.push(EnergyIndex);
                                         }
-
+                                    }
+                                } else {
+                                    clearInterval(EnergyTimer[EnergyIndex]);
+                                    EnergyOutObj[EnergyIndex].PowerState = false;
+                                    EnergyOutObj[EnergyIndex].Costs = 0;
+                                    EnergyOutObj[EnergyIndex].StartTimer = 0;
+                                    EnergyOutObj[EnergyIndex].Timer = 0;
+                                    EnergyOutObj[EnergyIndex].Event = 0;
+                                    EnergyOutObj[EnergyIndex].StandbyControl = 0;
+                                    Adapter.unsubscribeForeignStates(Adapterarray[0][ArrayDev].EnergyObjectInput);
+                                }
+                            }
+                            if (id == Adapterarray[0][ArrayDev].EnergyObjectInput) {
+                                var EnergyIndex = Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName;
+                                if (EnergyOutObj[EnergyIndex].PowerState) {
+                                    if (EnergyOutObj[EnergyIndex].Event == 0) {
                                         EnergyTimer[EnergyIndex] = setInterval(async function() {
                                             EnergyOutObj[EnergyIndex].TimeDiff = (new Date().getTime()) - EnergyOutObj[EnergyIndex].LastTime;
                                             EnergyOutObj[EnergyIndex].LastTime = new Date().getTime();
@@ -3012,73 +3131,59 @@ class alarmcontrol extends utils.Adapter {
                                             EnergyOutObj[EnergyIndex].CurrentConsumption = Temp.val;
                                             var CalcSubWh = EnergyOutObj[EnergyIndex].CurrentConsumption * EnergyOutObj[EnergyIndex].TimeDiff;
                                             var CalcMainWh = (CalcSubWh / 3600000);
-                                            EnergyOutObj[EnergyIndex].Wh = Math.round((EnergyOutObj[EnergyIndex].Wh + CalcMainWh) * 100) / 100;
-                                            if (WriteInterval == 5) {
+                                            EnergyOutObj[EnergyIndex].Wh = ((EnergyOutObj[EnergyIndex].Wh + CalcMainWh) * 100) / 100;
+                                            //~ Adapter.log.info(EnergyIndex + ' Interval ' + WriteInterval + ' ==> ' + CalcSubWh + ' / '+ CalcMainWh + ' / ' + EnergyOutObj[EnergyIndex].Wh);
+                                            if (WriteInterval == 2) {
+                                                var tempSetWHEnerg = EnergyOutObj[EnergyIndex].Wh + SetDayWh;
                                                 Adapter.setStateAsync(EnergyOutObj[EnergyIndex].Object, EnergyOutObj[EnergyIndex].Wh, true);
-                                                Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayWh',
-                                                    SetDayWh + EnergyOutObj[EnergyIndex].Wh, true);
-                                                Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayKwh',
-                                                    Math.round(SetDayKwh + (EnergyOutObj[EnergyIndex].Wh / 1000)), true);
-                                                Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayMoney',
-                                                    Math.round(SetDayCost + (Math.ceil(EnergyOutObj[EnergyIndex].Costs * 100) / 100)), true);
-                                                Adapter.log.info(EnergyIndex + ' ==> Calc Wh: ' + EnergyOutObj[EnergyIndex].Wh +
-                                                    ' | Calc Kwh: ' + Math.round(EnergyOutObj[EnergyIndex].Wh / 1000) +
-                                                    ' | Calc Costs: ' + EnergyOutObj[EnergyIndex].Costs);
+                                                Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayWh', tempSetWHEnerg, true);
+                                                var tempSetKWEnerg = (EnergyOutObj[EnergyIndex].Wh / 1000) + SetDayKwh;
+                                                Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayKwh', tempSetKWEnerg, true);
+                                                var tempSetMOEnerg = (tempSetKWEnerg * EnergyOutObj[EnergyIndex].Price);
+                                                EnergyOutObj[EnergyIndex].Costs = tempSetMOEnerg;
+                                                Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayMoney', tempSetMOEnerg, true);
+                                                Adapter.log.info(EnergyIndex + ' ==> Calc Wh: ' + EnergyOutObj[EnergyIndex].Wh + ' | Calc Kwh: ' + tempSetKWEnerg + ' | Calc Costs: ' + tempSetMOEnerg);
                                                 WriteInterval = 0;
                                             }
                                             WriteInterval += 1;
-                                        }, 5000);
+                                        }, 10000);
+                                        EnergyOutObj[EnergyIndex].Event = 1;
                                     }
-                                    //~ await Adapter.trigerEnergy(Adapterarray[0], ArrayDev);
-                                } else {
-                                    clearInterval(EnergyTimer[EnergyIndex]);
-                                    clearInterval(EnergyTimerWh[EnergyIndex]);
-                                    EnergyTimerWh[EnergyIndex] = null;
-                                    EnergyOutObj[EnergyIndex].PowerState = false;
-                                    EnergyOutObj[EnergyIndex].Event = 0;
-                                    EnergyOutObj[EnergyIndex].Costs = 0;
-                                    EnergyOutObj[EnergyIndex].Timer = 0;
-                                    Adapter.unsubscribeForeignStates(Adapterarray[0][ArrayDev].EnergyObjectInput);
-                                }
-                            }
-
-                            if (id == Adapterarray[0][ArrayDev].EnergyObjectInput) {
-                                var EnergyIndex = Adapterarray[0][ArrayDev].DeviceType + "-" + Adapterarray[0][ArrayDev].DeviceIDName
-                                if (EnergyTimerWh[EnergyIndex] === undefined) {
-                                    EnergyTimerWh.push(EnergyIndex);
-                                    //~ Adapter.log.warn(Adapterarray[0][ArrayDev].EnergyObjectInput + '==' + state.val + " / Max " + EnergyOutObj[EnergyIndex].StartPowerValue + " / Min " + EnergyOutObj[EnergyIndex].Standbymode);
-                                    EnergyTimerWh[EnergyIndex] = setInterval(function() {
-                                        if (EnergyOutObj[EnergyIndex].Event == 1) {
-                                            if (EnergyTimerNowWh[EnergyIndex] === undefined) {
-                                                EnergyTimerNowWh.push(EnergyIndex);
-                                            }
-                                            EnergyTimerNowWh[EnergyIndex] = setInterval(function() { // Start Costs
-                                                var TempCosts = (EnergyOutObj[EnergyIndex].Price / 3600000) * (((new Date().getTime()) - EnergyOutObj[EnergyIndex].StartCosts) / 1000) * state.val;
-                                                EnergyOutObj[EnergyIndex].Costs = EnergyOutObj[EnergyIndex].Costs + TempCosts;
-                                                EnergyOutObj[EnergyIndex].StartCosts = new Date().getTime();
-                                            }, 1500);
+                                    if (state.val <= EnergyOutObj[EnergyIndex].Standbymode) {
+                                        if (EnergyOutObj[EnergyIndex].StandbyControl == 0) {
+                                            EnergyOutObj[EnergyIndex].StandbyControl = new Date().getTime();
                                         }
-                                        if (state.val > EnergyOutObj[EnergyIndex].StartPowerValue) {
-                                            if (EnergyOutObj[EnergyIndex].Timer != 1) {
-                                                EnergyOutObj[EnergyIndex].StartCosts = new Date().getTime();
-                                                EnergyOutObj[EnergyIndex].Event = 1;
-                                            }
-                                            EnergyOutObj[EnergyIndex].Timer = 1;
-                                        } else if ((state.val < EnergyOutObj[EnergyIndex].Standbymode) && (EnergyOutObj[EnergyIndex].Timer == 1)) {
-                                            EnergyOutObj[EnergyIndex].Timer = 0;
+                                        var CalcStandbyControl = ((new Date().getTime()) - EnergyOutObj[EnergyIndex].StandbyControl) / 1000;
+                                        Adapter.log.info(EnergyIndex + ' (Standby) switch off the device in ' + CalcStandbyControl + ' seconds');
+                                        if ((CalcStandbyControl > 30) && (EnergyOutObj[EnergyIndex].StandbyControl !== 0)) {
                                             var CostNow = Math.ceil(EnergyOutObj[EnergyIndex].Costs * 100) / 100;
-                                            var CostEnd = Math.ceil((1000 / EnergyOutObj[EnergyIndex].Price) * (EnergyOutObj[EnergyIndex].Costs / 1000) * 100) / 100;
-                                            Adapter.log.warn(Adapterarray[0][ArrayDev].DeviceIDName + ': The costs amount to a total of' +
-                                                CostNow + ' . The device used ' + CostEnd + ' kilowatt hours');
-                                        } else if (state.val <= EnergyOutObj[EnergyIndex].DeviceIsOff) {
+                                            var KwhEnd = Math.ceil((1000 / EnergyOutObj[EnergyIndex].Price) * (EnergyOutObj[EnergyIndex].Costs / 1000) * 100) / 100;
+                                            Adapter.log.warn(Adapterarray[0][ArrayDev].DeviceIDName + ': The costs amount to a total of' + CostNow + ' 💰. The device used ' + KwhEnd + ' kilowatt hours.');
+                                            if (EnergyOutObj[EnergyIndex].DeviceSetOff) {
+                                                Adapter.setForeignStateAsync(Adapterarray[0][ArrayDev].EnergyObject, false);
+                                            }
+                                            //=================Add 💰 / Kwh to Speach string
+                                            var ChangeSpeachString = Adapterarray[0][ArrayDev].SpeachString;
+                                            Adapterarray[0][ArrayDev].SpeachString = ChangeSpeachString.toString().replace(/%1/, CostNow).replace(/%2/, KwhEnd);
+                                            Adapter.trigerSpeak(Adapterarray[0], ArrayDev);
+                                            //=================Pushover
+                                            if (EnergyOutObj[EnergyIndex].Pushover) {
+                                                Adapter.setForeignStateAsync(CommandSPTG.TelegramObject, ChangeSpeachString);
+                                            }
+                                            //=================Reset
+                                            clearInterval(EnergyTimer[EnergyIndex]);
                                             EnergyOutObj[EnergyIndex].Event = 0;
-                                            EnergyOutObj[EnergyIndex].Costs = 0;
-                                            EnergyOutObj[EnergyIndex].Timer = 0;
-                                            clearInterval(EnergyTimerNowWh[EnergyIndex]); // Clear Costs
                                         }
-                                    }, 20000);
+                                    } else if (state.val >= EnergyOutObj[EnergyIndex].StartPowerValue) {
+                                        EnergyOutObj[EnergyIndex].StandbyControl = 0;
+                                        if (EnergyOutObj[EnergyIndex].StartTimer = 0) {
+                                            EnergyOutObj[EnergyIndex].StartTimer = new Date().getTime();
+                                        }
+                                        EnergyOutObj[EnergyIndex].Timer = ((new Date().getTime()) - EnergyOutObj[EnergyIndex].StartTimer) / 1000;
+                                        var GetEnergyTotalTime = Adapter.convertseconds(EnergyOutObj[EnergyIndex].Timer)
+                                        Adapter.setStateAsync(Adapterarray[0][ArrayDev].DeviceType + "." + Adapterarray[0][ArrayDev].DeviceIDName + '.Database.EnergyDayTime', GetEnergyTotalTime, true);
+                                    }
                                 }
-
                             }
                             //=====================================================Other===========================================
                         } else if (Adapterarray[0][ArrayDev].DeviceType == "Other") {
@@ -3473,18 +3578,30 @@ class alarmcontrol extends utils.Adapter {
                             native: {}
                         });
                         Adapter.setStateAsync(ToCreateChannel + '.EnergyObjectInput', recivemsg.message.EnergyObjectInput, true);
-                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyValue', {
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyStandbyValue', {
                             type: "state",
                             common: {
-                                name: 'EnergyValue',
-                                desc: 'EnergyValue',
+                                name: 'EnergyStandbyValue',
+                                desc: 'EnergyStandbyValue',
                                 type: 'string',
                                 role: 'text',
                                 write: false
                             },
                             native: {}
                         });
-                        Adapter.setStateAsync(ToCreateChannel + '.EnergyValue', recivemsg.message.EnergyValue, true);
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyStandbyValue', recivemsg.message.EnergyStandbyValue, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyPowerValue', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyPowerValue',
+                                desc: 'EnergyPowerValue',
+                                type: 'string',
+                                role: 'text',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyPowerValue', recivemsg.message.EnergyPowerValue, true);
                         await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyPrice', {
                             type: "state",
                             common: {
@@ -3569,6 +3686,18 @@ class alarmcontrol extends utils.Adapter {
                             native: {}
                         });
                         Adapter.setStateAsync(ToCreateChannel + '.EnergyConsumptionYear', recivemsg.message.EnergyConsumptionYear, true);
+                        await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.EnergyPushover', {
+                            type: "state",
+                            common: {
+                                name: 'EnergyPushover',
+                                desc: 'EnergyPushover',
+                                type: 'boolean',
+                                role: 'switch',
+                                write: false
+                            },
+                            native: {}
+                        });
+                        Adapter.setStateAsync(ToCreateChannel + '.EnergyPushover', recivemsg.message.EnergyPushover, true);
                         //============================Day========================================
                         await Adapter.setObjectNotExistsAsync(ToCreateChannel + '.Database.EnergyDayKwh', {
                             type: "state",
@@ -4263,7 +4392,8 @@ class alarmcontrol extends utils.Adapter {
                                     LogTextNumberEnergy += 1;
                                     let EnergyObject = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyObject');
                                     let EnergyObjectInput = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyObjectInput');
-                                    let EnergyValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyValue');
+                                    let EnergyStandbyValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyStandbyValue');
+                                    let EnergyPowerValue = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyPowerValue');
                                     let EnergyPrice = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyPrice');
                                     let EnergySwitchOff = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergySwitchOff');
                                     let EnergyConsumption = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumption');
@@ -4271,12 +4401,14 @@ class alarmcontrol extends utils.Adapter {
                                     let EnergyConsumptionWeek = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionWeek');
                                     let EnergyConsumptionMonth = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionMonth');
                                     let EnergyConsumptionYear = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyConsumptionYear');
+                                    let EnergyPushover = await Adapter.getStateAsync(MyDevicename + "." + MyChannelname + '.EnergyPushover');
                                     devicearray[MyChannelname] = {
                                         DeviceIDName: DeviceIDName.val,
                                         DeviceType: DeviceType.val,
                                         EnergyObject: EnergyObject.val,
                                         EnergyObjectInput: EnergyObjectInput.val,
-                                        EnergyValue: EnergyValue.val,
+                                        EnergyStandbyValue: EnergyStandbyValue.val,
+                                        EnergyPowerValue: EnergyPowerValue.val,
                                         EnergyPrice: EnergyPrice.val,
                                         EnergySwitchOff: EnergySwitchOff.val,
                                         EnergyConsumption: EnergyConsumption.val,
@@ -4284,6 +4416,7 @@ class alarmcontrol extends utils.Adapter {
                                         EnergyConsumptionWeek: EnergyConsumptionWeek.val,
                                         EnergyConsumptionMonth: EnergyConsumptionMonth.val,
                                         EnergyConsumptionYear: EnergyConsumptionYear.val,
+                                        EnergyPushover: EnergyPushover.val,
                                         Schedule_Enabled: Schedule_Enabled,
                                         Schedule_Start: Schedule_Start.val,
                                         Schedule_End: Schedule_End.val,
