@@ -470,17 +470,17 @@ systemDictionary = {
     "pl": "Obiekt przełączający monitorowania energii",
     "zh-cn": "能量监控开关对象"
   },
-   "Current consumption (mA)": {
-    "en": "Current consumption (mA)",
-    "de": "Stromaufnahme (mA)",
-    "ru": "Потребление тока (мА)",
-    "pt": "Consumo de corrente (mA)",
-    "nl": "Stroomverbruik (mA)",
-    "fr": "Consommation de courant (mA)",
-    "it": "Consumo di corrente (mA)",
-    "es": "Consumo de corriente (mA)",
-    "pl": "Pobór prądu (mA)",
-    "zh-cn": "消耗电流（mA）"
+   "Current consumption (Wh)": {
+    "en": "Current consumption (Wh)",
+    "de": "Stromaufnahme (Wh)",
+    "ru": "Потребление тока (Wh)",
+    "pt": "Consumo de corrente (Wh)",
+    "nl": "Stroomverbruik (Wh)",
+    "fr": "Consommation de courant (Wh)",
+    "it": "Consumo di corrente (Wh)",
+    "es": "Consumo de corriente (Wh)",
+    "pl": "Pobór prądu (Wh)",
+    "zh-cn": "消耗电流（Wh）"
   },
     "Standby consumption": {
     "en": "Standby consumption",
@@ -601,6 +601,18 @@ systemDictionary = {
     "es": "Los costos ascienden a un total de",
     "pl": "Łącznie koszty wynoszą",
     "zh-cn": "费用总计为"
+  },
+   "Power consumption": {
+    "en": "Power consumption",
+    "de": "Energieverbrauch",
+    "ru": "Потребляемая мощность",
+    "pt": "Consumo de energia",
+    "nl": "Energieverbruik",
+    "fr": "Consommation d'énergie",
+    "it": "Consumo di energia",
+    "es": "El consumo de energía",
+    "pl": "Pobór energii",
+    "zh-cn": "能量消耗"
   },
    "Price per KWh": {
     "en": "Price per KWh",
