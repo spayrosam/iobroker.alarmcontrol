@@ -2687,7 +2687,7 @@ class alarmcontrol extends utils.Adapter {
             });
         }
         async CleareverySwitch(ClearSWName) {
-                return;
+                //~ return;
                 const Adapter = this;
                 Adapterarray = [];
                 var GetChangeObjectJson = await Adapter.getStateAsync('Change');
