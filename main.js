@@ -1242,8 +1242,8 @@ class alarmcontrol extends utils.Adapter {
                         common: {
                             name: 'PresentNumber',
                             desc: 'PresentNumber',
-                            type: 'string',
-                            role: 'text',
+                            type: 'number',
+                            role: 'number',
                             write: false
                         },
                         native: {}
