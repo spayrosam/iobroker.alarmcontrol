@@ -7,6 +7,11 @@ AlarmControl is a Alarm system adapter with four levels. Create and control thou
 
 ## Changelog
 
+### 0.5.0
+* (spayrosam) Latest release
+### 0.4.0
+
+### 0.3.0
 
 ### 0.2.0
 * (spayrosam) Energy monitoring has been implemented.
