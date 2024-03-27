@@ -540,7 +540,7 @@ class alarmcontrol extends utils.Adapter {
                 let Familyarray = {};
                 let LogTextString = "",
                     LogTextNumber = 0;
-                let Familynumber = await Adapter.getDevicesAsync('');
+                let Familynumber = await Adapter.getDevicesAsync();
                 for (let idx = 0; idx < Familynumber.length; idx++) {
                     let AllMyFamilyname = await Adapter.getChannelsOfAsync(Familynumber[idx].common.name);
                     let MyFamilyname = Familynumber[idx].common.name;
@@ -602,7 +602,7 @@ class alarmcontrol extends utils.Adapter {
                     LogTextNumberOther = 0;
                 let LogTextStringTimer = "",
                     LogTextNumberTimer = 0;
-                let devicenumber = await Adapter.getDevicesAsync('');
+                let devicenumber = await Adapter.getDevicesAsync();
                 for (let idx = 0; idx < devicenumber.length; idx++) {
                     let AllMyDevicename = await Adapter.getChannelsOfAsync(devicenumber[idx].common.name);
                     let MyDevicename = devicenumber[idx].common.name;
@@ -4208,7 +4208,7 @@ class alarmcontrol extends utils.Adapter {
                     LogTextNumberEnergy = 0;
                 let LogTextStringTimer = "",
                     LogTextNumberTimer = 0;
-                let devicenumber = await Adapter.getDevicesAsync('');
+                let devicenumber = await Adapter.getDevicesAsync();
                 for (let idx = 0; idx < devicenumber.length; idx++) {
                     let AllMyDevicename = await Adapter.getChannelsOfAsync(devicenumber[idx].common.name);
                     let MyDevicename = devicenumber[idx].common.name;
@@ -4698,7 +4698,7 @@ class alarmcontrol extends utils.Adapter {
                 let Familyarray = {};
                 let LogTextString = "",
                     LogTextNumber = 0;
-                let Familynumber = await Adapter.getDevicesAsync('');
+                let Familynumber = await Adapter.getDevicesAsync();
                 for (let idx = 0; idx < Familynumber.length; idx++) {
                     let AllMyFamilyname = await Adapter.getChannelsOfAsync(Familynumber[idx].common.name);
                     let MyFamilyname = Familynumber[idx].common.name;
